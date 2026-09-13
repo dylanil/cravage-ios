@@ -38,8 +38,10 @@ than discovered. The in-app Limitations screen carries the same list in shorter 
 - **Figures up to 999,999,999,999.99.** The masking maths hides figures perfectly only within a
   bounded range, so the app enforces one. Anything under a trillion in any unit is fine.
 - **If someone drops out mid-round, the round fails.** The host restarts it with one tap; the room
-  and label are kept. Every waiting step has a time limit. Recovering an average from a partial
-  group is planned for a later version.
+  and label are kept. Every waiting step has a time limit. If the group is smaller after a restart
+  and people re-enter the same figures as before, comparing the two results can reveal exactly what
+  the person who left had entered - the app warns about this the moment a restart drops someone.
+  Recovering an average from a partial group is planned for a later version.
 - **The maths cannot check honesty.** Signatures prove who sent a masked number, not that the
   figure behind it was truthful.
 - **Collusion has a floor.** If everyone else in the round conspires, they can recover your figure.
@@ -47,15 +49,24 @@ than discovered. The in-app Limitations screen carries the same list in shorter 
   strongly for groups of 3.
 - **The average itself can be revealing.** Small groups, prior knowledge, or repeated overlapping
   rounds can leak information through the result.
-- **Identity rests on the room.** The host admits people by looking at them, and every phone
-  refuses to send a masked number until its owner confirms the room code matches. A phone in Wi-Fi
-  range could only pose as a participant if people skip that check.
+- **A letter (A, B, C...) proves a matching digital signature, not a real second phone.** Nothing
+  stops a dishonest host from inventing extra "participants" entirely on their own device and
+  showing a lone real participant what looks like a normal room. The confirmation screen shows how
+  many other phones are expected; count that many real phones in the room yourself before
+  confirming - the app cannot do this check for you.
 - **Room label and nicknames are visible to nearby phones** while a room is open.
 - **Not sold in the EU** in this version, because EU rules would require publishing a postal
   address and phone number on the store page.
-- **The exported transcript proves internal consistency**, that the signatures verify and the
-  arithmetic adds up, plus the participants' signed agreement on the result. It does not by itself
-  prove who the participants were.
+- **The exported transcript proves internal consistency**: that the signatures verify, the
+  arithmetic adds up, and every listed key signed agreement to the result. It does not prove who
+  the participants were, or even that separate phones or people were involved - one device holding
+  every key could produce a transcript that verifies perfectly.
+- **A modified app could submit an out-of-range figure undetected.** Each phone checks its own
+  figure against the trillion cap before masking; nothing in the round detects a modified app that
+  skips this, and it would skew everyone's average with no signature or verification failure.
+- **A dispute found after the fact doesn't rewrite an already-saved file.** If a conflict surfaces
+  after a result was shown or exported, the app marks its own record disputed from then on; a file
+  already exported earlier is unchanged.
 
 ## Repository layout
 

@@ -1,8 +1,9 @@
 <!-- Provenance: produced 2026-09-13 from the protocol council (docs/review/council/2026-09-13-protocol-council.md),
 which reviewed docs/PLAN.md's technical design against its four gating questions. This is the spec
-required before any protocol code (delivery step 1). The Draft Limitations text at the end is
-drafted, not owner-approved; CLAUDE.md requires owner sign-off before it becomes the shipped
-Limitations copy or README's Known limitations section. -->
+required before any protocol code (delivery step 1). The Limitations text at the end was walked
+through with the owner in plain language and approved 2026-09-13; it is now folded into
+README.md's Known limitations section (the in-app Limitations screen carries the same content once
+the app target exists). -->
 
 # Cravage protocol specification (v1)
 
@@ -184,7 +185,7 @@ invariant class, one new schema field, two new UX moments) rather than a redesig
 `docs/review/council/2026-09-13-protocol-council.md` for the full independent reviews this spec is
 drawn from.
 
-## Draft Limitations text (pending owner sign-off — see CLAUDE.md)
+## Limitations text (owner-approved 2026-09-13, shipped in README.md)
 
 Short, in-app form (existing items from README's Known limitations are not repeated here except
 where their wording changes; new items are marked **NEW**):
