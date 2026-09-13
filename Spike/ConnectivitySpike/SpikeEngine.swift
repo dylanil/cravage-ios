@@ -163,7 +163,13 @@ final class SpikeEngine {
         Task {
             do {
                 try await browser.run { [weak self] endpoints in
-                    await MainActor.run { self?.discoveredHosts = endpoints }
+                    await MainActor.run {
+                        guard let self else { return }
+                        if endpoints.count != self.discoveredHosts.count {
+                            self.addLog("Room list changed: \(endpoints.count) nearby now.")
+                        }
+                        self.discoveredHosts = endpoints
+                    }
                 }
             } catch {
                 await MainActor.run { self.addLog("Browsing stopped: \(error)") }
