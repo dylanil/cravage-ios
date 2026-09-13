@@ -5,9 +5,10 @@
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 PATTERN='SETUP_MAC|Remote Desktop|Screen Sharing|MacBook|Windows laptop|Gmail|password|partner|wife|husband|beginner|unfamiliar|layperson|coding experience|never billed|borrow'
-# Imported third-party review documents are verbatim by design; everything else is checked.
+# Excluded: the imported third-party review documents (verbatim by design) and this script itself.
+EXCLUDE='docs/review/2026-09-12-(plan-review|coding-guardrails)\.md|Tools/check_public_safe\.sh'
 if git ls-files -z -- '*.md' '*.swift' '*.yml' '*.sh' '*.py' \
-   | grep -z -v -E 'docs/review/2026-09-12-(plan-review|coding-guardrails)\.md' \
+   | grep -z -v -E "$EXCLUDE" \
    | xargs -0 grep -n -i -E "$PATTERN" ; then
   echo "Owner-personal marker found in a tracked file. Move it to .git/agents/private/ or memory." >&2
   exit 1
