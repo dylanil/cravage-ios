@@ -183,6 +183,41 @@ public enum Digest {
     }
 
     public static func sha256Hex(_ data: Data) -> String {
-        SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+        Hex.encode(Data(SHA256.hash(data: data)))
+    }
+}
+
+/// Lowercase hexadecimal. Decoding accepts lowercase only, so every value has one spelling.
+public enum Hex {
+    private static let digits = Array("0123456789abcdef".utf8)
+
+    public static func encode(_ data: Data) -> String {
+        var out = [UInt8]()
+        out.reserveCapacity(data.count * 2)
+        for byte in data {
+            out.append(digits[Int(byte >> 4)])
+            out.append(digits[Int(byte & 0x0f)])
+        }
+        return String(decoding: out, as: UTF8.self)
+    }
+
+    public static func decode(_ text: String) -> Data? {
+        let bytes = Array(text.utf8)
+        guard bytes.count % 2 == 0 else { return nil }
+        func value(_ c: UInt8) -> UInt8? {
+            switch c {
+            case UInt8(ascii: "0")...UInt8(ascii: "9"): return c - UInt8(ascii: "0")
+            case UInt8(ascii: "a")...UInt8(ascii: "f"): return c - UInt8(ascii: "a") + 10
+            default: return nil
+            }
+        }
+        var out = Data(capacity: bytes.count / 2)
+        var index = 0
+        while index < bytes.count {
+            guard let hi = value(bytes[index]), let lo = value(bytes[index + 1]) else { return nil }
+            out.append(hi << 4 | lo)
+            index += 2
+        }
+        return out
     }
 }

@@ -56,13 +56,21 @@ public enum MessageError: Error, Equatable, Sendable {
 /// decide whether `sender` is allowed to speak as `party` in this session.
 public struct VerifiedMessage: Hashable, Sendable {
     public let session: SessionID
+    /// Present on post-lock messages: the roster hash the sender signed under.
+    public let rosterHash: Data?
     public let action: MessageAction
     public let party: String
     public let sender: VerifyingKey
     public let content: String
 
+    /// The session component of the canonical string: the session hex, or
+    /// "<session hex>.<roster hash hex>" when the message is bound to a locked roster.
+    public var boundSession: String {
+        Envelope.boundSession(session, rosterHash: rosterHash)
+    }
+
     public var canonical: CanonicalMessage {
-        CanonicalMessage(action: action, session: session.hex, party: party, content: content)
+        CanonicalMessage(action: action, session: boundSession, party: party, content: content)
     }
 }
 
@@ -75,12 +83,33 @@ public struct Envelope: Codable, Hashable, Sendable {
     public let content: String
     public let sig: String
 
-    /// Builds and signs an envelope under `key`.
-    public static func signed(action: MessageAction, session: SessionID, party: String, content: String,
-                              key: SigningKey) -> Envelope {
-        let canonical = CanonicalMessage(action: action, session: session.hex, party: party, content: content)
-        return Envelope(v: CravageCore.protocolVersion, session: session.hex, action: action.rawValue, party: party,
+    /// Builds and signs an envelope under `key`. Post-lock messages pass the roster hash, which
+    /// is then part of the signed session component, so a message cannot be replayed into a
+    /// different roster under the same session.
+    public static func signed(action: MessageAction, session: SessionID, rosterHash: Data? = nil, party: String,
+                              content: String, key: SigningKey) -> Envelope {
+        let bound = boundSession(session, rosterHash: rosterHash)
+        let canonical = CanonicalMessage(action: action, session: bound, party: party, content: content)
+        return Envelope(v: CravageCore.protocolVersion, session: bound, action: action.rawValue, party: party,
                         sender: key.verifyingKey.base64, content: content, sig: key.sign(canonical.string).base64)
+    }
+
+    static func boundSession(_ session: SessionID, rosterHash: Data?) -> String {
+        guard let rosterHash else { return session.hex }
+        return session.hex + "." + Hex.encode(rosterHash)
+    }
+
+    /// Parses "<32 hex>" or "<32 hex>.<64 hex>", lowercase only, so each binding has one spelling.
+    static func parseBoundSession(_ text: String) -> (SessionID, Data?)? {
+        let parts = text.split(separator: ".", omittingEmptySubsequences: false)
+        guard let session = SessionID(hex: String(parts[0])) else { return nil }
+        switch parts.count {
+        case 1: return (session, nil)
+        case 2:
+            guard parts[1].utf8.count == 64, let hash = Hex.decode(String(parts[1])) else { return nil }
+            return (session, hash)
+        default: return nil
+        }
     }
 
     public func encoded() -> Data {
@@ -102,11 +131,12 @@ public struct Envelope: Codable, Hashable, Sendable {
         guard probe.v == CravageCore.protocolVersion else { throw MessageError.unsupportedVersion(probe.v) }
         guard let envelope = try? decoder.decode(Envelope.self, from: data) else { throw MessageError.malformed }
         guard let action = MessageAction(rawValue: envelope.action) else { throw MessageError.unknownAction }
-        guard let session = SessionID(hex: envelope.session),
+        guard let (session, rosterHash) = parseBoundSession(envelope.session),
               let sender = try? VerifyingKey(base64: envelope.sender),
               let signature = try? Signature(base64: envelope.sig) else { throw MessageError.malformed }
-        let canonical = CanonicalMessage(action: action, session: session.hex, party: envelope.party, content: envelope.content)
+        let canonical = CanonicalMessage(action: action, session: envelope.session, party: envelope.party, content: envelope.content)
         guard sender.verify(signature, message: canonical.string) else { throw MessageError.badSignature }
-        return VerifiedMessage(session: session, action: action, party: envelope.party, sender: sender, content: envelope.content)
+        return VerifiedMessage(session: session, rosterHash: rosterHash, action: action, party: envelope.party,
+                               sender: sender, content: envelope.content)
     }
 }

@@ -224,3 +224,43 @@ final class EnvelopeTests: XCTestCase {
         XCTAssertLessThan(accepted, 3000)
     }
 }
+
+final class RosterBindingTests: XCTestCase {
+    func testPostLockMessagesSignTheRosterHashIntoTheSession() throws {
+        let key = SigningKey()
+        let session = SessionID.random()
+        let hash = Digest.sha256(Data("roster".utf8))
+        let data = Envelope.signed(action: .share, session: session, rosterHash: hash, party: "A", content: "5", key: key).encoded()
+        let received = try Envelope.decodeAndVerify(data)
+        XCTAssertEqual(received.session, session)
+        XCTAssertEqual(received.rosterHash, hash)
+        XCTAssertEqual(received.boundSession, session.hex + "." + Hex.encode(hash))
+        XCTAssertEqual(received.canonical.string, "share|" + session.hex + "." + Hex.encode(hash) + "|A|5")
+
+        var object = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        object["session"] = session.hex + "." + Hex.encode(Digest.sha256(Data("other".utf8)))
+        XCTAssertThrowsError(try Envelope.decodeAndVerify(try JSONSerialization.data(withJSONObject: object))) {
+            XCTAssertEqual($0 as? MessageError, .badSignature)
+        }
+        object["session"] = session.hex
+        XCTAssertThrowsError(try Envelope.decodeAndVerify(try JSONSerialization.data(withJSONObject: object))) {
+            XCTAssertEqual($0 as? MessageError, .badSignature, "stripping the binding breaks the signature")
+        }
+        for bad in [session.hex + ".", session.hex + "." + Hex.encode(hash).uppercased(), session.hex + "." + Hex.encode(hash) + ".00",
+                    session.hex + "." + String(Hex.encode(hash).dropLast(2)), "." + Hex.encode(hash)] {
+            object["session"] = bad
+            XCTAssertThrowsError(try Envelope.decodeAndVerify(try JSONSerialization.data(withJSONObject: object)), bad) {
+                XCTAssertEqual($0 as? MessageError, .malformed, bad)
+            }
+        }
+    }
+
+    func testHexIsLowercaseAndStrict() {
+        XCTAssertEqual(Hex.encode(Data([0x00, 0xab, 0xff])), "00abff")
+        XCTAssertEqual(Hex.decode("00abff"), Data([0x00, 0xab, 0xff]))
+        XCTAssertNil(Hex.decode("00ABFF"))
+        XCTAssertNil(Hex.decode("abc"))
+        XCTAssertNil(Hex.decode("zz"))
+        XCTAssertEqual(Hex.decode(""), Data())
+    }
+}
