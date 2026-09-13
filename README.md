@@ -74,8 +74,8 @@ than discovered. The in-app Limitations screen carries the same list in shorter 
 - `Cravage/` - the iPhone app (SwiftUI, Network framework, StoreKit 2).
 - `Tools/` - the web app's transcript verifier, pinned to a specific commit, plus the screenshot
   script.
-- `docs/` - the plan, privacy policy, support page and the review record, published with GitHub
-  Pages.
+- `docs/` - the plan, App Store paperwork, privacy policy, support page and the review record,
+  published with GitHub Pages.
 
 ## Verifying a round yourself
 
