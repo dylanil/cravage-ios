@@ -71,3 +71,18 @@ Pair mask for letters lo < hi: P-256 ECDH shared secret, HKDF-SHA256, empty salt
 `"SMPC mask " + lo + hi`, 8 bytes read big-endian as a signed Int64. A party's share is its
 figure plus each pair mask where its letter is lower, minus each where it is higher, all with
 wrapping Int64 arithmetic. The wrapping sum of all shares is the exact sum of the figures.
+
+## Transcript v2
+
+`cravage-transcript-2` is one JSON object with sorted keys: `format`, `session` (the bound session,
+exactly as signed), `label`, `parties` (the letters in order), `scale` `"1000000"`, `modulus`
+`"18446744073709551616"`, `shares`, `share_sigs`, `vks`, `confirms` (the `result_confirm`
+signatures), `sum`, `average` and `claim` (the pinned SPEC section 4 sentence). A verifier checks:
+format, scale, modulus and claim exactly; letters A.. in order and assigned by bytewise key order;
+every share canonical and its signature valid; the wrapping sum and the two-place average; every
+agreement signature over the result digest recomputed from the listed shares.
+
+Not covered, by construction: the roster hash cannot be recomputed (the file carries neither mask
+keys nor nicknames), so the `label` field is not authenticated by anything in the file.
+Implementations: `TranscriptVerifier` (Swift) and `Tools/check_transcript_v2.py` (Python, interim
+until the version-2 mode lands in the SMPC repository's `verify_round.py`).

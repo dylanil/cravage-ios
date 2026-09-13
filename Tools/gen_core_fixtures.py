@@ -215,6 +215,70 @@ def roster_vectors():
     return out
 
 
+def golden_transcript():
+    """TranscriptGolden (PLAN.md Tests): deterministic keys, figures 10, 20, 30. Shares are pinned;
+    the Python-signed transcript must verify under Swift, and check_transcript_v2 must accept it."""
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import check_transcript_v2 as v2
+
+    session = "ab" * 16
+    label = "Golden round"
+    spec = [(0x01, 0x0B, "Ada", 10_000_000), (0x02, 0x0C, "Bo", 20_000_000), (0x03, 0x0D, "Cy", 30_000_000)]
+    entries = []
+    for scalar, mask_scalar, nick, figure in spec:
+        sk = ec.derive_private_key(int(("%02x" % scalar) * 32, 16), ec.SECP256R1())
+        mk = ec.derive_private_key(int(("%02x" % mask_scalar) * 32, 16), ec.SECP256R1())
+        entries.append({"sk": sk, "mk": mk, "vk": raw_pub(sk), "mask": raw_pub(mk), "nick": nick, "figure": figure,
+                        "scalar_hex": ("%02x" % scalar) * 32, "mask_scalar_hex": ("%02x" % mask_scalar) * 32})
+    ordered = sorted(entries, key=lambda e: e["vk"])
+    for i, e in enumerate(ordered):
+        e["letter"] = LETTERS[i]
+    h = hashlib.sha256()
+    h.update(lp(b"cravage-roster-1"))
+    h.update(lp(session.encode()))
+    h.update(bytes([len(ordered)]))
+    for e in ordered:
+        h.update(lp(e["vk"]))
+        h.update(lp(e["mask"]))
+        h.update(lp(e["nick"].encode()))
+    roster_hash = h.digest()
+    bound = session + "." + roster_hash.hex()
+    shares = {}
+    for me in ordered:
+        share = me["figure"]
+        for other in ordered:
+            if other is me:
+                continue
+            lo, hi = sorted([me["letter"], other["letter"]])
+            r = derive_mask(me["mk"], other["mask"], lo, hi)
+            share += r if me["letter"] < other["letter"] else -r
+        shares[me["letter"]] = str(to_signed(share))
+    parties = [e["letter"] for e in ordered]
+    total = to_signed(sum(int(shares[p]) for p in parties))
+    assert total == 60_000_000
+    digest = v2.result_digest(session, roster_hash, [shares[p] for p in parties])
+    transcript = {
+        "format": v2.FORMAT, "session": bound, "label": label, "parties": parties,
+        "scale": "1000000", "modulus": str(TWO64),
+        "shares": shares,
+        "share_sigs": {e["letter"]: sign_raw(e["sk"], "share|%s|%s|%s" % (bound, e["letter"], shares[e["letter"]])) for e in ordered},
+        "vks": {e["letter"]: b64(e["vk"]) for e in ordered},
+        "confirms": {e["letter"]: sign_raw(e["sk"], "result_confirm|%s|%s|%s" % (bound, e["letter"], digest)) for e in ordered},
+        "sum": str(total), "average": v2.format_average_fixed(total, len(parties)), "claim": v2.CLAIM,
+    }
+    assert v2.check_transcript_v2(transcript) == [], v2.check_transcript_v2(transcript)
+    assert transcript["average"] == "20"
+    return {
+        "session": session, "label": label,
+        "entries": [{"scalar_hex": e["scalar_hex"], "mask_scalar_hex": e["mask_scalar_hex"], "nickname": e["nick"],
+                     "figure": str(e["figure"])} for e in entries],
+        "roster_hash": roster_hash.hex(),
+        "result_digest": digest,
+        "shares": shares,
+        "transcript": transcript,
+    }
+
+
 def main():
     here = os.path.dirname(os.path.abspath(__file__))
     out_path = os.path.join(here, "..", "CravageCore", "Tests", "CravageCoreTests", "Fixtures", "core_vectors.json")
@@ -224,6 +288,7 @@ def main():
         "rounds": rounds(rng),
         "wrapping_adds": wrapping_adds(rng),
         "rosters": roster_vectors(),
+        "golden": golden_transcript(),
         **crypto_vectors(),
     }
     os.makedirs(os.path.dirname(out_path), exist_ok=True)

@@ -14,6 +14,72 @@
   }
  ],
  "generator": "Tools/gen_core_fixtures.py",
+ "golden": {
+  "entries": [
+   {
+    "figure": "10000000",
+    "mask_scalar_hex": "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
+    "nickname": "Ada",
+    "scalar_hex": "0101010101010101010101010101010101010101010101010101010101010101"
+   },
+   {
+    "figure": "20000000",
+    "mask_scalar_hex": "0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c",
+    "nickname": "Bo",
+    "scalar_hex": "0202020202020202020202020202020202020202020202020202020202020202"
+   },
+   {
+    "figure": "30000000",
+    "mask_scalar_hex": "0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d",
+    "nickname": "Cy",
+    "scalar_hex": "0303030303030303030303030303030303030303030303030303030303030303"
+   }
+  ],
+  "label": "Golden round",
+  "result_digest": "9d9563cdceff04150b3f320e97b19f1e30e105e66ae0851d03550dcea7c2d864",
+  "roster_hash": "91672ce973090c241c4c8b1a6d66b62559c1f78548c02ce9a74e9bd9c4f07e6c",
+  "session": "abababababababababababababababab",
+  "shares": {
+   "A": "8101034332236751752",
+   "B": "6964455884472005403",
+   "C": "3381253857060794461"
+  },
+  "transcript": {
+   "average": "20",
+   "claim": "This transcript shows that the listed keys signed the listed shares, that they sum and average as stated, and that every listed key signed agreement to this exact set of shares. It does not prove who the participants were, that separate devices or people were involved, or that any input was truthful.",
+   "confirms": {
+    "A": "+lOeLF2XF1TD9om9S6Dtq1oxIix7V08htsQUWAulIQGGBwXhcxX/H/7GIW79PfosuFcQKGoAh3ugJEk7naKgPQ==",
+    "B": "AL5OpmnsDDRDtZVjY2Y4yIL7khII9HiJgCSdfn/gyhY2DAWRvzRhss848uT1q9BJfbMeprjlfUfeV3GCDAPunw==",
+    "C": "Nq/IX41pR87A8QW8pc3HuxPwexMOcLYeHNo/UklwJfY96cuGDo7GkLIwrG6WmfbZhNpMfLnVq9WlOUNOQc2WuA=="
+   },
+   "format": "cravage-transcript-2",
+   "label": "Golden round",
+   "modulus": "18446744073709551616",
+   "parties": [
+    "A",
+    "B",
+    "C"
+   ],
+   "scale": "1000000",
+   "session": "abababababababababababababababab.91672ce973090c241c4c8b1a6d66b62559c1f78548c02ce9a74e9bd9c4f07e6c",
+   "share_sigs": {
+    "A": "jU7kgNc+pya4vbTlWE702t4yJTMxITZYc0KqvaBsIzi8s5N40mgznCxYpIt1JQxHnb0bgaINz/3xfBDCDsBFoQ==",
+    "B": "9JUVsqQIemDdeXu4XgyI+Jjvh/DVLOv4Y+NJBx98B3DMBaXM6v722gjjNEUO09FJ8wi9ArOkfUcW06nxB5I9tA==",
+    "C": "oZlKnsP+iAqXn7WPf86tbEkJpr6Dv1luEFQgR5VUVzV4WOY99h4ud6eIuMJmIKBn05hfGhQO5pU7C9KXIss9QQ=="
+   },
+   "shares": {
+    "A": "8101034332236751752",
+    "B": "6964455884472005403",
+    "C": "3381253857060794461"
+   },
+   "sum": "60000000",
+   "vks": {
+    "A": "BFUPRxAD89+Xw99QaseX9nIfsaH7e49vg9IkSYplyI4kE2CT1wEuUJpzcVy9CwCjzA/0tcAbP/oZarH7MnA2uOY=",
+    "B": "BFkat3HrvP1tnLkJTRBlKK3Rpp1EwsH2J/CJ7Fi5xhrfn05qvw0EXAxpOjxorXyXynK+ZN70om/s0mPdmKkngPA=",
+    "C": "BG/wO5SSQc4drdQ1GeaWDgqFtBppoFwygQOqK84VlMoWPE91OlW/AdxT9sCwx+7ni0DG/30lqW4igrmJzvccFEo="
+   }
+  }
+ },
  "masks": [
   {
    "hi": "B",
@@ -3148,31 +3214,31 @@
   {
    "message": "share|ABCDEF|A|123",
    "private_scalar_hex": "1111111111111111111111111111111111111111111111111111111111111111",
-   "signature": "Hq3AqFzkWMgkBACVd7bfsLq0xu2tjfRXrbkVUWeHmpyy8I1prEiaTBwzJd8RL2FtlQXjaUtrnLbLOmbV7whuYg==",
+   "signature": "wXlb1IsAskSZHfbZvryD993kYn9jIEeHyQjpZfYXj80DhCZwwQvLrGw/d9MroxP3ZHA98GX4FKPpp8pULjHAmA==",
    "vk": "BAIX5hfwtkQ5KCePlpmeaaI6TywVK99tbN9m5bgCgtTtGUp968uXcS0t2jyoWqh2Wlb0X8dYWZZS8ol8ZTBuV5Q="
   },
   {
    "message": "pubkey|ROOM1|B|BASE64==",
    "private_scalar_hex": "2222222222222222222222222222222222222222222222222222222222222222",
-   "signature": "RGlcv+j98PDVsvUkjTp8LRoxsRmvOZD/3WNIcU03yFExjHcU3UKeygL8BwJdodif8+haNJ60fRVtWUu9bM0SQQ==",
+   "signature": "yfaWMPawmrQ5ErPXtQlFcnwr199xuiVg0ndMbpmzCDljXEA9oXLnHcHhAQkw81ZHp2nJvTQ5VmKhwV7xgymKkA==",
    "vk": "BNZak5d8qj0bCBhS/1ennkZfFmBXcwS66tUF3TpIWJzzUBheiVNy32Ih6joTdVfkc/3bZ1XwW9UHw8Uz/OnJEoU="
   },
   {
    "message": "control|S|host|{\"a\":1}",
    "private_scalar_hex": "0000000000000000000000000000000000000000000000000000000000000003",
-   "signature": "AXA/+huCzhlfliRMTNNhMq+CxyRUSb6upvmeqhPerSV4Q0L7D+sYlEtK9Tit2Q0RuZNcNdPyapoxjmZzpXfiaw==",
+   "signature": "wDJsX5gdqPSrNNDU1CJIuVB8EnfcEoVNzCU1QbovH5XNIZnOhdal80M9EfUgNpPXHDJeuZE07ONVnJ7FfpCCag==",
    "vk": "BF7L5NGmMwpEyPfvlR1L8WXmxrch762phftBZhvG5/1shzRkDEmY/343SwbOGmSi7NgqsDY4T7g9mnmxJ6J9UDI="
   },
   {
    "message": "",
    "private_scalar_hex": "7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-   "signature": "M1ZzBs9ZRE0LhgRSHtbF0roq4IeaeYUfUzLU2tVXG7p73VQ7J+eVDoqvGQWJQiAXQyUxG/W/YjZBMJxmQCEyIw==",
+   "signature": "6PVeFcHKrezx0xz+MF/ZnjswIEhEi2b1qDtlBd4etTswocMSqr98T/H3O+ll0rd+bx+6SFAEBtNOvhJnuxz6ZQ==",
    "vk": "BMHRcmnkbjh6y+KZ7CzJzC2to/BeTPQS8q2Ua3AKomE67bd0TzcME6T0mVfVT/eYEZ0RH2kSnCTbX1+4QWKQnbs="
   },
   {
    "message": "unicode \u00a3 \u2603 test",
    "private_scalar_hex": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-   "signature": "VuiPzYRsNRbUZdyKO/6lRQ2Bu9k917Wbwqp0u3z6xySruhcEhho+oTIKnH3N5WPBmvjXCR9iG774KEn6lmPsSw==",
+   "signature": "wqE3I1gEKeGT8hnfGaACK9UVHy++xcooQ+1r9vy/Y4zcBIAqqDH5U4w5GpEUCKkQQtU7y67kYc7UsS0sHLsxjw==",
    "vk": "BNjNEupcZ/L4oAwRJIk+3PpnVMTWzt5r4TvfIpXIEKl/paidLSo2DAyppNbHye1LKNPhmdZify5pbWicMQpbD0g="
   }
  ],

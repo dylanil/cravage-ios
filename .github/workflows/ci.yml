@@ -24,15 +24,11 @@ jobs:
         run: swift test --package-path CravageCore
         env:
           CRAVAGE_TRANSCRIPT_OUT: ${{ runner.temp }}/golden.json
-      - name: Verify the Swift-produced transcript with the vendored Python verifier
+      - name: Verify the Swift-produced transcript with the Python v2 check
         run: |
-          FILE="$RUNNER_TEMP/golden.json"
-          if [ -f "$FILE" ]; then
-            python3 -m pip install --user --quiet cryptography
-            python3 Tools/verify_round.py --transcript "$FILE"
-          else
-            echo "No golden transcript yet (TranscriptGoldenTests not written) - skipping"
-          fi
+          python3 -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/pip" install --quiet cryptography
+          PATH="$RUNNER_TEMP/venv/bin:$PATH" Tools/transcript_acceptance.sh "$RUNNER_TEMP/golden.json"
       - name: Check the vendored verifier still matches upstream SMPC
         run: Tools/check_verifier_sync.sh
       - name: Public-safety lint (no owner-personal material in tracked files)
