@@ -335,8 +335,9 @@ out of release).
    wraparound and crypto, roster and fingerprint, envelope, RoundEngine, transcript v2; fresh
    read-only review done and its fixes committed. Wire bytes in docs/WIRE.md. Python v2
    acceptance runs in CI against the interim Tools/check_transcript_v2.py; the verify_round.py v2
-   mode in the SMPC repo is still approved, not yet implemented. Open for the owner: review
-   findings M2 and L5 on the SPEC 13 restart warning.)
+   mode in the SMPC repo is still approved, not yet implemented. Review findings M2 and L5 and the
+   transcript label resolved by the owner and committed in 650b845: warn on every restart, ask
+   before rejoining, room code signatures in the transcript. Warning copy still to approve.)
 4. Mockups on a design canvas: the whole journey sketched cheaply; the screens for the first
    end-to-end round polished and approved; remaining screens approved feature by feature as device
    behaviour becomes known.
