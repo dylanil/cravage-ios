@@ -1,0 +1,269 @@
+{
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "First round (polished)"
+    },
+    {
+      "id": "page-2",
+      "name": "Other states (sketches)"
+    }
+  ],
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "title": "1 Home",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "page": "page-1"
+    },
+    {
+      "file": "NewRoom.dc.html",
+      "title": "2 New room",
+      "x": 470,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "page": "page-1"
+    },
+    {
+      "file": "Join.dc.html",
+      "title": "3 Join",
+      "x": 940,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "page": "page-1"
+    },
+    {
+      "file": "LobbyHost.dc.html",
+      "title": "4 Lobby: host",
+      "x": 1410,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "page": "page-1"
+    },
+    {
+      "file": "LobbyJoiner.dc.html",
+      "title": "5 Lobby: joiner",
+      "x": 1880,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "page": "page-1"
+    },
+    {
+      "file": "ConfirmCode.dc.html",
+      "title": "6 Check the code",
+      "x": 0,
+      "y": 1000,
+      "w": 390,
+      "h": 844,
+      "page": "page-1"
+    },
+    {
+      "file": "EnterFigure.dc.html",
+      "title": "7 Enter figure",
+      "x": 470,
+      "y": 1000,
+      "w": 390,
+      "h": 844,
+      "page": "page-1"
+    },
+    {
+      "file": "Waiting.dc.html",
+      "title": "8 Waiting for shares",
+      "x": 940,
+      "y": 1000,
+      "w": 390,
+      "h": 844,
+      "page": "page-1"
+    },
+    {
+      "file": "Result.dc.html",
+      "title": "9 Result: agreed",
+      "x": 1410,
+      "y": 1000,
+      "w": 390,
+      "h": 844,
+      "page": "page-1"
+    },
+    {
+      "file": "SketchJoinEmpty.dc.html",
+      "title": "Join: nothing nearby",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "page": "page-2"
+    },
+    {
+      "file": "SketchRequesting.dc.html",
+      "title": "Join: requesting",
+      "x": 470,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "page": "page-2"
+    },
+    {
+      "file": "SketchDeclined.dc.html",
+      "title": "Join: declined",
+      "x": 940,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "page": "page-2"
+    },
+    {
+      "file": "SketchRoomFull.dc.html",
+      "title": "Join: full",
+      "x": 1410,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "page": "page-2"
+    },
+    {
+      "file": "SketchUnsupported.dc.html",
+      "title": "Join: old app",
+      "x": 1880,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "page": "page-2"
+    },
+    {
+      "file": "SketchPermission.dc.html",
+      "title": "Permission off",
+      "x": 2350,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "page": "page-2"
+    },
+    {
+      "file": "SketchConnectionLost.dc.html",
+      "title": "Connection lost",
+      "x": 0,
+      "y": 1000,
+      "w": 390,
+      "h": 844,
+      "page": "page-2"
+    },
+    {
+      "file": "SketchTimeout.dc.html",
+      "title": "Round failed: timeout",
+      "x": 470,
+      "y": 1000,
+      "w": 390,
+      "h": 844,
+      "page": "page-2"
+    },
+    {
+      "file": "SketchRestartOffer.dc.html",
+      "title": "Restart offer (joiner)",
+      "x": 940,
+      "y": 1000,
+      "w": 390,
+      "h": 844,
+      "page": "page-2"
+    },
+    {
+      "file": "SketchRestartWarning.dc.html",
+      "title": "Before entering a figure after a restart",
+      "x": 1410,
+      "y": 1000,
+      "w": 390,
+      "h": 844,
+      "page": "page-2"
+    },
+    {
+      "file": "SketchPartial.dc.html",
+      "title": "Result: partial",
+      "x": 1880,
+      "y": 1000,
+      "w": 390,
+      "h": 844,
+      "page": "page-2"
+    },
+    {
+      "file": "SketchMismatch.dc.html",
+      "title": "Result: disagreement",
+      "x": 2350,
+      "y": 1000,
+      "w": 390,
+      "h": 844,
+      "page": "page-2"
+    },
+    {
+      "file": "SketchDisputed.dc.html",
+      "title": "Result: disputed later",
+      "x": 0,
+      "y": 2000,
+      "w": 390,
+      "h": 844,
+      "page": "page-2"
+    },
+    {
+      "file": "SketchPaywall.dc.html",
+      "title": "Paywall",
+      "x": 470,
+      "y": 2000,
+      "w": 390,
+      "h": 844,
+      "page": "page-2"
+    },
+    {
+      "file": "SketchSettings.dc.html",
+      "title": "Settings",
+      "x": 940,
+      "y": 2000,
+      "w": 390,
+      "h": 844,
+      "page": "page-2"
+    },
+    {
+      "file": "SketchLimitations.dc.html",
+      "title": "Limitations",
+      "x": 1410,
+      "y": 2000,
+      "w": 390,
+      "h": 844,
+      "page": "page-2"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "brief-round",
+      "page": "page-1",
+      "x": 1880,
+      "y": 1000,
+      "w": 420,
+      "text": "First end-to-end round, for approval.\n\nFollows PLAN.md Visual: system font, standard iOS controls, orange accent, monospace only for figures and the room code.\n\nFlow: Home > New room (host) or Join > Lobby > Check the code > Enter figure > Waiting > Result.\n\nLight mode shown; dark mode follows the system.\n\nFilled-button orange is darkened from system orange so white text stays readable."
+    },
+    {
+      "id": "open-questions",
+      "page": "page-1",
+      "x": 1880,
+      "y": 1420,
+      "w": 420,
+      "text": "Worth checking:\n- The Home three-step explainer: keep or cut?\n- Room code shown with a count of other phones (SPEC 12).\n- Collusion note sits on the figure screen (PLAN).\n- The unlock price is left as a placeholder."
+    },
+    {
+      "id": "brief-states",
+      "page": "page-2",
+      "x": 0,
+      "y": -150,
+      "w": 620,
+      "text": "Every other state, sketched cheaply. Approve these feature by feature as device behaviour becomes known (PLAN step 4). Tags mark new owner decisions and copy not yet approved."
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "page-1"
+  }
+}

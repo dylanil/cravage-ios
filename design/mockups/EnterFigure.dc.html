@@ -1,0 +1,42 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+body { margin: 0; background: #F2F2F7; color: #1C1C1E; font-family: -apple-system, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+a { color: #C2410C; text-decoration: none; } a:hover { color: #9A3412; }
+.mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; }
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #F2F2F7; display: flex; flex-direction: column; overflow: hidden; position: relative;">
+
+<div style="height: 44px; margin-top: 54px; padding: 0 16px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: center;">
+  <div style="display: flex; align-items: center; gap: 2px; color: #C2410C; font-size: 17px;">Leave</div>
+  <div style="text-align: center; font-size: 17px; font-weight: 600;">Your figure</div>
+  <div style="display: flex; align-items: center; justify-content: flex-end; color: #C2410C; font-size: 17px; font-weight: 600;"></div>
+</div>
+<div style="padding: 18px 20px 0; font-size: 15px; color: #6C6C70;">Annual bonus</div>
+<div style="margin: 10px 16px 0; padding: 18px 16px; background: #FFFFFF; border-radius: 14px; border: 2px solid #D9480F; display: flex; align-items: baseline; gap: 6px;">
+  <div class="mono" style="font-size: 40px; font-weight: 600; color: #1C1C1E;">42500.50</div>
+  <div style="width: 2px; height: 40px; background: #D9480F; align-self: center;"></div>
+</div>
+<div style="padding: 8px 32px 0; font-size: 13px; line-height: 18px; color: #6C6C70;">Up to 999,999,999,999.99. Use your decimal mark; leave out thousands separators.</div>
+<div style="margin: 22px 16px 0; padding: 14px 16px; background: #FFFFFF; border-radius: 14px; display: flex; flex-direction: column; gap: 10px;">
+  <div style="font-size: 15px; line-height: 21px; text-wrap: pretty;">Your figure is processed on your phone; the app sends a masked share to the other participants.</div>
+  <div style="height: 0.5px; background: #D1D1D6;"></div>
+  <div style="font-size: 15px; line-height: 21px; color: #3A3A3C; text-wrap: pretty;">With 3 people, the other 2 could work out your figure if they shared theirs with each other.</div>
+</div>
+<div style="margin-top: auto; padding: 12px 20px 34px; display: flex; flex-direction: column; gap: 10px;"><div style="height: 52px; border-radius: 14px; background: #D9480F; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 600;">Send masked share</div><div style="font-size: 13px; line-height: 18px; color: #6C6C70; text-align: center; text-wrap: pretty;">Once sent, your figure can't be changed for this round.</div></div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {}
+</script>
+</body>
+</html>
