@@ -157,6 +157,64 @@ def crypto_vectors():
     return {"signatures": signatures, "masks": masks, "digests": digests}
 
 
+CROCKFORD = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
+
+
+def lp(b):
+    """Length-prefixed field: 4-byte big-endian length, then the bytes."""
+    return len(b).to_bytes(4, "big") + b
+
+
+def crockford(five):
+    n = int.from_bytes(five, "big")
+    s = "".join(CROCKFORD[(n >> (35 - 5 * i)) & 31] for i in range(8))
+    return s[:4] + "-" + s[4:]
+
+
+def roster_vectors():
+    """Second implementation of Roster.rosterHash / RoomFingerprint (docs/SPEC.md section 3,
+    PLAN.md RoomFingerprint) so the Swift encoding is pinned by a file, not only by itself."""
+    out = []
+    cases = [
+        ("ab" * 16, "Salary", [(1, 11, "one"), (2, 12, "two"), (3, 13, "three")]),
+        ("00" * 16, "Average bonus (£) ☃", [(9, 90, "z"), (5, 50, "y"), (7, 70, "x"), (3, 30, "w")]),
+        ("ff" * 16, "x", [(i, 100 + i, "p%d" % i) for i in range(1, 9)]),
+    ]
+    for session, label, spec in cases:
+        entries = []
+        for scalar, mask_scalar, nickname in spec:
+            sk = ec.derive_private_key(int(("%02x" % scalar) * 32, 16), ec.SECP256R1())
+            mk = ec.derive_private_key(int(("%02x" % mask_scalar) * 32, 16), ec.SECP256R1())
+            entries.append({"scalar_hex": ("%02x" % scalar) * 32, "mask_scalar_hex": ("%02x" % mask_scalar) * 32,
+                            "nickname": nickname, "vk": raw_pub(sk), "mask": raw_pub(mk)})
+        ordered = sorted(entries, key=lambda e: e["vk"])
+        letters = {id(e): LETTERS[i] for i, e in enumerate(ordered)}
+        h = hashlib.sha256()
+        h.update(lp(b"cravage-roster-1"))
+        h.update(lp(session.encode()))
+        h.update(bytes([len(entries)]))
+        for e in ordered:
+            h.update(lp(e["vk"]))
+            h.update(lp(e["mask"]))
+            h.update(lp(e["nickname"].encode()))
+        roster_hash = h.digest()
+        f = hashlib.sha256()
+        f.update(lp(b"cravage-fingerprint-1"))
+        f.update(lp(session.encode()))
+        f.update(lp(label.encode()))
+        f.update(bytes([len(entries)]))
+        f.update(lp(roster_hash))
+        out.append({
+            "session": session,
+            "label": label,
+            "entries": [{"scalar_hex": e["scalar_hex"], "mask_scalar_hex": e["mask_scalar_hex"], "nickname": e["nickname"]} for e in entries],
+            "letters": [letters[id(e)] for e in entries],
+            "roster_hash": roster_hash.hex(),
+            "fingerprint": crockford(f.digest()[:5]),
+        })
+    return out
+
+
 def main():
     here = os.path.dirname(os.path.abspath(__file__))
     out_path = os.path.join(here, "..", "CravageCore", "Tests", "CravageCoreTests", "Fixtures", "core_vectors.json")
@@ -165,6 +223,7 @@ def main():
         "generator": "Tools/gen_core_fixtures.py",
         "rounds": rounds(rng),
         "wrapping_adds": wrapping_adds(rng),
+        "rosters": roster_vectors(),
         **crypto_vectors(),
     }
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
@@ -173,7 +232,7 @@ def main():
         f.write("\n")
     print(f"wrote {os.path.normpath(out_path)}: {len(fixture['rounds'])} rounds, "
           f"{len(fixture['wrapping_adds'])} wrapping adds, {len(fixture['signatures'])} signatures, "
-          f"{len(fixture['masks'])} masks")
+          f"{len(fixture['masks'])} masks, {len(fixture['rosters'])} rosters")
     return 0
 
 

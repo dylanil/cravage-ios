@@ -44,6 +44,128 @@
    "mask": "6952300041400834067"
   }
  ],
+ "rosters": [
+  {
+   "entries": [
+    {
+     "mask_scalar_hex": "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
+     "nickname": "one",
+     "scalar_hex": "0101010101010101010101010101010101010101010101010101010101010101"
+    },
+    {
+     "mask_scalar_hex": "0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c",
+     "nickname": "two",
+     "scalar_hex": "0202020202020202020202020202020202020202020202020202020202020202"
+    },
+    {
+     "mask_scalar_hex": "0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d",
+     "nickname": "three",
+     "scalar_hex": "0303030303030303030303030303030303030303030303030303030303030303"
+    }
+   ],
+   "fingerprint": "JZDC-44A8",
+   "label": "Salary",
+   "letters": [
+    "C",
+    "A",
+    "B"
+   ],
+   "roster_hash": "a0785516ee643ac5da5dd4481d99bf573fc83a6c80128e283c25e29ac299274c",
+   "session": "abababababababababababababababab"
+  },
+  {
+   "entries": [
+    {
+     "mask_scalar_hex": "5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a",
+     "nickname": "z",
+     "scalar_hex": "0909090909090909090909090909090909090909090909090909090909090909"
+    },
+    {
+     "mask_scalar_hex": "3232323232323232323232323232323232323232323232323232323232323232",
+     "nickname": "y",
+     "scalar_hex": "0505050505050505050505050505050505050505050505050505050505050505"
+    },
+    {
+     "mask_scalar_hex": "4646464646464646464646464646464646464646464646464646464646464646",
+     "nickname": "x",
+     "scalar_hex": "0707070707070707070707070707070707070707070707070707070707070707"
+    },
+    {
+     "mask_scalar_hex": "1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e",
+     "nickname": "w",
+     "scalar_hex": "0303030303030303030303030303030303030303030303030303030303030303"
+    }
+   ],
+   "fingerprint": "WYQ3-R0W0",
+   "label": "Average bonus (\u00a3) \u2603",
+   "letters": [
+    "D",
+    "A",
+    "B",
+    "C"
+   ],
+   "roster_hash": "f842552a3e58075b7cbe6c2388e21587ae5feec2acf1208b6d79817fc384e923",
+   "session": "00000000000000000000000000000000"
+  },
+  {
+   "entries": [
+    {
+     "mask_scalar_hex": "6565656565656565656565656565656565656565656565656565656565656565",
+     "nickname": "p1",
+     "scalar_hex": "0101010101010101010101010101010101010101010101010101010101010101"
+    },
+    {
+     "mask_scalar_hex": "6666666666666666666666666666666666666666666666666666666666666666",
+     "nickname": "p2",
+     "scalar_hex": "0202020202020202020202020202020202020202020202020202020202020202"
+    },
+    {
+     "mask_scalar_hex": "6767676767676767676767676767676767676767676767676767676767676767",
+     "nickname": "p3",
+     "scalar_hex": "0303030303030303030303030303030303030303030303030303030303030303"
+    },
+    {
+     "mask_scalar_hex": "6868686868686868686868686868686868686868686868686868686868686868",
+     "nickname": "p4",
+     "scalar_hex": "0404040404040404040404040404040404040404040404040404040404040404"
+    },
+    {
+     "mask_scalar_hex": "6969696969696969696969696969696969696969696969696969696969696969",
+     "nickname": "p5",
+     "scalar_hex": "0505050505050505050505050505050505050505050505050505050505050505"
+    },
+    {
+     "mask_scalar_hex": "6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a",
+     "nickname": "p6",
+     "scalar_hex": "0606060606060606060606060606060606060606060606060606060606060606"
+    },
+    {
+     "mask_scalar_hex": "6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b",
+     "nickname": "p7",
+     "scalar_hex": "0707070707070707070707070707070707070707070707070707070707070707"
+    },
+    {
+     "mask_scalar_hex": "6c6c6c6c6c6c6c6c6c6c6c6c6c6c6c6c6c6c6c6c6c6c6c6c6c6c6c6c6c6c6c6c",
+     "nickname": "p8",
+     "scalar_hex": "0808080808080808080808080808080808080808080808080808080808080808"
+    }
+   ],
+   "fingerprint": "3QJC-BW2X",
+   "label": "x",
+   "letters": [
+    "F",
+    "D",
+    "E",
+    "G",
+    "A",
+    "H",
+    "B",
+    "C"
+   ],
+   "roster_hash": "ad19252aa0a86027461a133e50579e0b961a8e1645b3382eafde52370adf24ea",
+   "session": "ffffffffffffffffffffffffffffffff"
+  }
+ ],
  "rounds": [
   {
    "figures": {
@@ -3026,31 +3148,31 @@
   {
    "message": "share|ABCDEF|A|123",
    "private_scalar_hex": "1111111111111111111111111111111111111111111111111111111111111111",
-   "signature": "9NEPxtTToNP7ur6DRB4RFFouYo+weqnGEd0jYiFm3gqMn497BPsM4bq0c9Ud5XVvdfEGjnzoGCUQqSo4UKbjww==",
+   "signature": "Hq3AqFzkWMgkBACVd7bfsLq0xu2tjfRXrbkVUWeHmpyy8I1prEiaTBwzJd8RL2FtlQXjaUtrnLbLOmbV7whuYg==",
    "vk": "BAIX5hfwtkQ5KCePlpmeaaI6TywVK99tbN9m5bgCgtTtGUp968uXcS0t2jyoWqh2Wlb0X8dYWZZS8ol8ZTBuV5Q="
   },
   {
    "message": "pubkey|ROOM1|B|BASE64==",
    "private_scalar_hex": "2222222222222222222222222222222222222222222222222222222222222222",
-   "signature": "uxMgNMfSgyq0O1ic4TTJenUWZmHCOsTfO1vhMmQh/rARx+ToeRA7Vx/+tjqF/CZvk86EygV5IDdOqCj+bGnvZQ==",
+   "signature": "RGlcv+j98PDVsvUkjTp8LRoxsRmvOZD/3WNIcU03yFExjHcU3UKeygL8BwJdodif8+haNJ60fRVtWUu9bM0SQQ==",
    "vk": "BNZak5d8qj0bCBhS/1ennkZfFmBXcwS66tUF3TpIWJzzUBheiVNy32Ih6joTdVfkc/3bZ1XwW9UHw8Uz/OnJEoU="
   },
   {
    "message": "control|S|host|{\"a\":1}",
    "private_scalar_hex": "0000000000000000000000000000000000000000000000000000000000000003",
-   "signature": "azKCkykNtaIEF4kAp6IsN9i3Q5Gg8Z8f7USfgAPSUl1yw8hHrKEVA/YiXHJuGM6bLI/wb6pYKY7mv4ACfYKKPw==",
+   "signature": "AXA/+huCzhlfliRMTNNhMq+CxyRUSb6upvmeqhPerSV4Q0L7D+sYlEtK9Tit2Q0RuZNcNdPyapoxjmZzpXfiaw==",
    "vk": "BF7L5NGmMwpEyPfvlR1L8WXmxrch762phftBZhvG5/1shzRkDEmY/343SwbOGmSi7NgqsDY4T7g9mnmxJ6J9UDI="
   },
   {
    "message": "",
    "private_scalar_hex": "7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-   "signature": "4f4vPsz2Ou3ZYii45zhLu4/rQQAq1TLd5Pq9OE/ogpXGWg/qxCPXu4Npb7m5te9a4vFGSp4p5xZfdyBzvJdsRw==",
+   "signature": "M1ZzBs9ZRE0LhgRSHtbF0roq4IeaeYUfUzLU2tVXG7p73VQ7J+eVDoqvGQWJQiAXQyUxG/W/YjZBMJxmQCEyIw==",
    "vk": "BMHRcmnkbjh6y+KZ7CzJzC2to/BeTPQS8q2Ua3AKomE67bd0TzcME6T0mVfVT/eYEZ0RH2kSnCTbX1+4QWKQnbs="
   },
   {
    "message": "unicode \u00a3 \u2603 test",
    "private_scalar_hex": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-   "signature": "uZlXnhqF+2i3BA1To0AYM/tfGh4VH74rrd28fFJ8lTIEtHBcp5sL/FrVDC/Pc8c+hMq9yOKaXgIkYf7N432SlA==",
+   "signature": "VuiPzYRsNRbUZdyKO/6lRQ2Bu9k917Wbwqp0u3z6xySruhcEhho+oTIKnH3N5WPBmvjXCR9iG774KEn6lmPsSw==",
    "vk": "BNjNEupcZ/L4oAwRJIk+3PpnVMTWzt5r4TvfIpXIEKl/paidLSo2DAyppNbHye1LKNPhmdZify5pbWicMQpbD0g="
   }
  ],
