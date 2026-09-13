@@ -17,4 +17,5 @@ Two pages:
 Visual rules come from `docs/PLAN.md` (system font, standard iOS controls, orange accent,
 monospace only for figures and the room code). Copy follows CLAUDE.md's honesty rules and the
 SPEC 7 copy rule. Strings marked "Copy not yet approved" or "Draft copy" need the owner's sign-off;
-the unlock price is a placeholder. Status: approved, not yet implemented - awaiting owner review.
+the unlock price is a placeholder. Status: drafted and awaiting owner review; not approved and not
+implemented.
