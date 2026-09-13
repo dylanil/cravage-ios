@@ -35,6 +35,8 @@ jobs:
           fi
       - name: Check the vendored verifier still matches upstream SMPC
         run: Tools/check_verifier_sync.sh
+      - name: Public-safety lint (no owner-personal material in tracked files)
+        run: Tools/check_public_safe.sh
 
   app:
     name: iOS app build + tests (simulator)
