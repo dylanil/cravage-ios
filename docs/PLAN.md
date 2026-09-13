@@ -331,6 +331,12 @@ out of release).
    phones deferred to step 10.)
 3. CravageCore with tests, all pins and negative tests green, Python v2 acceptance green in CI
    (verify_round.py v2 extension lands in the SMPC repo in the same step).
+   (CravageCore committed and CI green 2026-09-13, f9166a1 through ffe8155: FixedPoint,
+   wraparound and crypto, roster and fingerprint, envelope, RoundEngine, transcript v2; fresh
+   read-only review done and its fixes committed. Wire bytes in docs/WIRE.md. Python v2
+   acceptance runs in CI against the interim Tools/check_transcript_v2.py; the verify_round.py v2
+   mode in the SMPC repo is still approved, not yet implemented. Open for the owner: review
+   findings M2 and L5 on the SPEC 13 restart warning.)
 4. Mockups on a design canvas: the whole journey sketched cheaply; the screens for the first
    end-to-end round polished and approved; remaining screens approved feature by feature as device
    behaviour becomes known.
