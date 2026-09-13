@@ -36,6 +36,8 @@ public enum FailureReason: Equatable, Sendable {
     case rosterMismatch(PartyLabel?)
     case invalidRoster
     case declined
+    /// The host restarted while this round was still running; a restart offer is waiting.
+    case hostRestarted
 }
 
 public enum Outcome: Equatable, Sendable {
@@ -118,6 +120,8 @@ public enum Event: Sendable {
     case confirmRoomCode(generation: Int)
     case submitFigure(Int64, generation: Int)
     case restart(generation: Int)
+    /// Joiner: the person agreed to rejoin the host's restart (owner decision 2026-09-13: ask first).
+    case acceptRestart(generation: Int)
     case leave
     case tick
 }
@@ -157,9 +161,20 @@ public struct RoundRecord: Equatable, Sendable {
     public let shares: [PartyLabel: String]
     public let shareSignatures: [PartyLabel: Signature]
     public let resultConfirmSignatures: [PartyLabel: Signature]
+    /// roomcode_confirm signatures: over roster hash, label and keys, so they authenticate the label.
+    public let roomcodeConfirmSignatures: [PartyLabel: Signature]
     public let sum: Int64
 
     public var boundSession: String { Envelope.boundSession(session, rosterHash: rosterHash) }
+}
+
+/// A host's restart waiting for this person's decision. Only what the UI needs to ask.
+public struct RestartOffer: Equatable, Sendable {
+    public let label: String
+    public let size: Int
+    fileprivate let session: SessionID
+    fileprivate let nonce: String
+    fileprivate let host: VerifyingKey
 }
 
 public final class RoundEngine {
@@ -182,8 +197,14 @@ public final class RoundEngine {
     public private(set) var nextDeadline: UInt64?
     public private(set) var sum: Int64?
     public private(set) var record: RoundRecord?
-    /// SPEC invariant 13: this round replaced one with fewer or different people.
-    public private(set) var restartDroppedParticipants = false
+    /// SPEC invariant 13 (owner decision 2026-09-13): true for every round that replaced an earlier
+    /// one, whoever is in it. A dishonest host can fake the same size and nicknames, so the warning
+    /// cannot depend on the roster looking unchanged.
+    public var restartWarningRequired: Bool { previousRound != nil && role != nil }
+    /// Stronger copy: the new roster visibly has fewer people or different names than the last.
+    public private(set) var restartRosterChanged = false
+    /// Joiner: a restart the person has not yet accepted or declined.
+    public private(set) var restartOffer: RestartOffer?
     public private(set) var localConfirmed = false
     public private(set) var lastIncompatibleVersion: Int?
 
@@ -242,7 +263,7 @@ public final class RoundEngine {
     private var restartPending = false
     private var previousRound: (size: Int, nicknames: [String])?
 
-    private var roomcodeConfirms: [PartyLabel: String] = [:]
+    private var roomcodeConfirms: [PartyLabel: (content: String, signature: Signature)] = [:]
     private var shares: [PartyLabel: (content: String, signature: Signature)] = [:]
     private var resultConfirms: [PartyLabel: (content: String, signature: Signature)] = [:]
     private var sentShareGeneration: Int?
@@ -293,6 +314,9 @@ public final class RoundEngine {
             guard role == .host else { effects.append(.rejected(.wrongPhase)); break }
             guard checkGeneration(generation, into: &effects) else { break }
             restart(now: now, into: &effects)
+        case let .acceptRestart(generation):
+            guard checkGeneration(generation, into: &effects) else { break }
+            acceptRestart(now: now, into: &effects)
         case .leave:
             leave(into: &effects)
         case .tick:
@@ -368,7 +392,8 @@ public final class RoundEngine {
         rosterPeers = [:]
         messageCounts = [:]
         ownHelloSignature = nil
-        restartDroppedParticipants = false
+        restartRosterChanged = false
+        restartOffer = nil
         phase = .lobby
         nextDeadline = after(now, deadlines.lobbyMs)
     }
@@ -512,7 +537,7 @@ public final class RoundEngine {
         roster = locked
         myLetter = locked.label(for: signingKey!.verifyingKey)
         if let previousRound {
-            restartDroppedParticipants = locked.size < previousRound.size
+            restartRosterChanged = locked.size < previousRound.size
                 || locked.parties.map(\.nickname).sorted() != previousRound.nicknames
         }
         phase = .confirming
@@ -650,13 +675,10 @@ public final class RoundEngine {
             guard phase != .lobby || roster != nil, newSession != session else {
                 effects.append(.rejected(.wrongPhase)); return
             }
-            if let roster { previousRound = (roster.size, roster.parties.map(\.nickname).sorted()) }
-            hostKey = newHost
-            label = newLabel
-            maxSize = size
-            beginSession(newSession, nonce: newNonce, now: now)
+            if !phase.isTerminal { fail(.hostRestarted, now: now, into: &effects) }
+            // Nothing is sent until the person agrees; the offer lapses with the host's restart lobby.
+            restartOffer = RestartOffer(label: newLabel, size: size, session: newSession, nonce: newNonce, host: newHost)
             nextDeadline = after(now, deadlines.confirmingMs)
-            sendHello(into: &effects)
         }
     }
 
@@ -697,13 +719,13 @@ public final class RoundEngine {
         switch message.action {
         case .roomcodeConfirm:
             if let existing = roomcodeConfirms[letter] {
-                if existing == message.content { return false }
+                if existing.content == message.content { return false }
                 fail(.conflictingMessage(letter), now: now, into: &effects); return false
             }
             guard message.content == Wire.roomcodeDigest(roster!) else {
                 fail(.rosterMismatch(letter), now: now, into: &effects); return false
             }
-            roomcodeConfirms[letter] = message.content
+            roomcodeConfirms[letter] = (message.content, signature)
             passBarrierIfReady(now: now, into: &effects)
             return true
         case .share:
@@ -740,8 +762,10 @@ public final class RoundEngine {
         if localConfirmed { return }
         localConfirmed = true
         let content = Wire.roomcodeDigest(roster)
-        roomcodeConfirms[myLetter] = content
-        emit(action: .roomcodeConfirm, content: content, into: &effects)
+        let envelope = Envelope.signed(action: .roomcodeConfirm, session: session!, rosterHash: roster.rosterHash,
+                                       party: myLetter.letter, content: content, key: signingKey!)
+        roomcodeConfirms[myLetter] = (content, try! Signature(base64: envelope.sig))
+        send(envelope.encoded(), into: &effects)
         passBarrierIfReady(now: now, into: &effects)
     }
 
@@ -759,9 +783,8 @@ public final class RoundEngine {
         sendShareIfReady(now: now, into: &effects)
     }
 
-    private func emit(action: MessageAction, content: String, into effects: inout [Effect]) {
-        let data = Envelope.signed(action: action, session: session!, rosterHash: roster!.rosterHash,
-                                   party: myLetter!.letter, content: content, key: signingKey!).encoded()
+    /// Own round message: a joiner sends it to the host; the host sends it to every roster peer.
+    private func send(_ data: Data, into effects: inout [Effect]) {
         if role == .host {
             for peer in rosterPeers.sorted(by: { $0.key < $1.key }).map(\.value) {
                 effects.append(.send(data, to: peer))
@@ -847,7 +870,8 @@ public final class RoundEngine {
         else { outcome = .agreed }
         record = RoundRecord(session: session!, rosterHash: roster.rosterHash, label: roster.label, parties: roster.parties,
                              shares: shares.mapValues(\.content), shareSignatures: shares.mapValues(\.signature),
-                             resultConfirmSignatures: resultConfirms.mapValues(\.signature), sum: sum!)
+                             resultConfirmSignatures: resultConfirms.mapValues(\.signature),
+                             roomcodeConfirmSignatures: roomcodeConfirms.mapValues(\.signature), sum: sum!)
         phase = .complete(outcome)
         endRound()
     }
@@ -874,7 +898,7 @@ public final class RoundEngine {
         case .peerLeft: abortReason = .peerLeft
         case .conflictingMessage: abortReason = .conflict
         case .rosterMismatch, .invalidRoster: abortReason = .rosterMismatch
-        case .connectionLost, .aborted, .declined: abortReason = .hostLeft
+        case .connectionLost, .aborted, .declined, .hostRestarted: abortReason = .hostLeft
         }
         let targets = wasLocked ? rosterPeers.sorted(by: { $0.key < $1.key }).map(\.value)
                                 : (pending + admitted).map(\.peer)
@@ -891,7 +915,9 @@ public final class RoundEngine {
         case .keyExchange: fail(.timeout(.keyExchange), now: now, into: &effects)
         case .sharing: fail(.timeout(.sharing), now: now, into: &effects)
         case .collectingConfirmations: resolve()
-        case .idle, .complete, .failed: nextDeadline = nil
+        case .idle, .complete, .failed:
+            nextDeadline = nil
+            restartOffer = nil
         }
     }
 
@@ -939,7 +965,7 @@ public final class RoundEngine {
         carriedPeers = Set(remaining)
         restartPending = true
         nextDeadline = after(now, deadlines.confirmingMs)
-        for peer in remaining { connectionDeadlines[peer] = after(now, deadlines.helloMs) }
+        for peer in remaining { connectionDeadlines[peer] = after(now, deadlines.confirmingMs) }
         ownHelloSignature = signHello(Wire.Hello(mask: maskKey!.publicKey, nonce: nonce!, nickname: nickname))
         let message = Wire.Control.restart(session: newSession, nonce: nonce!, label: label!, size: size,
                                            host: signingKey!.verifyingKey)
@@ -948,6 +974,18 @@ public final class RoundEngine {
         for peer in remaining.sorted(by: { $0.raw < $1.raw }) {
             effects.append(.send(data, to: peer))
         }
+    }
+
+    private func acceptRestart(now: UInt64, into effects: inout [Effect]) {
+        guard role == .joiner, let offer = restartOffer else { effects.append(.rejected(.wrongPhase)); return }
+        if let roster { previousRound = (roster.size, roster.parties.map(\.nickname).sorted()) }
+        else if previousRound == nil { previousRound = (0, []) }
+        hostKey = offer.host
+        label = offer.label
+        maxSize = offer.size
+        beginSession(offer.session, nonce: offer.nonce, now: now)
+        nextDeadline = after(now, deadlines.confirmingMs)
+        sendHello(into: &effects)
     }
 
     private func leave(into effects: inout [Effect]) {
@@ -975,7 +1013,8 @@ public final class RoundEngine {
         nextDeadline = nil
         sum = nil
         record = nil
-        restartDroppedParticipants = false
+        restartRosterChanged = false
+        restartOffer = nil
         localConfirmed = false
         connected = []
         pending = []

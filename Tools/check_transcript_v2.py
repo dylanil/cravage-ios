@@ -45,6 +45,17 @@ def result_digest(session_hex, roster_hash, shares_in_letter_order):
     return h.hexdigest()
 
 
+def roomcode_digest(roster_hash, label, points_in_letter_order):
+    h = hashlib.sha256()
+    h.update(lp(b"cravage-roomcode-confirm-1"))
+    h.update(lp(roster_hash))
+    h.update(lp(label.encode()))
+    h.update(bytes([len(points_in_letter_order)]))
+    for point in points_in_letter_order:
+        h.update(lp(point))
+    return h.hexdigest()
+
+
 def format_average_fixed(sum_fixed, n, max_dp=2):
     """Mirror smpc-core.js formatAverageFixed: half away from zero, trailing zeros stripped, no -0."""
     neg = sum_fixed < 0
@@ -113,7 +124,9 @@ def check_transcript_v2(t):
     parties = t.get("parties")
     if not isinstance(parties, list) or not 3 <= len(parties) <= 8 or parties != list(LETTERS[:len(parties)]):
         return failures + ["parties must be the letters A.. in order, three to eight of them"]
-    for name in ("shares", "share_sigs", "vks", "confirms"):
+    if not isinstance(t.get("label"), str):
+        failures.append("label is missing")
+    for name in ("shares", "share_sigs", "vks", "confirms", "roomcode_confirms"):
         m = t.get(name)
         if not isinstance(m, dict) or set(m.keys()) != set(parties) or not all(isinstance(v, str) for v in m.values()):
             failures.append(name + " does not have exactly one entry per party")
@@ -140,6 +153,11 @@ def check_transcript_v2(t):
         failures.append("shares sum (mod 2^64) differs from the stated sum")
     if t.get("average") != format_average_fixed(total, len(parties)):
         failures.append("stated average does not follow from the sum")
+
+    roomcode = roomcode_digest(roster_hash, t["label"], points)
+    for p in parties:
+        if not verify(t["vks"][p], t["roomcode_confirms"][p], "roomcode_confirm|%s|%s|%s" % (session, p, roomcode)):
+            failures.append(p + ": room code signature does not cover this label and roster")
 
     digest = result_digest(session_hex, roster_hash, [t["shares"][p] for p in parties])
     for p in parties:
@@ -171,8 +189,9 @@ def main(argv):
         for line in failures:
             print("FAIL:", _clean(line))
         return 1
-    print("PASS: %d share signatures and %d agreement signatures verify; sum and average recomputed (average = %s)"
-          % (len(t["parties"]), len(t["parties"]), _clean(t["average"], 40)))
+    n = len(t["parties"])
+    print("PASS: %d share, %d agreement and %d room code signatures verify; sum and average recomputed (average = %s)"
+          % (n, n, n, _clean(t["average"], 40)))
     print("Scope: " + CLAIM)
     return 0
 

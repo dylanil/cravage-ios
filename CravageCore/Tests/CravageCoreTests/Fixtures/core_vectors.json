@@ -37,6 +37,7 @@
   ],
   "label": "Golden round",
   "result_digest": "9d9563cdceff04150b3f320e97b19f1e30e105e66ae0851d03550dcea7c2d864",
+  "roomcode_digest": "6f80383b55daaccb3ff93eda1f8b183bfed24e09a4725a7d66b41fb5aabcf158",
   "roster_hash": "91672ce973090c241c4c8b1a6d66b62559c1f78548c02ce9a74e9bd9c4f07e6c",
   "session": "abababababababababababababababab",
   "shares": {
@@ -48,9 +49,9 @@
    "average": "20",
    "claim": "This transcript shows that the listed keys signed the listed shares, that they sum and average as stated, and that every listed key signed agreement to this exact set of shares. It does not prove who the participants were, that separate devices or people were involved, or that any input was truthful.",
    "confirms": {
-    "A": "+lOeLF2XF1TD9om9S6Dtq1oxIix7V08htsQUWAulIQGGBwXhcxX/H/7GIW79PfosuFcQKGoAh3ugJEk7naKgPQ==",
-    "B": "AL5OpmnsDDRDtZVjY2Y4yIL7khII9HiJgCSdfn/gyhY2DAWRvzRhss848uT1q9BJfbMeprjlfUfeV3GCDAPunw==",
-    "C": "Nq/IX41pR87A8QW8pc3HuxPwexMOcLYeHNo/UklwJfY96cuGDo7GkLIwrG6WmfbZhNpMfLnVq9WlOUNOQc2WuA=="
+    "A": "TVrqHb188ad0OxZLsqsqwoBclGAbgss0oVsMurWhJLQfC94TSL1JdTRM8fLhOeC3wcK+2W5ymJfzQiltJFB6Fg==",
+    "B": "1rBIOhkZOTpxeVkEmpjt11TaEfyVO2JD4tDo7EtX9RH4MYyQ5xU73w92mv1UEwQtgMj4IL4/igoX6sZXb6KIZg==",
+    "C": "bivL+AWlvFpwKdzq0re2hAAbo82xf8wxplWaaHqbS4Oz2peS/YgwyzG/dgDLgSXzmgWA6nGiES5w7kl3wAnM5Q=="
    },
    "format": "cravage-transcript-2",
    "label": "Golden round",
@@ -60,12 +61,17 @@
     "B",
     "C"
    ],
+   "roomcode_confirms": {
+    "A": "jrbnHoKv4m25bggrTHHX1svS3oCAq+lNxi3bKQ75vtA3rNlj8V3P58wyrieFe+kG7yKVxyudWt0Hi19YdJz9WQ==",
+    "B": "h5o5NuyyxuEdFJX6FUB/NqfCw0pxR4jlSqOYcidVkhcSeH4FqRHbQuzLlnOTRs31njDiUj5IGEW4Ztfo6rTRUg==",
+    "C": "+BXhzDKhnRDnUSI4NnaBTbOBz1CzsrDgj5AhuCgA97sDwUb7Ds4G+JFOHkmjfwwdifDBuKBChn2W0fIrO/dz4w=="
+   },
    "scale": "1000000",
    "session": "abababababababababababababababab.91672ce973090c241c4c8b1a6d66b62559c1f78548c02ce9a74e9bd9c4f07e6c",
    "share_sigs": {
-    "A": "jU7kgNc+pya4vbTlWE702t4yJTMxITZYc0KqvaBsIzi8s5N40mgznCxYpIt1JQxHnb0bgaINz/3xfBDCDsBFoQ==",
-    "B": "9JUVsqQIemDdeXu4XgyI+Jjvh/DVLOv4Y+NJBx98B3DMBaXM6v722gjjNEUO09FJ8wi9ArOkfUcW06nxB5I9tA==",
-    "C": "oZlKnsP+iAqXn7WPf86tbEkJpr6Dv1luEFQgR5VUVzV4WOY99h4ud6eIuMJmIKBn05hfGhQO5pU7C9KXIss9QQ=="
+    "A": "IVFm3xxtmracaG2xkmMY8bmscAidD9D//ZFcRFbYBtyC3Ls+oS/gZnd/ZOEYUnZhHgYYyUgGapVIUERkUz8nNA==",
+    "B": "6MOm185Z1pUEQID8AYAB+UkoU4nEQWoXFwiDsa0UguZgsCxhuWnbEIKdWfL4MdElmsTXx9nQppwpy8JhHqvLug==",
+    "C": "ISBYHxgFl/m77OvSZJ/nz5qP5wGkYcpczIEg8q+RauGMuO0PfBrjSLyo1b+DMQxxWkZ3lz3cSTHAtnOFxlCxOQ=="
    },
    "shares": {
     "A": "8101034332236751752",
@@ -3214,31 +3220,31 @@
   {
    "message": "share|ABCDEF|A|123",
    "private_scalar_hex": "1111111111111111111111111111111111111111111111111111111111111111",
-   "signature": "wXlb1IsAskSZHfbZvryD993kYn9jIEeHyQjpZfYXj80DhCZwwQvLrGw/d9MroxP3ZHA98GX4FKPpp8pULjHAmA==",
+   "signature": "DlqC5pb584uEFU+mrj8YeSBwKUhwRmA00TP+zMLbA/rYpM2JCtb19O83dJMbcwFqdpzUGCLErcyisM4D5kYVGQ==",
    "vk": "BAIX5hfwtkQ5KCePlpmeaaI6TywVK99tbN9m5bgCgtTtGUp968uXcS0t2jyoWqh2Wlb0X8dYWZZS8ol8ZTBuV5Q="
   },
   {
    "message": "pubkey|ROOM1|B|BASE64==",
    "private_scalar_hex": "2222222222222222222222222222222222222222222222222222222222222222",
-   "signature": "yfaWMPawmrQ5ErPXtQlFcnwr199xuiVg0ndMbpmzCDljXEA9oXLnHcHhAQkw81ZHp2nJvTQ5VmKhwV7xgymKkA==",
+   "signature": "eXZZdyRVYCqIGt46b+Rd/EazFHFZqGnVS3vVoM3OE+z1wWBIU12G0myl5QnXyRZRbU9MO76rwQsDT4H2O5AZKA==",
    "vk": "BNZak5d8qj0bCBhS/1ennkZfFmBXcwS66tUF3TpIWJzzUBheiVNy32Ih6joTdVfkc/3bZ1XwW9UHw8Uz/OnJEoU="
   },
   {
    "message": "control|S|host|{\"a\":1}",
    "private_scalar_hex": "0000000000000000000000000000000000000000000000000000000000000003",
-   "signature": "wDJsX5gdqPSrNNDU1CJIuVB8EnfcEoVNzCU1QbovH5XNIZnOhdal80M9EfUgNpPXHDJeuZE07ONVnJ7FfpCCag==",
+   "signature": "wnvuDyhkY/oJzH35idhpqyQUbR4WWoa+IUipFh4LE0uru5qkrYiIrGJOjFVzje2knLAYxH6h1DgEAd1Xfyi1XQ==",
    "vk": "BF7L5NGmMwpEyPfvlR1L8WXmxrch762phftBZhvG5/1shzRkDEmY/343SwbOGmSi7NgqsDY4T7g9mnmxJ6J9UDI="
   },
   {
    "message": "",
    "private_scalar_hex": "7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-   "signature": "6PVeFcHKrezx0xz+MF/ZnjswIEhEi2b1qDtlBd4etTswocMSqr98T/H3O+ll0rd+bx+6SFAEBtNOvhJnuxz6ZQ==",
+   "signature": "Wc5wMPcv8qY3q6n/oZsE8i0C6NSh6WjbEU/kzWAlun2bzcMhVcxtQ7FN5alKFeoI7c0u6bPuOCRt+ZRwgbpozg==",
    "vk": "BMHRcmnkbjh6y+KZ7CzJzC2to/BeTPQS8q2Ua3AKomE67bd0TzcME6T0mVfVT/eYEZ0RH2kSnCTbX1+4QWKQnbs="
   },
   {
    "message": "unicode \u00a3 \u2603 test",
    "private_scalar_hex": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-   "signature": "wqE3I1gEKeGT8hnfGaACK9UVHy++xcooQ+1r9vy/Y4zcBIAqqDH5U4w5GpEUCKkQQtU7y67kYc7UsS0sHLsxjw==",
+   "signature": "JRsgQZbjLK7JpgkN9v8d6bpJO6iGzoCyDo6NmFt2QKytRD1tYgcb9s53EpLC23rV72XpOuNjJ826if0vWG7iNg==",
    "vk": "BNjNEupcZ/L4oAwRJIk+3PpnVMTWzt5r4TvfIpXIEKl/paidLSo2DAyppNbHye1LKNPhmdZify5pbWicMQpbD0g="
   }
  ],

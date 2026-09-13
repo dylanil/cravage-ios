@@ -42,7 +42,8 @@ than discovered. The in-app Limitations screen carries the same list in shorter 
 - **If someone drops out mid-round, the round fails.** The host restarts it with one tap; the room
   and label are kept. Every waiting step has a time limit. If the group is smaller after a restart
   and people re-enter the same figures as before, comparing the two results can reveal exactly what
-  the person who left had entered - the app warns about this the moment a restart drops someone.
+  the person who left had entered. The app warns about this on every restart, because it cannot
+  always tell whether the group really changed, and each person chooses whether to rejoin.
   Recovering an average from a partial group is planned for a later version.
 - **The maths cannot check honesty.** Signatures prove who sent a masked number, not that the
   figure behind it was truthful.

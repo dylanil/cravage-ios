@@ -14,6 +14,7 @@ final class TranscriptTests: XCTestCase {
         let entries: [Entry]
         let roster_hash: String
         let result_digest: String
+        let roomcode_digest: String
         let shares: [String: String]
         let transcript: Transcript
     }
@@ -49,6 +50,7 @@ final class TranscriptTests: XCTestCase {
         let ordered = roster.parties.map { shares[$0.label.letter]! }
         XCTAssertEqual(Wire.resultDigest(session: roster.session, rosterHash: roster.rosterHash, sharesInLetterOrder: ordered), g.result_digest)
         XCTAssertEqual(Wraparound.sum(ordered.map { Int64($0)! }), 60_000_000)
+        XCTAssertEqual(Wire.roomcodeDigest(roster), g.roomcode_digest)
     }
 
     func testPythonSignedGoldenTranscriptVerifiesInSwift() throws {
@@ -70,7 +72,7 @@ final class TranscriptTests: XCTestCase {
         XCTAssertEqual(TranscriptVerifier.verify(transcript.encoded()), [])
         let object = try XCTUnwrap(JSONSerialization.jsonObject(with: transcript.encoded()) as? [String: Any])
         XCTAssertEqual(Set(object.keys), ["format", "session", "label", "parties", "scale", "modulus", "shares", "share_sigs",
-                                          "vks", "confirms", "sum", "average", "claim"])
+                                          "vks", "confirms", "roomcode_confirms", "sum", "average", "claim"])
         if let path = ProcessInfo.processInfo.environment["CRAVAGE_TRANSCRIPT_OUT"] {
             try transcript.encoded().write(to: URL(fileURLWithPath: path))
         }
@@ -144,6 +146,10 @@ final class TranscriptTests: XCTestCase {
                 var confirms = object["confirms"] as! [String: String]; confirms["C"] = nil; object["confirms"] = confirms }),
             ("C: agreement signature does not cover this exact set of shares", { object in
                 var confirms = object["confirms"] as! [String: String]; confirms["C"] = confirms["A"]; object["confirms"] = confirms }),
+            ("A: room code signature does not cover this label and roster", { object in
+                var codes = object["roomcode_confirms"] as! [String: String]; codes["A"] = codes["B"]; object["roomcode_confirms"] = codes }),
+            ("roomcode_confirms does not have exactly one entry per party", { object in
+                var codes = object["roomcode_confirms"] as! [String: String]; codes["B"] = nil; object["roomcode_confirms"] = codes }),
             ("B: share is not a canonical 64-bit decimal", { object in
                 var shares = object["shares"] as! [String: String]; shares["B"] = "0" + shares["B"]!; object["shares"] = shares }),
         ]
@@ -153,11 +159,11 @@ final class TranscriptTests: XCTestCase {
         }
     }
 
-    func testLabelIsNotSignedButSessionAndShareSetAre() throws {
-        // The label is display metadata the transcript does not authenticate (the roster hash that
-        // covers it cannot be recomputed from the file). Pinned so the claim text stays honest.
+    /// Owner decision 2026-09-13: the label is authenticated, by every party's room code signature.
+    func testLabelSessionAndShareSetAreAllSigned() throws {
         let t = try golden().transcript
-        XCTAssertEqual(TranscriptVerifier.verify(try mutated(t) { $0["label"] = "Something else" }), [])
+        XCTAssertEqual(TranscriptVerifier.verify(try mutated(t) { $0["label"] = "Something else" }),
+                       t.parties.map { "\($0): room code signature does not cover this label and roster" })
         let otherSession = String(repeating: "cd", count: 16) + "." + String(t.session.split(separator: ".")[1])
         let failures = TranscriptVerifier.verify(try mutated(t) { $0["session"] = otherSession })
         XCTAssertEqual(failures.count, 3, "every share signature fails when the session changes")

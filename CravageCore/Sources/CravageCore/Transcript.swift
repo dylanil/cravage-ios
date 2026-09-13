@@ -4,8 +4,10 @@
 // What it shows, and only this (the `claim` field travels with the file and is checked byte for
 // byte): the listed keys signed the listed shares, the shares sum and average as stated, and every
 // listed key signed agreement to this exact set of shares. It cannot show who the participants
-// were, that separate devices were involved, or that any figure was truthful or in range. It also
-// cannot recompute the roster hash, which covers mask keys and nicknames the file does not carry.
+// were, that separate devices were involved, or that any figure was truthful or in range.
+// The label is authenticated by the roomcode_confirm signatures (owner decision 2026-09-13), which
+// cover roster hash, label and keys. The roster hash itself cannot be recomputed from the file,
+// because it covers mask keys and nicknames the file does not carry.
 
 import Foundation
 
@@ -27,6 +29,8 @@ public struct Transcript: Codable, Equatable, Sendable {
     public let vks: [String: String]
     /// result_confirm signatures, by letter.
     public let confirms: [String: String]
+    /// roomcode_confirm signatures, by letter: each party's signed agreement to this label and roster.
+    public let roomcode_confirms: [String: String]
     public let sum: String
     public let average: String
     public let claim: String
@@ -37,9 +41,12 @@ public struct Transcript: Codable, Equatable, Sendable {
     public static func make(from record: RoundRecord) -> Transcript? {
         let letters = record.parties.map(\.label.letter)
         var confirms: [String: String] = [:]
+        var roomcodeConfirms: [String: String] = [:]
         for party in record.parties {
-            guard let signature = record.resultConfirmSignatures[party.label] else { return nil }
+            guard let signature = record.resultConfirmSignatures[party.label],
+                  let roomcode = record.roomcodeConfirmSignatures[party.label] else { return nil }
             confirms[party.label.letter] = signature.base64
+            roomcodeConfirms[party.label.letter] = roomcode.base64
         }
         guard record.shares.count == letters.count, record.shareSignatures.count == letters.count else { return nil }
         let transcript = Transcript(
@@ -53,6 +60,7 @@ public struct Transcript: Codable, Equatable, Sendable {
             share_sigs: Dictionary(uniqueKeysWithValues: record.parties.map { ($0.label.letter, record.shareSignatures[$0.label]!.base64) }),
             vks: Dictionary(uniqueKeysWithValues: record.parties.map { ($0.label.letter, $0.verifyingKey.base64) }),
             confirms: confirms,
+            roomcode_confirms: roomcodeConfirms,
             sum: ShareString.format(record.sum),
             average: FixedPoint.formatAverageFixed(record.sum, count: letters.count),
             claim: claimText)
@@ -92,7 +100,8 @@ public enum TranscriptVerifier {
             return failures + ["parties must be the letters A.. in order, three to eight of them"]
         }
         let letters = Set(t.parties)
-        for (name, map) in [("shares", t.shares), ("share_sigs", t.share_sigs), ("vks", t.vks), ("confirms", t.confirms)]
+        for (name, map) in [("shares", t.shares), ("share_sigs", t.share_sigs), ("vks", t.vks), ("confirms", t.confirms),
+                            ("roomcode_confirms", t.roomcode_confirms)]
         where Set(map.keys) != letters {
             failures.append("\(name) does not have exactly one entry per party")
         }
@@ -126,6 +135,17 @@ public enum TranscriptVerifier {
         if t.sum != ShareString.format(total) { failures.append("shares sum (mod 2^64) differs from the stated sum") }
         if t.average != FixedPoint.formatAverageFixed(total, count: n) {
             failures.append("stated average does not follow from the sum")
+        }
+
+        let roomcode = Wire.roomcodeDigest(rosterHash: rosterHash, label: t.label, keysInLetterOrder: keys)
+        for (letter, key) in zip(t.parties, keys) {
+            guard let signature = try? Signature(base64: t.roomcode_confirms[letter]!) else {
+                failures.append("\(letter): room code signature is malformed"); continue
+            }
+            let canonical = CanonicalMessage(action: .roomcodeConfirm, session: t.session, party: letter, content: roomcode)
+            if !key.verify(signature, message: canonical.string) {
+                failures.append("\(letter): room code signature does not cover this label and roster")
+            }
         }
 
         let digest = Wire.resultDigest(session: session, rosterHash: rosterHash, sharesInLetterOrder: t.parties.map { t.shares[$0]! })

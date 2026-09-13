@@ -47,7 +47,8 @@ Control objects (sorted keys):
 - `{"type":"decline"}`
 - `{"type":"abort","reason":"peer_left|timeout|conflict|roster_mismatch|host_left"}`
 - `{"type":"restart","session":..,"nonce":..,"label":..,"size":..,"host":..}`: signed by the
-  old host key under the old session; `host` is the new round's host verifying key.
+  old host key under the old session; `host` is the new round's host verifying key. A joiner
+  treats it as an offer and sends its new hello only after the person accepts.
 
 ## Hashes
 
@@ -77,12 +78,15 @@ wrapping Int64 arithmetic. The wrapping sum of all shares is the exact sum of th
 `cravage-transcript-2` is one JSON object with sorted keys: `format`, `session` (the bound session,
 exactly as signed), `label`, `parties` (the letters in order), `scale` `"1000000"`, `modulus`
 `"18446744073709551616"`, `shares`, `share_sigs`, `vks`, `confirms` (the `result_confirm`
-signatures), `sum`, `average` and `claim` (the pinned SPEC section 4 sentence). A verifier checks:
-format, scale, modulus and claim exactly; letters A.. in order and assigned by bytewise key order;
-every share canonical and its signature valid; the wrapping sum and the two-place average; every
-agreement signature over the result digest recomputed from the listed shares.
+signatures), `roomcode_confirms` (the `roomcode_confirm` signatures), `sum`, `average` and `claim`
+(the pinned SPEC section 4 sentence). A verifier checks: format, scale, modulus and claim exactly;
+letters A.. in order and assigned by bytewise key order; every share canonical and its signature
+valid; the wrapping sum and the two-place average; every room code signature over the roomcode
+digest of roster hash, label and keys (this is what authenticates the label); every agreement
+signature over the result digest recomputed from the listed shares.
 
-Not covered, by construction: the roster hash cannot be recomputed (the file carries neither mask
-keys nor nicknames), so the `label` field is not authenticated by anything in the file.
+Not covered, by construction: the roster hash itself cannot be recomputed (the file carries
+neither mask keys nor nicknames), so the file shows that everyone signed the same roster hash,
+not which mask keys or nicknames it contained.
 Implementations: `TranscriptVerifier` (Swift) and `Tools/check_transcript_v2.py` (Python, interim
 until the version-2 mode lands in the SMPC repository's `verify_round.py`).

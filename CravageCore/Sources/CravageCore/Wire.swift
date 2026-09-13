@@ -140,11 +140,16 @@ public enum Wire {
     /// roomcode_confirm content: SHA-256 over roster hash, room label and the verifying keys in
     /// letter order (SPEC section 3), length-prefixed and domain-tagged.
     public static func roomcodeDigest(_ roster: Roster) -> String {
+        roomcodeDigest(rosterHash: roster.rosterHash, label: roster.label, keysInLetterOrder: roster.parties.map(\.verifyingKey))
+    }
+
+    /// The same digest from its parts, as a transcript verifier has them.
+    public static func roomcodeDigest(rosterHash: Data, label: String, keysInLetterOrder: [VerifyingKey]) -> String {
         var encoder = LengthPrefixedEncoder(tag: "cravage-roomcode-confirm-1")
-        encoder.append(roster.rosterHash)
-        encoder.append(roster.label)
-        encoder.appendByte(UInt8(roster.size))
-        for party in roster.parties { encoder.append(party.verifyingKey.x963) }
+        encoder.append(rosterHash)
+        encoder.append(label)
+        encoder.appendByte(UInt8(keysInLetterOrder.count))
+        for key in keysInLetterOrder { encoder.append(key.x963) }
         return Hex.encode(Digest.sha256(encoder.bytes))
     }
 

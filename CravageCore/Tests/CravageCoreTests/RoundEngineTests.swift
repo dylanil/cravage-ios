@@ -418,13 +418,17 @@ final class RoundEngineTests: XCTestCase {
 
         bus.deliver(0, .restart(generation: bus.host.generation))
         bus.run()
-        XCTAssertEqual(bus.phases(), Array(repeating: .confirming, count: 3), "previous participants rejoin automatically")
+        bus.acceptRestart()
+        XCTAssertEqual(bus.phases(), Array(repeating: .confirming, count: 3), "previous participants who accept rejoin")
         XCTAssertNotEqual(bus.host.session, oldSession)
         for (engine, old) in zip(bus.engines, oldKeys) {
             XCTAssertNotEqual(engine.signingKey!.verifyingKey, old)
             XCTAssertEqual(engine.session, bus.host.session)
             XCTAssertEqual(engine.generation, 2)
-            XCTAssertFalse(engine.restartDroppedParticipants)
+            // Review finding M2: same size and same nicknames is exactly what a host faking a ghost
+            // would show, so the warning must not depend on the roster looking changed.
+            XCTAssertTrue(engine.restartWarningRequired, "every restart warns, even with the same people")
+            XCTAssertFalse(engine.restartRosterChanged)
         }
         bus.deliver(0, .received(oldShare, from: PeerID(1)))
         XCTAssertEqual(bus.rejections[0]?.last, .wrongSession)
@@ -444,10 +448,12 @@ final class RoundEngineTests: XCTestCase {
         XCTAssertEqual(bus.host.phase, .failed(.peerLeft(leaving)), "host names who left")
         bus.deliver(0, .restart(generation: bus.host.generation))
         bus.run()
+        bus.acceptRestart([1, 2])
         for node in 0..<3 {
             XCTAssertEqual(bus.engines[node].phase, .confirming)
             XCTAssertEqual(bus.engines[node].roster?.size, 3)
-            XCTAssertTrue(bus.engines[node].restartDroppedParticipants, "SPEC invariant 13, node \(node)")
+            XCTAssertTrue(bus.engines[node].restartWarningRequired, "SPEC invariant 13, node \(node)")
+            XCTAssertTrue(bus.engines[node].restartRosterChanged, "fewer people, node \(node)")
         }
     }
 
@@ -457,6 +463,7 @@ final class RoundEngineTests: XCTestCase {
         bus.advance(ms: Deadlines.forTests.confirmingMs)
         bus.deliver(0, .restart(generation: bus.host.generation))
         bus.run()
+        bus.acceptRestart()
         bus.deliver(1, .submitFigure(5, generation: oldGeneration))
         bus.deliver(1, .confirmRoomCode(generation: oldGeneration))
         XCTAssertEqual(bus.rejections[1], [.staleGeneration, .staleGeneration])
@@ -649,6 +656,7 @@ final class RoundEngineReviewTests: XCTestCase {
         bus.intercept = { from, _, data in (from == 1 || from == 2) ? [] : [data] }
         bus.deliver(0, .restart(generation: bus.host.generation))
         bus.run()
+        bus.acceptRestart()
         let stranger = SigningKey()
         bus.connected.insert(9)
         bus.deliver(0, .peerConnected(PeerID(9)))
@@ -697,6 +705,7 @@ final class RoundEngineReviewTests: XCTestCase {
         bus.intercept = { from, _, data in from == 2 ? [] : [data] }
         bus.deliver(0, .restart(generation: bus.host.generation))
         bus.run()
+        bus.acceptRestart()
         XCTAssertEqual(bus.host.phase, .lobby)
         XCTAssertEqual(bus.host.nextDeadline, bus.now + Deadlines.forTests.confirmingMs)
         XCTAssertEqual(bus.engines[1].nextDeadline, bus.now + Deadlines.forTests.confirmingMs)
@@ -758,5 +767,101 @@ final class RoundEngineReviewTests: XCTestCase {
         bus.confirm()
         XCTAssertFalse(bus.sentAny(.share))
         XCTAssertEqual(bus.host.phase, .failed(.rosterMismatch(bus.engines[2].myLetter)))
+    }
+}
+
+
+/// Owner decisions 2026-09-13: warn on every restart; ask each person before rejoining a restart.
+final class RestartConsentTests: XCTestCase {
+
+    func testFirstRoundHasNoRestartWarning() {
+        let bus = StarBus.locked(nodes: 3)
+        for engine in bus.engines { XCTAssertFalse(engine.restartWarningRequired) }
+    }
+
+    func testNothingIsSentUntilThePersonAcceptsTheRestart() throws {
+        let bus = StarBus.completed(figures: [1, 2, 3])
+        let sentBefore = bus.sent.filter { $0.from != 0 }.count
+        bus.deliver(0, .restart(generation: bus.host.generation))
+        bus.run()
+        for node in [1, 2] {
+            let offer = try XCTUnwrap(bus.engines[node].restartOffer)
+            XCTAssertEqual(offer.label, "Average salary")
+            XCTAssertEqual(offer.size, 3)
+            XCTAssertEqual(bus.engines[node].phase, .complete(.agreed), "the finished result stays on screen")
+            XCTAssertEqual(bus.engines[node].generation, 1)
+        }
+        XCTAssertEqual(bus.sent.filter { $0.from != 0 }.count, sentBefore, "no hello until someone taps")
+        XCTAssertEqual(bus.host.phase, .lobby)
+
+        bus.acceptRestart([1])
+        XCTAssertEqual(bus.engines[1].phase, .lobby)
+        XCTAssertNil(bus.engines[1].restartOffer)
+        XCTAssertEqual(bus.host.admittedCount, 1)
+        XCTAssertEqual(bus.host.phase, .lobby, "still waiting for the other person")
+        bus.acceptRestart([2])
+        XCTAssertEqual(bus.phases(), Array(repeating: .confirming, count: 3))
+    }
+
+    func testDecliningARestartLeavesAndTheRestContinueIfEnoughRemain() {
+        let bus = StarBus.locked(nodes: 4)
+        bus.advance(ms: Deadlines.forTests.confirmingMs)
+        bus.deliver(0, .restart(generation: bus.host.generation))
+        bus.run()
+        bus.deliver(3, .leave)
+        bus.run()
+        XCTAssertEqual(bus.engines[3].phase, .idle)
+        XCTAssertFalse(bus.connected.contains(3))
+        bus.acceptRestart([1, 2])
+        XCTAssertEqual(bus.host.roster?.size, 3)
+        XCTAssertEqual(bus.host.phase, .confirming)
+        XCTAssertTrue(bus.host.restartRosterChanged)
+    }
+
+    func testAnUnansweredOfferLapsesAndCannotBeAcceptedLater() {
+        let bus = StarBus.completed(figures: [1, 2, 3])
+        bus.deliver(0, .restart(generation: bus.host.generation))
+        bus.run()
+        XCTAssertNotNil(bus.engines[1].restartOffer)
+        bus.advance(ms: Deadlines.forTests.confirmingMs)
+        XCTAssertNil(bus.engines[1].restartOffer)
+        bus.deliver(1, .acceptRestart(generation: bus.engines[1].generation))
+        XCTAssertEqual(bus.rejections[1]?.last, .wrongPhase)
+        XCTAssertEqual(bus.host.phase, .failed(.timeout(.lobby)))
+    }
+
+    func testCarriedPeopleHaveTheConfirmingDeadlineToDecideNotTheHelloDeadline() {
+        let bus = StarBus.completed(figures: [1, 2, 3])
+        bus.deliver(0, .restart(generation: bus.host.generation))
+        bus.run()
+        bus.advance(ms: Deadlines.forTests.helloMs)
+        XCTAssertTrue(bus.connected.isSuperset(of: [1, 2]), "thinking about it is not a silent connection")
+        bus.acceptRestart()
+        XCTAssertEqual(bus.phases(), Array(repeating: .confirming, count: 3))
+    }
+
+    func testRestartDuringARunningRoundEndsItLocallyAndOffers() throws {
+        let bus = StarBus.locked(nodes: 3)
+        bus.confirm()
+        bus.submit([1: 5])
+        bus.deliver(0, .restart(generation: bus.host.generation))
+        bus.run()
+        XCTAssertEqual(bus.engines[1].phase, .failed(.hostRestarted))
+        XCTAssertNil(bus.engines[1].frozenFigure, "the old figure does not carry into the new round")
+        XCTAssertNil(bus.engines[1].maskKey)
+        XCTAssertNotNil(bus.engines[1].restartOffer)
+        bus.acceptRestart()
+        bus.confirm()
+        XCTAssertFalse(bus.originated(by: 1, .share).contains { $0.session == bus.host.session }, "needs a fresh figure")
+    }
+}
+
+extension StarBus {
+    /// Every joiner (or the listed ones) holding a restart offer taps "Rejoin".
+    func acceptRestart(_ nodes: [Int]? = nil) {
+        for node in nodes ?? Array(joinerNodes) where engines[node].restartOffer != nil {
+            deliver(node, .acceptRestart(generation: engines[node].generation))
+        }
+        run()
     }
 }

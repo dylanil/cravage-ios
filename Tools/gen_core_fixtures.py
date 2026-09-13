@@ -257,6 +257,7 @@ def golden_transcript():
     total = to_signed(sum(int(shares[p]) for p in parties))
     assert total == 60_000_000
     digest = v2.result_digest(session, roster_hash, [shares[p] for p in parties])
+    roomcode = v2.roomcode_digest(roster_hash, label, [e["vk"] for e in ordered])
     transcript = {
         "format": v2.FORMAT, "session": bound, "label": label, "parties": parties,
         "scale": "1000000", "modulus": str(TWO64),
@@ -264,6 +265,7 @@ def golden_transcript():
         "share_sigs": {e["letter"]: sign_raw(e["sk"], "share|%s|%s|%s" % (bound, e["letter"], shares[e["letter"]])) for e in ordered},
         "vks": {e["letter"]: b64(e["vk"]) for e in ordered},
         "confirms": {e["letter"]: sign_raw(e["sk"], "result_confirm|%s|%s|%s" % (bound, e["letter"], digest)) for e in ordered},
+        "roomcode_confirms": {e["letter"]: sign_raw(e["sk"], "roomcode_confirm|%s|%s|%s" % (bound, e["letter"], roomcode)) for e in ordered},
         "sum": str(total), "average": v2.format_average_fixed(total, len(parties)), "claim": v2.CLAIM,
     }
     assert v2.check_transcript_v2(transcript) == [], v2.check_transcript_v2(transcript)
@@ -274,6 +276,7 @@ def golden_transcript():
                      "figure": str(e["figure"])} for e in entries],
         "roster_hash": roster_hash.hex(),
         "result_digest": digest,
+        "roomcode_digest": roomcode,
         "shares": shares,
         "transcript": transcript,
     }

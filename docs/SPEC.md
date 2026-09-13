@@ -116,6 +116,10 @@ distinct cases so a future change to one cannot accidentally widen the other's v
    the sole permitted transition out of a completed state, triggered by a late-arriving conflicting
    `result_confirm`. An already-exported transcript file is not mutated; only the on-device record
    (and any subsequent display or re-export) carries the disputed flag.
+   **Copy rule (owner-agreed 2026-09-13, from the code review)**: a mismatch names the parties whose
+   agreement differs from this phone's, which is not the same as naming who cheated. A dishonest
+   relay can make two honest phones each name the other. The result screen says "did not agree
+   with this phone", never that the named person misbehaved.
 8. Every waiting state has a deadline; expiry fails the round with a reason. *(unchanged)*
 9. Restart: host issues a signed restart with a new session id. **Clarified ordering**: the host
    applies the restart to its own local state (discard keys, generate fresh ones, reset generation)
@@ -150,12 +154,23 @@ distinct cases so a future change to one cannot accidentally widen the other's v
     same-figures scenario and cannot be patched cryptographically); it is a timing/copy control so
     the risk is surfaced when it is actually live, not only in a general Limitations paragraph read
     once before the first round.
+    **Revised by the owner, 2026-09-13, after the code review.** A dishonest host can make a changed
+    roster look unchanged (for example a key of its own under the departed person's nickname), so
+    the warning is shown on **every** restart, whoever is in the new roster. When the roster visibly
+    has fewer people or different names, the stronger copy is used. Suggested copy (not yet
+    approved): "This is a restarted round. If the group has changed and people enter the same
+    figures as last time, comparing the two results can reveal someone's figure." Also revised:
+    a restart is an **offer**. Each joiner's phone asks the person before rejoining and sends
+    nothing until they accept; an unanswered offer lapses with the host's restart lobby, and
+    declining leaves the room.
 
 ## 4. Transcript honesty
 
 - Format `cravage-transcript-2`. Fields: format id, session id, room label, ordered parties, scale
   `"1000000"`, modulus `"18446744073709551616"`, shares (signed decimal strings), share signatures,
-  verifying keys, `result_confirm` signatures, sum, average.
+  verifying keys, `result_confirm` signatures, sum, average. **Added by the owner, 2026-09-13**:
+  `roomcode_confirm` signatures, which cover the roster hash, the label and the keys, so the room
+  label is authenticated by the file (without them nothing in the file covered the label).
 - **New required field**: `claim`, a fixed string asserted and checked byte-for-byte by both
   `TranscriptVerifier` (Swift) and `verify_round.py` (Python) as part of acceptance, so the honest
   scope of the transcript travels with the exported file itself and not only the app's UI chrome:
@@ -168,7 +183,8 @@ distinct cases so a future change to one cannot accidentally widen the other's v
 - Verifier checks (unchanged): every share signature verifies under its stated key; shares sum (mod
   2^64) to the stated sum; the stated average follows the app's rounding rule; every party's
   `result_confirm` verifies over the expected digest; **new**: the `claim` field is present and
-  matches the pinned string exactly.
+  matches the pinned string exactly; **new (2026-09-13)**: every party's `roomcode_confirm` verifies
+  over the digest of roster hash, label and keys.
 - Two limitations that are inherent to this design and cannot be closed by a schema or verifier
   change (documented, not fixed): a verified transcript can be produced start-to-finish by a single
   device holding every private key (no external attestation exists to prevent this); the verifier
@@ -196,7 +212,9 @@ where their wording changes; new items are marked **NEW**):
 - If someone drops out mid-round, the round fails; the host restarts with one tap, same room and
   label. **NEW, sharper**: if a restart changes who's in the room and people re-enter the same
   figures as before, the difference between the two results can reveal the figure of whoever left —
-  the app warns at the moment a restart drops someone, not only here.
+  the app warns at the moment a restart drops someone, not only here. *(Behaviour revised by the
+  owner 2026-09-13: the warning shows on every restart and each person chooses whether to rejoin;
+  the shipped wording in README.md is updated to match.)*
 - The maths cannot check honesty: signatures prove who sent a masked number, not that the figure
   was truthful. *(unchanged)*
 - **NEW**: a room letter proves a distinct cryptographic key, not a distinct human or phone — the
