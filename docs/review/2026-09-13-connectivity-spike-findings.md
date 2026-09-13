@@ -41,8 +41,12 @@ reproduced verbatim here, only the events they show.
   waiting state needs its own explicit deadline rather than relying on the transport to notice and
   report a dropped peer promptly - 38 seconds is well outside what a user would tolerate waiting
   silently.
-- Not yet observed/recorded: the local-network-permission system prompt (TN3179) - unclear whether
-  either device showed it during this session or had already granted it from a prior spike install.
+- Local-network-permission system prompt (TN3179): both phones showed it and Allow was tapped on
+  both. Exact timing not captured precisely, but most likely at the point of tapping "Host a room"
+  or "Join a room" (i.e. when the listener/browser actually starts) rather than at launch. Worth
+  logging this explicitly in a later round - TN3179 notes the prompt can be denied silently before
+  the user answers, so the real app needs to handle a denial distinctly from other connection
+  failures; this round only observed the allow path.
 - Fix applied during this session: the host's `NetworkListener` had no explicit
   `newConnectionLimit`, which is a plausible cause of otherwise-unexplained "cannot add handler"
   console noise seen mid-session; set to 8 (the product's max party count) going forward
