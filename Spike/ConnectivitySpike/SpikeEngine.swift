@@ -52,6 +52,7 @@ final class SpikeEngine {
             let listener = try NetworkListener(for: .bonjour(name: nil, type: serviceType, txtRecord: txt)) {
                 spikeStack()
             }
+            listener.newConnectionLimit = 8
             self.listener = listener
             listener.onStateUpdate { [weak self] _, state in
                 Task { @MainActor in self?.addLog("Listener state: \(state)") }
