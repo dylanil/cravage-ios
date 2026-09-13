@@ -13,6 +13,10 @@ let package = Package(
     ],
     targets: [
         .target(name: "CravageCore"),
-        .testTarget(name: "CravageCoreTests", dependencies: ["CravageCore"]),
+        .testTarget(
+            name: "CravageCoreTests",
+            dependencies: ["CravageCore"],
+            resources: [.copy("Fixtures")]
+        ),
     ]
 )
