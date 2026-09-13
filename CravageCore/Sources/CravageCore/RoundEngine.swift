@@ -129,9 +129,13 @@ public struct Deadlines: Equatable, Sendable {
     public var figureMs: UInt64
     /// From all shares arriving to every agreement signature arriving.
     public var confirmationsMs: UInt64
+    /// Host: how long a new connection may stay silent before its hello, and how long a declined
+    /// connection is left open to read its decline, before the host closes it.
+    public var helloMs: UInt64
 
     public init(lobbyMs: UInt64 = 15 * 60_000, confirmingMs: UInt64 = 3 * 60_000,
-                figureMs: UInt64 = 5 * 60_000, confirmationsMs: UInt64 = 20_000) {
+                figureMs: UInt64 = 5 * 60_000, confirmationsMs: UInt64 = 20_000, helloMs: UInt64 = 15_000) {
+        self.helloMs = helloMs
         self.lobbyMs = lobbyMs
         self.confirmingMs = confirmingMs
         self.figureMs = figureMs
@@ -199,6 +203,12 @@ public final class RoundEngine {
     }
 
     public var admittedCount: Int { admitted.count }
+
+    /// The earliest clock reading at which a `.tick` has work to do (a phase deadline or a
+    /// connection to close). The app schedules its next tick no later than this.
+    public var nextTickDue: UInt64? {
+        ([nextDeadline].compactMap { $0 } + connectionDeadlines.values).min()
+    }
     public var confirmedLetters: Set<PartyLabel> { Set(roomcodeConfirms.keys) }
     public var sharesReceived: Set<PartyLabel> { Set(shares.keys) }
 
@@ -222,6 +232,8 @@ public final class RoundEngine {
     private var pending: [Joiner] = []
     private var admitted: [Joiner] = []
     private var declinedPeers: Set<PeerID> = []
+    /// Host: connections that must say hello (or, once declined, be gone) by this clock reading.
+    private var connectionDeadlines: [PeerID: UInt64] = [:]
     private var messageCounts: [PeerID: Int] = [:]
     private var rosterPeers: [PartyLabel: PeerID] = [:]
     private var ownHelloSignature: Signature?
@@ -247,13 +259,17 @@ public final class RoundEngine {
         if let deadline = nextDeadline, now >= deadline {
             expire(now: now, into: &effects)
         }
+        for (peer, deadline) in connectionDeadlines.sorted(by: { $0.key.raw < $1.key.raw }) where now >= deadline {
+            connectionDeadlines[peer] = nil
+            effects.append(.disconnect(peer))
+        }
         switch event {
         case let .createRoom(label, maxSize, nickname, entitled):
             createRoom(label: label, maxSize: maxSize, nickname: nickname, entitled: entitled, now: now, into: &effects)
         case let .joinRoom(nickname):
             joinRoom(nickname: nickname, now: now, into: &effects)
         case let .peerConnected(peer):
-            peerConnected(peer, into: &effects)
+            peerConnected(peer, now: now, into: &effects)
         case let .received(data, from):
             received(data, from: from, now: now, into: &effects)
         case let .peerDisconnected(peer):
@@ -263,7 +279,7 @@ public final class RoundEngine {
             admit(key, now: now, into: &effects)
         case let .decline(key, generation):
             guard checkGeneration(generation, into: &effects) else { break }
-            decline(key, into: &effects)
+            decline(key, now: now, into: &effects)
         case let .start(generation):
             guard checkGeneration(generation, into: &effects) else { break }
             start(now: now, into: &effects)
@@ -283,6 +299,12 @@ public final class RoundEngine {
             break
         }
         return effects
+    }
+
+    /// Deadline arithmetic saturates: a clock near UInt64.max must never trap.
+    private func after(_ now: UInt64, _ ms: UInt64) -> UInt64 {
+        let (value, overflow) = now.addingReportingOverflow(ms)
+        return overflow ? .max : value
     }
 
     private func checkGeneration(_ value: Int, into effects: inout [Effect]) -> Bool {
@@ -320,7 +342,7 @@ public final class RoundEngine {
         self.nickname = nickname
         generation += 1
         phase = .lobby
-        nextDeadline = now + deadlines.lobbyMs
+        nextDeadline = after(now, deadlines.lobbyMs)
     }
 
     /// Fresh keys, fresh session, fresh generation: every round and every restart.
@@ -348,7 +370,7 @@ public final class RoundEngine {
         ownHelloSignature = nil
         restartDroppedParticipants = false
         phase = .lobby
-        nextDeadline = now + deadlines.lobbyMs
+        nextDeadline = after(now, deadlines.lobbyMs)
     }
 
     private func signHello(_ hello: Wire.Hello) -> Signature {
@@ -366,11 +388,12 @@ public final class RoundEngine {
 
     // MARK: - Host: connections and admission
 
-    private func peerConnected(_ peer: PeerID, into effects: inout [Effect]) {
+    private func peerConnected(_ peer: PeerID, now: UInt64, into effects: inout [Effect]) {
         guard role == .host, phase == .lobby, connected.count < RoundEngine.maxConnections else {
             effects.append(.disconnect(peer)); return
         }
         connected.insert(peer)
+        connectionDeadlines[peer] = after(now, deadlines.helloMs)
         let welcome = Wire.Control.welcome(nonce: nonce!, label: label!, size: maxSize)
         effects.append(.send(control(welcome), to: peer))
     }
@@ -401,6 +424,7 @@ public final class RoundEngine {
         }
         let joiner = Joiner(peer: peer, key: message.sender, hello: hello, signature: message.signature)
         if restartPending, carriedPeers.contains(peer) {
+            connectionDeadlines[peer] = nil
             admitted.append(joiner)
             lockIfRestartReady(now: now, into: &effects)
             return
@@ -410,22 +434,24 @@ public final class RoundEngine {
             effects.append(.disconnect(peer))
             return
         }
+        connectionDeadlines[peer] = nil
         pending.append(joiner)
     }
 
     private func admit(_ key: VerifyingKey, now: UInt64, into effects: inout [Effect]) {
-        guard role == .host, phase == .lobby else { effects.append(.rejected(.wrongPhase)); return }
+        guard role == .host, phase == .lobby, !restartPending else { effects.append(.rejected(.wrongPhase)); return }
         guard let index = pending.firstIndex(where: { $0.key == key }) else { effects.append(.rejected(.invalidInput)); return }
         guard admitted.count + 1 < maxSize else { effects.append(.rejected(.roomFull)); return }
         guard admitted.count + 2 <= Roster.minimumSize || entitled else { effects.append(.rejected(.notEntitled)); return }
         admitted.append(pending.remove(at: index))
     }
 
-    private func decline(_ key: VerifyingKey, into effects: inout [Effect]) {
+    private func decline(_ key: VerifyingKey, now: UInt64, into effects: inout [Effect]) {
         guard role == .host, phase == .lobby else { effects.append(.rejected(.wrongPhase)); return }
         guard let index = pending.firstIndex(where: { $0.key == key }) else { effects.append(.rejected(.invalidInput)); return }
         let joiner = pending.remove(at: index)
         declinedPeers.insert(joiner.peer)
+        connectionDeadlines[joiner.peer] = after(now, deadlines.helloMs)
         effects.append(.send(control(.decline), to: joiner.peer))
     }
 
@@ -469,6 +495,7 @@ public final class RoundEngine {
         let data = control(.roster(signedHellos()))
         for joiner in pending {
             declinedPeers.insert(joiner.peer)
+            connectionDeadlines[joiner.peer] = after(now, deadlines.helloMs)
             effects.append(.send(control(.decline), to: joiner.peer))
         }
         pending = []
@@ -489,7 +516,7 @@ public final class RoundEngine {
                 || locked.parties.map(\.nickname).sorted() != previousRound.nicknames
         }
         phase = .confirming
-        nextDeadline = now + deadlines.confirmingMs
+        nextDeadline = after(now, deadlines.confirmingMs)
     }
 
     // MARK: - Receiving
@@ -628,6 +655,7 @@ public final class RoundEngine {
             label = newLabel
             maxSize = size
             beginSession(newSession, nonce: newNonce, now: now)
+            nextDeadline = after(now, deadlines.confirmingMs)
             sendHello(into: &effects)
         }
     }
@@ -749,7 +777,7 @@ public final class RoundEngine {
     private func passBarrierIfReady(now: UInt64, into effects: inout [Effect]) {
         guard phase == .confirming, localConfirmed, let roster, roomcodeConfirms.count == roster.size else { return }
         phase = .keyExchange
-        nextDeadline = now + deadlines.figureMs
+        nextDeadline = after(now, deadlines.figureMs)
         sendShareIfReady(now: now, into: &effects)
     }
 
@@ -796,7 +824,7 @@ public final class RoundEngine {
             effects.append(.send(data.encoded(), to: .host))
         }
         phase = .collectingConfirmations
-        nextDeadline = now + deadlines.confirmationsMs
+        nextDeadline = after(now, deadlines.confirmationsMs)
         resolveIfComplete(now: now)
     }
 
@@ -837,6 +865,7 @@ public final class RoundEngine {
         guard !phase.isTerminal else { return }
         let wasLocked = phase.isLocked
         phase = .failed(reason)
+        sum = nil
         endRound()
         guard role == .host else { return }
         let abortReason: Wire.AbortReason
@@ -876,6 +905,7 @@ public final class RoundEngine {
         guard connected.remove(peer) != nil else { return }
         declinedPeers.remove(peer)
         messageCounts[peer] = nil
+        connectionDeadlines[peer] = nil
         carriedPeers.remove(peer)
         pending.removeAll { $0.peer == peer }
         if phase == .lobby {
@@ -908,6 +938,8 @@ public final class RoundEngine {
         maxSize = size
         carriedPeers = Set(remaining)
         restartPending = true
+        nextDeadline = after(now, deadlines.confirmingMs)
+        for peer in remaining { connectionDeadlines[peer] = after(now, deadlines.helloMs) }
         ownHelloSignature = signHello(Wire.Hello(mask: maskKey!.publicKey, nonce: nonce!, nickname: nickname))
         let message = Wire.Control.restart(session: newSession, nonce: nonce!, label: label!, size: size,
                                            host: signingKey!.verifyingKey)
@@ -949,6 +981,7 @@ public final class RoundEngine {
         pending = []
         admitted = []
         declinedPeers = []
+        connectionDeadlines = [:]
         messageCounts = [:]
         rosterPeers = [:]
         carriedPeers = []

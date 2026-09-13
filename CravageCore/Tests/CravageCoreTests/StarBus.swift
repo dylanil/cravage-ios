@@ -60,7 +60,8 @@ final class StarBus {
             precondition(steps < limit, "bus did not go quiet")
             let message = inFlight.removeFirst()
             let link = message.to == 0 ? message.from : message.to
-            guard connected.contains(link) else { continue }
+            // Peers numbered beyond the engines are raw test connections with no engine behind them.
+            guard connected.contains(link), message.to < size else { continue }
             let from = message.to == 0 ? PeerID(message.from) : PeerID.host
             deliver(message.to, .received(message.data, from: from))
         }
@@ -165,5 +166,6 @@ final class StarBus {
 }
 
 extension Deadlines {
-    static let forTests = Deadlines(lobbyMs: 600_000, confirmingMs: 60_000, figureMs: 90_000, confirmationsMs: 10_000)
+    static let forTests = Deadlines(lobbyMs: 600_000, confirmingMs: 60_000, figureMs: 90_000, confirmationsMs: 10_000,
+                                    helloMs: 5_000)
 }

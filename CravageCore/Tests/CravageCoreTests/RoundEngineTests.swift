@@ -510,7 +510,10 @@ final class RoundEngineTests: XCTestCase {
 
     // MARK: - Invariant 11: entitlement inside the state machine
 
-    func testEntitlementIsEnforcedAtCreationAndAdmission() {
+    /// Without entitlement the only reachable guard is at creation: it caps the room at three,
+    /// after which admission reports roomFull. The notEntitled checks in admit and lock are a
+    /// second layer no event sequence reaches (confirmed by mutation and by review).
+    func testEntitlementCapsAnUnpaidRoomAtThree() {
         let unpaid = StarBus(nodes: 4)
         unpaid.deliver(0, .createRoom(label: "Bonus", maxSize: 4, nickname: "Host", entitled: false))
         XCTAssertEqual(unpaid.host.phase, .idle)
@@ -587,5 +590,173 @@ extension StarBus {
     /// The hello content joiner `node` sent.
     func hello(of node: Int) -> String {
         sent.first { $0.from == node }.flatMap { try? Envelope.decodeAndVerify($0.data) }?.content ?? ""
+    }
+}
+
+/// Regression tests for the fresh read-only review of 6b34bdf (findings M1, M3, L2, L3, L4 and the
+/// tests it found weaker than their names).
+final class RoundEngineReviewTests: XCTestCase {
+
+    // M1: silent or declined connections cannot hold lobby slots.
+    func testSilentConnectionIsDroppedAfterTheHelloDeadline() {
+        let bus = StarBus.lobby(nodes: 3)
+        bus.connected.insert(20)
+        bus.deliver(0, .peerConnected(PeerID(20)))
+        XCTAssertLessThanOrEqual(bus.host.nextTickDue ?? .max, bus.now + Deadlines.forTests.helloMs)
+        bus.advance(ms: Deadlines.forTests.helloMs - 1)
+        XCTAssertTrue(bus.connected.contains(20))
+        bus.advance(ms: 1)
+        XCTAssertFalse(bus.connected.contains(20), "a connection that never says hello is closed")
+        XCTAssertTrue(bus.connected.isSuperset(of: [1, 2]), "joiners who said hello stay")
+        XCTAssertEqual(bus.host.phase, .lobby)
+    }
+
+    func testDeclinedConnectionIsClosedEvenIfItStaysSilent() throws {
+        let bus = StarBus(nodes: 3)
+        bus.deliver(0, .createRoom(label: "L", maxSize: 3, nickname: "Host", entitled: false))
+        bus.join(1)
+        // Joiner 1 ignores the decline: simulate by dropping everything addressed to it.
+        bus.intercept = { _, to, data in to == 1 ? [] : [data] }
+        let pending = try XCTUnwrap(bus.host.pendingJoiners.first)
+        bus.deliver(0, .decline(pending.verifyingKey, generation: bus.host.generation))
+        bus.run()
+        XCTAssertTrue(bus.connected.contains(1))
+        bus.advance(ms: Deadlines.forTests.helloMs)
+        XCTAssertFalse(bus.connected.contains(1), "the host closes a declined link itself")
+    }
+
+    func testPendingQueueFullRejectsAndDisconnects() {
+        let bus = StarBus(nodes: 1)
+        bus.deliver(0, .createRoom(label: "L", maxSize: 8, nickname: "Host", entitled: true))
+        for k in 1...(RoundEngine.maxPending + 1) {
+            bus.connected.insert(k)
+            bus.deliver(0, .peerConnected(PeerID(k)))
+            let key = SigningKey()
+            let hello = Wire.Hello(mask: MaskPrivateKey().publicKey, nonce: bus.host.nonce!, nickname: "p\(k)")
+            bus.deliver(0, .received(Envelope.signed(action: .pubkey, session: bus.host.session!, party: key.verifyingKey.base64,
+                                                     content: hello.content, key: key).encoded(), from: PeerID(k)))
+        }
+        XCTAssertEqual(bus.host.pendingJoiners.count, RoundEngine.maxPending)
+        XCTAssertEqual(bus.rejections[0], [.queueFull])
+        XCTAssertFalse(bus.connected.contains(RoundEngine.maxPending + 1))
+    }
+
+    // M3: the restart lobby cannot be overfilled.
+    func testNoManualAdmissionWhileARestartIsGathering() throws {
+        let bus = StarBus.locked(nodes: 3)
+        bus.advance(ms: Deadlines.forTests.confirmingMs)
+        // Hold back the carried joiners' hellos so a stranger can get in first.
+        bus.intercept = { from, _, data in (from == 1 || from == 2) ? [] : [data] }
+        bus.deliver(0, .restart(generation: bus.host.generation))
+        bus.run()
+        let stranger = SigningKey()
+        bus.connected.insert(9)
+        bus.deliver(0, .peerConnected(PeerID(9)))
+        let hello = Wire.Hello(mask: MaskPrivateKey().publicKey, nonce: bus.host.nonce!, nickname: "Stranger")
+        bus.deliver(0, .received(Envelope.signed(action: .pubkey, session: bus.host.session!, party: stranger.verifyingKey.base64,
+                                                 content: hello.content, key: stranger).encoded(), from: PeerID(9)))
+        bus.deliver(0, .admit(stranger.verifyingKey, generation: bus.host.generation))
+        XCTAssertEqual(bus.rejections[0]?.last, .wrongPhase)
+        XCTAssertEqual(bus.host.admittedCount, 0)
+        // The carried joiners now rejoin and the round locks with exactly them.
+        bus.intercept = nil
+        for node in [1, 2] {
+            let hellos = bus.sent.filter { $0.from == node }.compactMap { try? Envelope.decodeAndVerify($0.data) }
+                .filter { $0.action == .pubkey && $0.session == bus.host.session }
+            guard !hellos.isEmpty else { return XCTFail("no hello from \(node)") }
+            let data = Envelope.signed(action: .pubkey, session: bus.host.session!, party: hellos[0].party,
+                                       content: hellos[0].content, key: bus.engines[node].signingKey!).encoded()
+            bus.deliver(0, .received(data, from: PeerID(node)))
+        }
+        bus.run()
+        XCTAssertEqual(bus.host.roster?.size, 3)
+        XCTAssertEqual(bus.phases(), Array(repeating: .confirming, count: 3))
+    }
+
+    // L2: an unagreed sum is not left readable after a failure.
+    func testFailureClearsTheSum() throws {
+        let bus = StarBus.locked(nodes: 3)
+        bus.confirm()
+        bus.intercept = { from, _, data in
+            (from == 1 && (try? Envelope.decodeAndVerify(data))?.action == .resultConfirm) ? [] : [data]
+        }
+        bus.submit([0: 1, 1: 2, 2: 3])
+        XCTAssertEqual(bus.host.phase, .collectingConfirmations)
+        XCTAssertNotNil(bus.host.sum)
+        bus.drop(2)
+        bus.run()
+        XCTAssertEqual(bus.host.phase, .failed(.peerLeft(bus.engines[2].myLetter)))
+        XCTAssertNil(bus.host.sum)
+        XCTAssertNil(bus.host.average)
+    }
+
+    // L3: a restart lobby waits the confirming deadline, not the full lobby deadline.
+    func testRestartLobbyHasAShortDeadline() {
+        let bus = StarBus.locked(nodes: 3)
+        bus.advance(ms: Deadlines.forTests.confirmingMs)
+        bus.intercept = { from, _, data in from == 2 ? [] : [data] }
+        bus.deliver(0, .restart(generation: bus.host.generation))
+        bus.run()
+        XCTAssertEqual(bus.host.phase, .lobby)
+        XCTAssertEqual(bus.host.nextDeadline, bus.now + Deadlines.forTests.confirmingMs)
+        XCTAssertEqual(bus.engines[1].nextDeadline, bus.now + Deadlines.forTests.confirmingMs)
+        bus.advance(ms: Deadlines.forTests.confirmingMs)
+        XCTAssertEqual(bus.host.phase, .failed(.timeout(.lobby)))
+    }
+
+    // L4: an extreme clock value never traps.
+    func testExtremeClockDoesNotTrap() {
+        let engine = RoundEngine(deadlines: .forTests)
+        _ = engine.handle(.createRoom(label: "L", maxSize: 3, nickname: "Host", entitled: false), now: .max - 5)
+        XCTAssertEqual(engine.nextDeadline, .max)
+        _ = engine.handle(.tick, now: .max)
+        XCTAssertEqual(engine.phase, .failed(.timeout(.lobby)))
+    }
+
+    // Weak-test follow-ups.
+    func testDeadlinesCoverSharingAgreementAndAJoinerWaitingForWelcome() {
+        let bus = StarBus.locked(nodes: 3)
+        bus.confirm()
+        bus.submit([1: 1])
+        XCTAssertEqual(bus.engines[1].phase, .sharing)
+        XCTAssertNotNil(bus.engines[1].nextDeadline)
+        bus.intercept = { from, _, data in
+            (from == 2 && (try? Envelope.decodeAndVerify(data))?.action == .resultConfirm) ? [] : [data]
+        }
+        bus.submit([0: 1, 2: 1])
+        XCTAssertEqual(bus.host.phase, .collectingConfirmations)
+        XCTAssertEqual(bus.host.nextDeadline, bus.now + Deadlines.forTests.confirmationsMs)
+
+        let early = StarBus(nodes: 2)
+        early.connected.insert(1)
+        early.deliver(1, .joinRoom(nickname: "Early"))
+        early.advance(ms: Deadlines.forTests.lobbyMs)
+        XCTAssertEqual(early.engines[1].phase, .failed(.timeout(.lobby)))
+    }
+
+    func testWrongRoomcodeDigestUnderTheRightRosterFails() throws {
+        let bus = StarBus.locked(nodes: 3)
+        let letter = try XCTUnwrap(bus.engines[1].myLetter)
+        bus.deliver(2, .received(bus.forged(by: 1, .roomcodeConfirm, content: String(repeating: "a", count: 64)), from: .host))
+        XCTAssertEqual(bus.engines[2].phase, .failed(.rosterMismatch(letter)))
+    }
+
+    func testHostShowingOneJoinerADifferentLabelIsCaughtBeforeAnyShare() throws {
+        let bus = StarBus(nodes: 3)
+        bus.deliver(0, .createRoom(label: "Average salary", maxSize: 3, nickname: "Host", entitled: false))
+        bus.intercept = { from, to, data in
+            guard from == 0, to == 2, let m = try? Envelope.decodeAndVerify(data), m.action == .control,
+                  case let .welcome(nonce, _, size)? = Wire.decodeControl(m.content) else { return [data] }
+            return [Envelope.signed(action: .control, session: m.session, party: Wire.hostParty,
+                                    content: Wire.encode(.welcome(nonce: nonce, label: "Average bonus", size: size)),
+                                    key: bus.host.signingKey!).encoded()]
+        }
+        for k in 1...2 { bus.join(k) }
+        bus.admitAll()
+        bus.start()
+        XCTAssertNotEqual(bus.engines[2].roster?.fingerprint, bus.host.roster?.fingerprint, "the codes differ on screen")
+        bus.confirm()
+        XCTAssertFalse(bus.sentAny(.share))
+        XCTAssertEqual(bus.host.phase, .failed(.rosterMismatch(bus.engines[2].myLetter)))
     }
 }
