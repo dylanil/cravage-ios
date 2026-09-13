@@ -77,6 +77,8 @@ final class SpikeEngine {
         connection.onStateUpdate { [weak self] _, state in
             Task { @MainActor in self?.addLog("Peer connection state: \(state)") }
         }
+        var peerID: String?
+        var peerNickname: String = "a phone"
         do {
             let first = try await connection.receive()
             let hello = first.content
@@ -84,27 +86,40 @@ final class SpikeEngine {
                 addLog("First message wasn't a hello, dropping connection.")
                 return
             }
-            let peerID = hello.senderID
-            hostConnections[peerID] = connection
-            pendingRequests.append(Peer(id: peerID, nickname: hello.senderNickname, admitted: false))
-            addLog("\(hello.senderNickname) wants to join.")
+            peerID = hello.senderID
+            peerNickname = hello.senderNickname
+            hostConnections[hello.senderID] = connection
+
+            if admittedPeers.contains(where: { $0.id == hello.senderID }) {
+                addLog("\(hello.senderNickname) reconnected - already admitted, letting them straight back in.")
+                try await connection.send(SpikeMessage(kind: .admit, senderID: myID, senderNickname: nickname, text: ""))
+            } else {
+                pendingRequests.removeAll { $0.id == hello.senderID }
+                pendingRequests.append(Peer(id: hello.senderID, nickname: hello.senderNickname, admitted: false))
+                addLog("\(hello.senderNickname) wants to join.")
+            }
 
             for try await message in connection.messages {
                 let msg = message.content
                 switch msg.kind {
                 case .chat:
                     addLog("\(msg.senderNickname): \(msg.text)")
-                    await relay(msg, from: peerID)
+                    await relay(msg, from: hello.senderID)
                 default:
                     break
                 }
             }
             addLog("\(hello.senderNickname) disconnected.")
+        } catch {
+            addLog("Connection from \(peerNickname) failed: \(error)")
+        }
+        // Only tear down bookkeeping if a newer reconnect from the same phone hasn't already
+        // replaced this connection - otherwise a slow-to-fail old connection can wipe out a
+        // perfectly good new one.
+        if let peerID, hostConnections[peerID]?.id == connection.id {
             pendingRequests.removeAll { $0.id == peerID }
             admittedPeers.removeAll { $0.id == peerID }
             hostConnections[peerID] = nil
-        } catch {
-            addLog("Connection from a peer failed: \(error)")
         }
     }
 

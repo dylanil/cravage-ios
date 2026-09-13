@@ -52,6 +52,31 @@ reproduced verbatim here, only the events they show.
   console noise seen mid-session; set to 8 (the product's max party count) going forward
   (`268f2f5`).
 
+## Session 2 (host + two joiners, three phones)
+
+- **Relay through the host confirmed working joiner-to-joiner**, not just host-to-joiner: messages
+  from each of the two joiners reached the other joiner via the host, matching the star-topology
+  design.
+- **A live connection tolerated a brief Wi-Fi drop and recovered on its own**, no reconnect needed
+  (joiner's Wi-Fi was toggled off and back on; chat kept flowing once it returned). This is a real
+  resilience data point - not everything that looks like a network interruption actually needs the
+  round-restart machinery; only a full app kill or a backgrounded host proved fatal in these tests.
+- **A genuine spike-code bug, now fixed**: force-quitting the app on a joiner and reopening it (a
+  fresh launch, so a new random identity) produced a confusing stuck state - the host logged "wants
+  to join" three times for the same rejoining phone (the user tapped the room repeatedly since
+  nothing appeared to happen) and never admitted it, while separately the host kept failing to
+  relay to the *original*, long-dead connection on every subsequent message. Root cause: the
+  cleanup code that removes a peer from `hostConnections`/`admittedPeers`/`pendingRequests` once
+  their connection ends was written after the message-receive loop inside the same `do` block, so a
+  *thrown* failure (the normal way a dead connection surfaces) skipped straight to `catch` and never
+  reached it - cleanup only ran on a clean, non-throwing disconnect, which is the rare case here.
+  Fixed by moving cleanup outside the do/catch so it runs unconditionally, and by having the host
+  recognize a reconnect from an already-admitted identity and immediately re-admit it rather than
+  piling up duplicate pending requests.
+- Force-quitting a peer's app was detected by the host almost instantly (same second) via a proper
+  TCP reset, in clear contrast to session 1's 38-second lag for a silent background failure -
+  disconnect-detection speed depends heavily on *how* a peer leaves, not just *that* they left.
+
 ## Open for the next session
 
 - Third phone (needs a Lightning-to-USB-C cable) - repeat with three concurrent joiners once
