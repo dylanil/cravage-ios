@@ -341,9 +341,15 @@ out of release).
 4. Mockups on a design canvas: the whole journey sketched cheaply; the screens for the first
    end-to-end round polished and approved; remaining screens approved feature by feature as device
    behaviour becomes known.
+   (Drafted 2026-09-13, awaiting owner approval: design/mockups/, published as a private design
+   canvas. Nine polished first-round screens and sixteen sketched states; draft copy is marked.)
 5. Vertical slice on three phones: NetworkTransport + Home/New Room/Join/Lobby/Confirm/Enter
    Figure/Waiting/Result, real round end to end. Fresh read-only review of the protocol, parser and
    binding code.
+   (Groundwork committed 2026-09-13, 9b6f3f2: XcodeGen project with the team ID in an ignored
+   xcconfig, NetworkTransport, RoundCoordinator with entitlement at creation, coordinator tests on
+   the simulator. Screens wait for mockup approval; the device run needs the owner and three phones.
+   The verify_round.py v2 mode is open as dylanil/SMPC pull request 1, unmerged.)
 6. Restart, timeouts, failure and disagreement states; interruption acceptance tests (app switch,
    lock, call, host leaves, cancel, rapid restart, permission denied then granted, silent peer).
 7. Transcript v2 export; Python acceptance; temp-file cleanup.
