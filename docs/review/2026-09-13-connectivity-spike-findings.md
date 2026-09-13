@@ -1,14 +1,15 @@
-# Connectivity spike findings, 2026-09-13 (in progress)
+# Connectivity spike findings, 2026-09-13
 
 Delivery step 2 (`docs/PLAN.md`): prove three phones can find each other, connect through a host,
 get admitted, and pass messages, using the iOS 26 `NetworkListener`/`NetworkBrowser`/
 `NetworkConnection` interface. Records discovery time, permission-prompt behaviour, backgrounding
-and lock behaviour, and disconnect signals. Code: `Spike/` (throwaway, deleted once this step is
-done).
+and lock behaviour, and disconnect signals. Code: `Spike/` (throwaway).
 
-Two physical iPhones so far (a third pending a Lightning-to-USB-C cable). Both on iOS 26. Raw logs
-captured via the app's own on-screen log (timestamped, copy-pasted from each device) - not
-reproduced verbatim here, only the events they show.
+**Status: closed 2026-09-13** after two rounds, first with two physical iPhones, then three, all on
+iOS 26. `Spike/` stays in the tree for now in case another round is wanted; it is deleted once
+CravageCore's real transport replaces it. Raw logs were captured via the app's own on-screen log
+(timestamped, copy-pasted from each device) - not reproduced verbatim here, only the events they
+show.
 
 ## Session 1 (host + one joiner)
 
@@ -76,13 +77,28 @@ reproduced verbatim here, only the events they show.
 - Force-quitting a peer's app was detected by the host almost instantly (same second) via a proper
   TCP reset, in clear contrast to session 1's 38-second lag for a silent background failure -
   disconnect-detection speed depends heavily on *how* a peer leaves, not just *that* they left.
+- **Discovery time, with the host already advertising: 43 ms and 89 ms** from the joiner starting
+  to browse to the room appearing in its list (the two joiners' logs: 18:10:18.871 -> .914 and
+  18:06:45.290 -> .379). Connect-to-ready after the tap was 100-500 ms. No discovery-time concern
+  for the product.
 
-## Open for the next session
+## Clean-checkout build on the Mac (the other step-2 deliverable)
 
-- Third phone (needs a Lightning-to-USB-C cable) - repeat with three concurrent joiners once
-  available, and scale toward eight before release per PLAN.md.
-- Confirm whether the local-network permission prompt appeared and on which device/timing.
-- Rough discovery-time number: the joiner's browser reached `ready` within ~70ms of starting, but
-  the exact moment the host's room appeared in its list was not logged (only "looking" and the
-  human's subsequent tap, ~10s later, which includes reaction time) - worth adding an explicit log
-  line for a cleaner number, low priority.
+Fresh `git clone` of `origin/main` at `e396056` into a temporary directory on the development Mac,
+no private files, no caches, on 2026-09-13:
+
+- Toolchain: Xcode 26.6 (17F113), Swift 6.3.3, Python 3.9.6 with `cryptography` 50.0.1.
+- `swift test --package-path CravageCore`: 1 test (the placeholder), 0 failures.
+- `Tools/check_verifier_sync.sh`: `verify_round.py` matches the pinned SMPC commit `06b7061`.
+- `Tools/check_public_safe.sh`: clean.
+- The Python transcript acceptance cannot run yet (no golden transcript until step 3 produces one).
+- `Spike/ConnectivitySpike.xcodeproj` built unsigned for the device SDK (`-sdk iphoneos`) and for
+  the simulator SDK from the tree; three physical iPhones ran it via Xcode with automatic signing
+  under the free Personal Team.
+
+## Not tested (carried forward)
+
+- Rejoin after the round-2 fix (force-quit, reopen, rejoin the same live room): the fix compiled
+  and is pushed but has not been exercised on phones.
+- The local-network permission *denial* path (TN3179): only the allow path was observed.
+- Eight phones: PLAN.md step 10, with the real app, before advertising "up to 8".
