@@ -1,0 +1,26 @@
+name: ConnectivitySpike
+options:
+  bundleIdPrefix: com.cravage.spike
+targets:
+  ConnectivitySpike:
+    type: application
+    platform: iOS
+    deploymentTarget: "26.0"
+    sources:
+      - ConnectivitySpike
+    info:
+      path: ConnectivitySpike/Info.plist
+      properties:
+        CFBundleDisplayName: Spike
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        NSLocalNetworkUsageDescription: "This test finds other phones nearby to check how phones discover and talk to each other. It has no server and sends nothing over the internet."
+        NSBonjourServices:
+          - _cravagespike._tcp
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.cravage.spike.ConnectivitySpike
+        SWIFT_VERSION: "5.0"
+        TARGETED_DEVICE_FAMILY: "1"
+        CODE_SIGN_STYLE: Automatic
