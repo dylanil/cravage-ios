@@ -10,7 +10,7 @@ limits are Apple's. Items marked *decision* need the owner's confirmation before
 |---|---|
 | Name (30) | Cravage |
 | Subtitle (30) | Group average, kept private |
-| Bundle ID | `com.dylanliew.cravage` (*decision*: permanent once the first build is uploaded) |
+| Bundle ID | `com.dylanliew.cravage` (decided 2026-09-13; permanent once the first build is uploaded) |
 | SKU | `cravage-ios` |
 | Primary language | English (UK) |
 | Primary category | Utilities |
@@ -83,8 +83,8 @@ First release.
 
 ## App Review information
 
-**Contact:** the dedicated support address (EMAIL-TBD) and a phone number (*decision*: Apple
-requires one for review contact; it is not shown publicly).
+**Contact:** cravage.support@gmail.com and the owner's review-contact phone number (kept in the
+private notes; Apple requires it for review contact and never shows it publicly).
 
 **Sign-in required:** No. Demo account: not applicable.
 

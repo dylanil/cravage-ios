@@ -2,7 +2,7 @@
 
 Cravage is made by Dylan Liew. Questions, bugs and suggestions are welcome.
 
-- Email: EMAIL-TBD
+- Email: cravage.support@gmail.com
 - Report a bug or request a feature: [GitHub issues](https://github.com/dylanil/cravage-ios/issues)
 
 ## Common questions

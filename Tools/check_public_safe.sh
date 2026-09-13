@@ -4,7 +4,7 @@
 # markers. Owner-personal notes belong in the untracked .git/agents/private/ tree.
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
-PATTERN='SETUP_MAC|Remote Desktop|Screen Sharing|MacBook|Windows laptop|Gmail|password|partner|wife|husband|beginner|unfamiliar|layperson|coding experience|never billed|borrow'
+PATTERN='SETUP_MAC|Remote Desktop|Screen Sharing|MacBook|Windows laptop|dylan.liew@|password|partner|wife|husband|beginner|unfamiliar|layperson|coding experience|never billed|borrow'
 # Excluded: the imported third-party review documents (verbatim by design) and this script itself.
 EXCLUDE='docs/review/2026-09-12-(plan-review|coding-guardrails)\.md|Tools/check_public_safe\.sh'
 if git ls-files -z -- '*.md' '*.swift' '*.yml' '*.sh' '*.py' \
