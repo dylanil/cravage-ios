@@ -367,4 +367,5 @@ out of release).
 - R4 App Review with one device: video and note; practice mode fallback.
 - R5 iOS 26 minimum excludes some phones; accepted, revisit if TestFlight friends are blocked.
 - R6 verify_round.py v2 extension is a change to the SMPC repo (approved, not yet implemented).
-- R8 Link security choice (TLS vs signatures only) open until the council.
+- R8 Link security choice: council reviewed 2026-09-13 and recommends signatures-only, no
+  link-layer TLS (docs/SPEC.md §2 has the reasoning). Pending owner confirmation to close.
