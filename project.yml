@@ -1,0 +1,67 @@
+# Generates Cravage.xcodeproj with XcodeGen: run `xcodegen generate` after changing this file.
+# Signing: the Apple team ID lives only in Config/Local.xcconfig, which git ignores. Copy
+# Config/Local.xcconfig.example to Config/Local.xcconfig on a Mac that signs for a phone.
+name: Cravage
+options:
+  bundleIdPrefix: com.dylanliew
+  deploymentTarget:
+    iOS: "26.0"
+  createIntermediateGroups: true
+packages:
+  CravageCore:
+    path: CravageCore
+configFiles:
+  Debug: Config/Cravage.xcconfig
+  Release: Config/Cravage.xcconfig
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+targets:
+  Cravage:
+    type: application
+    platform: iOS
+    sources:
+      - Cravage
+    dependencies:
+      - package: CravageCore
+    info:
+      path: Cravage/Resources/Info.plist
+      properties:
+        CFBundleDisplayName: Cravage
+        CFBundleShortVersionString: "0.1"
+        CFBundleVersion: "1"
+        UILaunchScreen: {}
+        UIRequiresFullScreen: true
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        NSLocalNetworkUsageDescription: "Cravage finds other phones nearby to run a round. It has no server and sends nothing over the internet."
+        NSBonjourServices:
+          - _cravage._tcp
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.dylanliew.cravage
+        TARGETED_DEVICE_FAMILY: "1"
+        CODE_SIGN_STYLE: Automatic
+        GENERATE_INFOPLIST_FILE: false
+  CravageTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - CravageTests
+    dependencies:
+      - target: Cravage
+      - package: CravageCore
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: true
+        PRODUCT_BUNDLE_IDENTIFIER: com.dylanliew.cravage.tests
+schemes:
+  Cravage:
+    build:
+      targets:
+        Cravage: all
+        CravageTests: [test]
+    test:
+      targets:
+        - CravageTests

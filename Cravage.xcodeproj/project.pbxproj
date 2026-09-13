@@ -1,0 +1,516 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		15F7C3CC3341390D21B49FB4 /* RoundTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = B905F281DE24FC1367631CFA /* RoundTransport.swift */; };
+		3EB296C46CBE1CB51601F83C /* RoundClock.swift in Sources */ = {isa = PBXBuildFile; fileRef = E74A1EDE1710F69C8874B010 /* RoundClock.swift */; };
+		49E1ECA3AEA4FA2EA0A4085C /* CravageCore in Frameworks */ = {isa = PBXBuildFile; productRef = B10152A40DA4D36B9A520DE7 /* CravageCore */; };
+		59974EF6E2E857EC41CA9645 /* CravageApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5103289F3128432D9EE3F7D8 /* CravageApp.swift */; };
+		5F97B4C7D9763C4AD60CD3D9 /* CravageCore in Frameworks */ = {isa = PBXBuildFile; productRef = 8E725B4E24F32822D251C859 /* CravageCore */; };
+		7833B30895D6FC7CDF4F1191 /* CoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA617C1EE94277DED0F37644 /* CoordinatorTests.swift */; };
+		8F6857EFC3B3F51319921153 /* EntitlementProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A545A19E718A3245869718AF /* EntitlementProvider.swift */; };
+		BCD0FECF8A89B9A8259BCCA8 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21A9FDD6C6104FFE266357AF /* RootView.swift */; };
+		CA27AC80245C6ACE0BC5E998 /* NetworkTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 951EB584BC0D3D35547C6CF5 /* NetworkTransport.swift */; };
+		D9D118087056C8E51411EF10 /* RoundCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0ED4CADDCFFD7E599A5606 /* RoundCoordinator.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		EC4D6863EF361623AADA83BF /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4155C16C1659EB3C80B589F5 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4D8189EA1155E5DDFAEEE0C3;
+			remoteInfo = Cravage;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		172ADE99C9D870127282445D /* CravageCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = CravageCore; path = CravageCore; sourceTree = SOURCE_ROOT; };
+		21A9FDD6C6104FFE266357AF /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		5103289F3128432D9EE3F7D8 /* CravageApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CravageApp.swift; sourceTree = "<group>"; };
+		77FCC0B72CDFAE6326C6AF50 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		8C6194E42A838377EC9B5A6B /* Cravage.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Cravage.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		951EB584BC0D3D35547C6CF5 /* NetworkTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkTransport.swift; sourceTree = "<group>"; };
+		A545A19E718A3245869718AF /* EntitlementProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntitlementProvider.swift; sourceTree = "<group>"; };
+		AEEF7EDC2455B13692EDD44C /* Cravage.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Cravage.xcconfig; sourceTree = "<group>"; };
+		B448F5E83E17F6E781CD2002 /* CravageTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = CravageTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B905F281DE24FC1367631CFA /* RoundTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoundTransport.swift; sourceTree = "<group>"; };
+		BE0ED4CADDCFFD7E599A5606 /* RoundCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoundCoordinator.swift; sourceTree = "<group>"; };
+		DA617C1EE94277DED0F37644 /* CoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoordinatorTests.swift; sourceTree = "<group>"; };
+		E74A1EDE1710F69C8874B010 /* RoundClock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoundClock.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		26202EE0AB73B7EA96F7F394 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5F97B4C7D9763C4AD60CD3D9 /* CravageCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		83C3D8B7FF33110858FEDD03 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				49E1ECA3AEA4FA2EA0A4085C /* CravageCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		04E29E230D426D2CC0450E7D /* Store */ = {
+			isa = PBXGroup;
+			children = (
+				A545A19E718A3245869718AF /* EntitlementProvider.swift */,
+			);
+			path = Store;
+			sourceTree = "<group>";
+		};
+		0723933A48AD0E2CAC97DE0B /* Cravage */ = {
+			isa = PBXGroup;
+			children = (
+				5103289F3128432D9EE3F7D8 /* CravageApp.swift */,
+				21A9FDD6C6104FFE266357AF /* RootView.swift */,
+				8A4963B5BE4A809A4F823962 /* Resources */,
+				DC77E3ADEAA42C7B0398BD1A /* Round */,
+				04E29E230D426D2CC0450E7D /* Store */,
+				C5F687C07ACE9826DC8F1842 /* Transport */,
+			);
+			path = Cravage;
+			sourceTree = "<group>";
+		};
+		21A94972E32630547E932898 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				172ADE99C9D870127282445D /* CravageCore */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+		45617D84803B0BBCF46AFF89 /* CravageTests */ = {
+			isa = PBXGroup;
+			children = (
+				DA617C1EE94277DED0F37644 /* CoordinatorTests.swift */,
+			);
+			path = CravageTests;
+			sourceTree = "<group>";
+		};
+		73A48791771A580E08F06BC9 = {
+			isa = PBXGroup;
+			children = (
+				F33BD1BAF3EF8AB322F0971D /* Config */,
+				0723933A48AD0E2CAC97DE0B /* Cravage */,
+				45617D84803B0BBCF46AFF89 /* CravageTests */,
+				21A94972E32630547E932898 /* Packages */,
+				8B42A0A41A30D80D84FE6152 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		8A4963B5BE4A809A4F823962 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				77FCC0B72CDFAE6326C6AF50 /* Info.plist */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		8B42A0A41A30D80D84FE6152 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				8C6194E42A838377EC9B5A6B /* Cravage.app */,
+				B448F5E83E17F6E781CD2002 /* CravageTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		C5F687C07ACE9826DC8F1842 /* Transport */ = {
+			isa = PBXGroup;
+			children = (
+				951EB584BC0D3D35547C6CF5 /* NetworkTransport.swift */,
+				B905F281DE24FC1367631CFA /* RoundTransport.swift */,
+			);
+			path = Transport;
+			sourceTree = "<group>";
+		};
+		DC77E3ADEAA42C7B0398BD1A /* Round */ = {
+			isa = PBXGroup;
+			children = (
+				E74A1EDE1710F69C8874B010 /* RoundClock.swift */,
+				BE0ED4CADDCFFD7E599A5606 /* RoundCoordinator.swift */,
+			);
+			path = Round;
+			sourceTree = "<group>";
+		};
+		F33BD1BAF3EF8AB322F0971D /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				AEEF7EDC2455B13692EDD44C /* Cravage.xcconfig */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		4D8189EA1155E5DDFAEEE0C3 /* Cravage */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8089618B1CE969C0BCED1855 /* Build configuration list for PBXNativeTarget "Cravage" */;
+			buildPhases = (
+				316A7821B10D1F3781156676 /* Sources */,
+				83C3D8B7FF33110858FEDD03 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Cravage;
+			packageProductDependencies = (
+				B10152A40DA4D36B9A520DE7 /* CravageCore */,
+			);
+			productName = Cravage;
+			productReference = 8C6194E42A838377EC9B5A6B /* Cravage.app */;
+			productType = "com.apple.product-type.application";
+		};
+		52D0E5E0DCFEE274BA718B59 /* CravageTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 93DFDA353AB40E6F6CA5C2B9 /* Build configuration list for PBXNativeTarget "CravageTests" */;
+			buildPhases = (
+				D60F6620929BD312088625C5 /* Sources */,
+				26202EE0AB73B7EA96F7F394 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				1066D4DAA186C14070401848 /* PBXTargetDependency */,
+			);
+			name = CravageTests;
+			packageProductDependencies = (
+				8E725B4E24F32822D251C859 /* CravageCore */,
+			);
+			productName = CravageTests;
+			productReference = B448F5E83E17F6E781CD2002 /* CravageTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		4155C16C1659EB3C80B589F5 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					4D8189EA1155E5DDFAEEE0C3 = {
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 9EA346D3EA4A6CF3F2988FC1 /* Build configuration list for PBXProject "Cravage" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 73A48791771A580E08F06BC9;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				5CFA8486CBDA78B2C141852A /* XCLocalSwiftPackageReference "CravageCore" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 8B42A0A41A30D80D84FE6152 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				4D8189EA1155E5DDFAEEE0C3 /* Cravage */,
+				52D0E5E0DCFEE274BA718B59 /* CravageTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		316A7821B10D1F3781156676 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				59974EF6E2E857EC41CA9645 /* CravageApp.swift in Sources */,
+				8F6857EFC3B3F51319921153 /* EntitlementProvider.swift in Sources */,
+				CA27AC80245C6ACE0BC5E998 /* NetworkTransport.swift in Sources */,
+				BCD0FECF8A89B9A8259BCCA8 /* RootView.swift in Sources */,
+				3EB296C46CBE1CB51601F83C /* RoundClock.swift in Sources */,
+				D9D118087056C8E51411EF10 /* RoundCoordinator.swift in Sources */,
+				15F7C3CC3341390D21B49FB4 /* RoundTransport.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D60F6620929BD312088625C5 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7833B30895D6FC7CDF4F1191 /* CoordinatorTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		1066D4DAA186C14070401848 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4D8189EA1155E5DDFAEEE0C3 /* Cravage */;
+			targetProxy = EC4D6863EF361623AADA83BF /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		411AFF08C15E4C56F22F21E3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = AEEF7EDC2455B13692EDD44C /* Cravage.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		6B2E172051E729D15730303F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.dylanliew.cravage.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Cravage.app/Cravage";
+			};
+			name = Debug;
+		};
+		75E9A8A6CF0742ED665737BB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = AEEF7EDC2455B13692EDD44C /* Cravage.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		A38DEF2ADECC0545A86F2C4E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Cravage/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.dylanliew.cravage;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		B19744DB06326743416BB0F6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Cravage/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.dylanliew.cravage;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		BC17A6BAC332D870E912ACA0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.dylanliew.cravage.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Cravage.app/Cravage";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		8089618B1CE969C0BCED1855 /* Build configuration list for PBXNativeTarget "Cravage" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A38DEF2ADECC0545A86F2C4E /* Debug */,
+				B19744DB06326743416BB0F6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		93DFDA353AB40E6F6CA5C2B9 /* Build configuration list for PBXNativeTarget "CravageTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6B2E172051E729D15730303F /* Debug */,
+				BC17A6BAC332D870E912ACA0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		9EA346D3EA4A6CF3F2988FC1 /* Build configuration list for PBXProject "Cravage" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				75E9A8A6CF0742ED665737BB /* Debug */,
+				411AFF08C15E4C56F22F21E3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		5CFA8486CBDA78B2C141852A /* XCLocalSwiftPackageReference "CravageCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = CravageCore;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		8E725B4E24F32822D251C859 /* CravageCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = CravageCore;
+		};
+		B10152A40DA4D36B9A520DE7 /* CravageCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = CravageCore;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 4155C16C1659EB3C80B589F5 /* Project object */;
+}

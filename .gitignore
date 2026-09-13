@@ -34,3 +34,6 @@ __pycache__/
 Thumbs.db
 .vscode/
 .idea/
+
+# Local signing settings (team ID) - never committed
+Config/Local.xcconfig
