@@ -23,6 +23,13 @@ final class FramingTests: XCTestCase {
         }
     }
 
+    final class Collector: @unchecked Sendable {
+        private let lock = NSLock()
+        private var stored: [Data] = []
+        func add(_ data: Data) { lock.lock(); stored.append(data); lock.unlock() }
+        var items: [Data] { lock.lock(); defer { lock.unlock() }; return stored }
+    }
+
     func testEncodeIsBigEndianLengthThenPayload() {
         let frame = Framing.encode(Data("hi".utf8))
         XCTAssertEqual(Array(frame), [0, 0, 0, 2, UInt8(ascii: "h"), UInt8(ascii: "i")])
@@ -63,17 +70,17 @@ final class FramingTests: XCTestCase {
         let good = Framing.encode(Data("first".utf8)) + Framing.encode(Data("second".utf8))
         let partial = Framing.encode(Data("never delivered".utf8)).prefix(9)
         let source = ScriptedSource(Array(good + partial))
-        var delivered: [Data] = []
-        let end = await Framing.pump(receiveExactly: source.receiveExactly) { delivered.append($0) }
-        XCTAssertEqual(delivered, [Data("first".utf8), Data("second".utf8)])
+        let delivered = Collector()
+        let end = await Framing.pump(receiveExactly: source.receiveExactly) { delivered.add($0) }
+        XCTAssertEqual(delivered.items, [Data("first".utf8), Data("second".utf8)])
         XCTAssertEqual(end, .failed, "a throwing stream ends the loop; the caller's cleanup then runs")
     }
 
     func testPumpStopsOnAProtocolViolationAndSaysSo() async {
         let source = ScriptedSource(Array(Framing.encode(Data("ok".utf8))) + [0xff, 0xff, 0xff, 0xff])
-        var delivered = 0
-        let end = await Framing.pump(receiveExactly: source.receiveExactly) { _ in delivered += 1 }
-        XCTAssertEqual(delivered, 1)
+        let delivered = Collector()
+        let end = await Framing.pump(receiveExactly: source.receiveExactly) { delivered.add($0) }
+        XCTAssertEqual(delivered.items.count, 1)
         XCTAssertEqual(end, .rejected(.oversized))
     }
 

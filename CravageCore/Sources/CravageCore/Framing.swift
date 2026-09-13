@@ -33,7 +33,7 @@ public enum Framing {
         return frame
     }
 
-    public static func readFrame(receiveExactly: (Int) async throws -> Data) async throws -> Data {
+    public static func readFrame(receiveExactly: @Sendable (Int) async throws -> Data) async throws -> Data {
         let header = try await receiveExactly(headerBytes)
         guard header.count == headerBytes else { throw FrameError.empty }
         let length = header.reduce(0) { ($0 << 8) | Int($1) }
@@ -43,7 +43,8 @@ public enum Framing {
     }
 
     /// Reads frames until the connection ends, handing each to `deliver`. Never throws.
-    public static func pump(receiveExactly: (Int) async throws -> Data, deliver: (Data) async -> Void) async -> ConnectionEnd {
+    public static func pump(receiveExactly: @escaping @Sendable (Int) async throws -> Data,
+                            deliver: @escaping @Sendable (Data) async -> Void) async -> ConnectionEnd {
         while true {
             if Task.isCancelled { return .cancelled }
             do {
