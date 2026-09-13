@@ -7,7 +7,8 @@ anything - without anyone revealing their own figure. Phones talk directly to ea
 Wi-Fi. Cravage has no server, no accounts, and saves no round data.
 
 *Status: design reviewed and specified, phone-to-phone transport proven on three iPhones, core
-library next. Not yet on the App Store.*
+library in progress (numeric domain, crypto, roster and round state machine written and tested;
+transcript next). No app yet. Not yet on the App Store.*
 
 The web demo, which shares the same maths: [dylanil/SMPC](https://github.com/dylanil/SMPC).
 

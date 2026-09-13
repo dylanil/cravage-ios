@@ -62,6 +62,8 @@ public struct VerifiedMessage: Hashable, Sendable {
     public let party: String
     public let sender: VerifyingKey
     public let content: String
+    /// The verified signature, kept for first-write-wins records and the transcript.
+    public let signature: Signature
 
     /// The session component of the canonical string: the session hex, or
     /// "<session hex>.<roster hash hex>" when the message is bound to a locked roster.
@@ -137,6 +139,6 @@ public struct Envelope: Codable, Hashable, Sendable {
         let canonical = CanonicalMessage(action: action, session: envelope.session, party: envelope.party, content: envelope.content)
         guard sender.verify(signature, message: canonical.string) else { throw MessageError.badSignature }
         return VerifiedMessage(session: session, rosterHash: rosterHash, action: action, party: envelope.party,
-                               sender: sender, content: envelope.content)
+                               sender: sender, content: envelope.content, signature: signature)
     }
 }
