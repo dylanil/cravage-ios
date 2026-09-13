@@ -1,0 +1,67 @@
+# Builds and tests on every push, on GitHub's free macOS runners (free and uncapped for public repos).
+# Two jobs: the pure-Swift CravageCore package (fast, no simulator), and the iOS app on a simulator
+# (skipped until Cravage.xcodeproj exists). No code signing and no TestFlight upload happen here.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  core:
+    name: CravageCore tests + Python transcript acceptance
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select the newest Xcode on the runner
+        run: |
+          XCODE="$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)"
+          echo "Using $XCODE"
+          sudo xcode-select -s "$XCODE"
+          swift --version
+      - name: Run CravageCore tests
+        run: swift test --package-path CravageCore
+        env:
+          CRAVAGE_TRANSCRIPT_OUT: ${{ runner.temp }}/golden.json
+      - name: Verify the Swift-produced transcript with the vendored Python verifier
+        run: |
+          FILE="$RUNNER_TEMP/golden.json"
+          if [ -f "$FILE" ]; then
+            python3 -m pip install --user --quiet cryptography
+            python3 Tools/verify_round.py --transcript "$FILE"
+          else
+            echo "No golden transcript yet (TranscriptGoldenTests not written) - skipping"
+          fi
+      - name: Check the vendored verifier still matches upstream SMPC
+        run: Tools/check_verifier_sync.sh
+
+  app:
+    name: iOS app build + tests (simulator)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select the newest Xcode on the runner
+        run: |
+          XCODE="$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)"
+          sudo xcode-select -s "$XCODE"
+      - name: Build and test on a simulator
+        run: |
+          if [ ! -d Cravage.xcodeproj ]; then
+            echo "No Xcode project yet - skipping app job"
+            exit 0
+          fi
+          SIM="$(xcrun simctl list devices available | grep -m1 -o 'iPhone [0-9A-Za-z ]*' | sed 's/ *$//')"
+          echo "Simulator: $SIM"
+          xcodebuild test \
+            -project Cravage.xcodeproj \
+            -scheme Cravage \
+            -destination "platform=iOS Simulator,name=$SIM" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            -resultBundlePath "$RUNNER_TEMP/result.xcresult"
+      - name: Upload the test result bundle on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcresult
+          path: ${{ runner.temp }}/result.xcresult
