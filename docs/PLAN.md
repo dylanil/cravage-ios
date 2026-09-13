@@ -321,10 +321,14 @@ out of release).
    Business Program enrolment once approved, trader status declaration. Repo skeleton (done
    2026-09-12). Support address. Three physical iPhones lined up for the spike.
 1. Council on the four questions -> spec (docs/SPEC.md) + Limitations text. No protocol code before.
+   (Done 2026-09-13: docs/review/council/2026-09-13-protocol-council.md, docs/SPEC.md; Limitations
+   text owner-approved and in README.)
 2. Transport spike (throwaway): Network framework iOS 26 interface, host/join/admit/forward on
    three physical phones, then as many as available towards 8. Measures discovery time, permission
    prompt behaviour, backgrounding and lock behaviour, disconnect signals. Records the link-security
    choice. Also verifies Xcode 26 / macOS 26 toolchain and the clean-checkout build on the Mac.
+   (Done 2026-09-13 on three iPhones: docs/review/2026-09-13-connectivity-spike-findings.md. Eight
+   phones deferred to step 10.)
 3. CravageCore with tests, all pins and negative tests green, Python v2 acceptance green in CI
    (verify_round.py v2 extension lands in the SMPC repo in the same step).
 4. Mockups on a design canvas: the whole journey sketched cheaply; the screens for the first

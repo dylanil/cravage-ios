@@ -6,7 +6,8 @@ Cravage lets a group of people in the same room find their average - salary, bon
 anything - without anyone revealing their own figure. Phones talk directly to each other over
 Wi-Fi. Cravage has no server, no accounts, and saves no round data.
 
-*Status: plan approved and reviewed, implementation starting. Not yet on the App Store.*
+*Status: design reviewed and specified, phone-to-phone transport proven on three iPhones, core
+library next. Not yet on the App Store.*
 
 The web demo, which shares the same maths: [dylanil/SMPC](https://github.com/dylanil/SMPC).
 

@@ -1,7 +1,9 @@
 # CLAUDE.md
 
 Guidance for Claude Code sessions in this repository. Read `docs/PLAN.md` (the approved plan, with
-every owner decision) before substantive work. Deeper guidance, loaded only when relevant:
+every owner decision) and `docs/SPEC.md` (the council-approved protocol spec; it governs
+`CravageCore` and adds to PLAN.md's technical design) before substantive work. The latest retro in
+`docs/retros/` carries the handoff. Deeper guidance, loaded only when relevant:
 `docs/review/2026-09-12-coding-guardrails.md` (acceptance discipline) and
 `docs/review/2026-09-12-plan-review.md` with its response (why the design is what it is).
 
@@ -31,7 +33,10 @@ files; when unsure which side a document falls on, ask before committing it.
   only file that imports Network), StoreKit 2, settings, transcript export, diagnostics.
 - `Tools/verify_round.py` - vendored from SMPC and **pinned to a commit and SHA-256** by
   `Tools/check_verifier_sync.sh`. Upstream changes are adopted deliberately, never silently.
-- `docs/` - GitHub Pages: privacy policy, support, Mac setup walkthrough, plan, review record.
+- `Spike/` - the throwaway three-phone Network framework spike (delivery step 2, closed; findings
+  in `docs/review/2026-09-13-connectivity-spike-findings.md`). Not the app. Delete it once
+  `Cravage/` has a real transport.
+- `docs/` - GitHub Pages: privacy policy, support, plan, spec, App Store paperwork, review record.
   Council archive: `docs/review/council/`. Retros: `docs/retros/` (public-safe: findings, gates and
   handoff only; private material stays in memory).
 
@@ -71,6 +76,11 @@ to share. The Limitations text is council-approved; change it only with the owne
 - No em dashes or en dashes anywhere. Use " - " or "-". Unicode math minus only in equations.
 - Commit and push to `origin main` after every meaningful change, one concern per commit. **No step
   is reported done until CI is green; a red run is fixed or reverted before anything else.**
+- More than one session pushes to `main`. `git fetch` and fast-forward before every commit; never
+  force.
+- Stage files by name, never `git add -A` or `git add .`. Xcode writes the owner's Apple team ID
+  into any `.xcodeproj` it signs for a phone; that change stays uncommitted (an ignored xcconfig is
+  the intended home for it).
 - Per slice: state outcome, non-goals and invariant; write the acceptance or regression test first;
   smallest change; run the real checks and keep the output; fresh read-only reviewer for protocol,
   entitlement and state-machine changes; never weaken a failing security test; finish with the
