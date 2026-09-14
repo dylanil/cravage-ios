@@ -34,6 +34,18 @@ jobs:
       - name: Public-safety lint (no owner-personal material in tracked files)
         run: Tools/check_public_safe.sh
 
+  mutations:
+    name: Mutation gate (every listed guard is caught by a test)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select the newest Xcode on the runner
+        run: |
+          XCODE="$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)"
+          sudo xcode-select -s "$XCODE"
+      - name: Break each guard in Tools/mutations.json and require a failing test
+        run: python3 Tools/check_mutations.py
+
   app:
     name: iOS app build + tests (simulator)
     runs-on: macos-latest
