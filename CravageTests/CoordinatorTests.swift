@@ -240,6 +240,33 @@ final class CoordinatorTests: XCTestCase {
         }
     }
 
+    /// Review finding 8: Leave while the store is answering must not open the room afterwards.
+    func testLeaveDuringTheStoreCheckOpensNothing() async {
+        let entitlement = FakeEntitlement(unlocked: true)
+        entitlement.holdAnswer = true
+        let star = FakeStar(phones: 1, entitlement: entitlement)
+        let host = star.coordinators[0]
+        let creating = Task { await host.createRoom(label: "Team", size: 5, nickname: "Sam") }
+        for _ in 0..<10 { await Task.yield() }
+        host.leave()
+        entitlement.gate?.resume()
+        await creating.value
+        XCTAssertEqual(host.engine.phase, .idle)
+        XCTAssertNil(star.transports[0].hosting)
+    }
+
+    /// Review finding 10: a listener that fails closes the room instead of leaving the host waiting.
+    func testAFailedListenerClosesTheRoom() async {
+        let star = FakeStar(phones: 1, entitlement: FakeEntitlement(unlocked: false))
+        let host = star.coordinators[0]
+        await host.createRoom(label: "L", size: 3, nickname: "Sam")
+        XCTAssertEqual(host.engine.phase, .lobby)
+        star.transports[0].onEvent?(.hostingFailed(.localNetworkDenied))
+        XCTAssertEqual(host.engine.phase, .idle)
+        XCTAssertEqual(host.problem, .localNetworkDenied)
+        XCTAssertNil(star.transports[0].hosting)
+    }
+
     func testLeavingStopsTheTransport() async {
         let star = FakeStar(phones: 1, entitlement: FakeEntitlement(unlocked: false))
         await star.coordinators[0].createRoom(label: "L", size: 3, nickname: "Sam")

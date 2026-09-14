@@ -23,6 +23,8 @@ final class RoundCoordinator {
     @ObservationIgnored private let clock: RoundClock
     @ObservationIgnored private let entitlement: EntitlementProvider
     @ObservationIgnored private var tickTask: Task<Void, Never>?
+    /// Bumped by Leave, so an answer from the store that arrives afterwards opens nothing.
+    @ObservationIgnored private var leaveCount = 0
 
     init(transport: RoundTransport, clock: RoundClock, entitlement: EntitlementProvider, deadlines: Deadlines = Deadlines()) {
         self.engine = RoundEngine(deadlines: deadlines)
@@ -39,8 +41,9 @@ final class RoundCoordinator {
         guard !isCreatingRoom, engine.phase == .idle else { return }
         isCreatingRoom = true
         defer { isCreatingRoom = false }
+        let leavesBefore = leaveCount
         let entitled = size > Roster.minimumSize ? await entitlement.hasVerifiedUnlock() : false
-        guard engine.phase == .idle else { return }
+        guard engine.phase == .idle, leaveCount == leavesBefore else { return }
         apply(.createRoom(label: label, maxSize: size, nickname: nickname, entitled: entitled))
         if engine.phase == .lobby, engine.role == .host {
             transport.startHosting(label: label, size: size, hostNickname: nickname)
@@ -78,6 +81,7 @@ final class RoundCoordinator {
     }
 
     func leave() {
+        leaveCount += 1
         apply(.leave)
         transport.stopAll()
         rooms = []
@@ -90,7 +94,14 @@ final class RoundCoordinator {
         case let .roomsChanged(adverts):
             rooms = adverts
             revision += 1
-        case let .discoveryFailed(problem), let .hostingFailed(problem):
+        case let .discoveryFailed(problem):
+            self.problem = problem
+            revision += 1
+        case let .hostingFailed(problem):
+            // Nobody can reach a room whose listener failed: close it rather than wait out the lobby.
+            if engine.role == .host, !engine.phase.isTerminalOrIdle {
+                leave()
+            }
             self.problem = problem
             revision += 1
         case let .peerConnected(peer):
@@ -126,6 +137,15 @@ final class RoundCoordinator {
             do { try await clock.sleep(untilMs: due) } catch { return }
             guard !Task.isCancelled else { return }
             self?.apply(.tick)
+        }
+    }
+}
+
+private extension Phase {
+    var isTerminalOrIdle: Bool {
+        switch self {
+        case .idle, .complete, .failed: return true
+        default: return false
         }
     }
 }

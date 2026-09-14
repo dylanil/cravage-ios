@@ -32,7 +32,6 @@ targets:
         CFBundleShortVersionString: "0.1"
         CFBundleVersion: "1"
         UILaunchScreen: {}
-        UIRequiresFullScreen: true
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
         NSLocalNetworkUsageDescription: "Cravage finds other phones nearby to run a round. It has no server and sends nothing over the internet."

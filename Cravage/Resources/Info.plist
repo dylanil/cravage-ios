@@ -28,8 +28,6 @@
 	<string>Cravage finds other phones nearby to run a round. It has no server and sends nothing over the internet.</string>
 	<key>UILaunchScreen</key>
 	<dict/>
-	<key>UIRequiresFullScreen</key>
-	<true/>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>

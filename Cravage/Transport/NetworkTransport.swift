@@ -6,42 +6,71 @@ import CravageCore
 // NetworkConnection over peer-to-peer-capable TCP, star topology: the host listens and advertises
 // `_cravage._tcp`; each joiner opens one connection to the host. Frames are CravageCore.Framing.
 //
-// Lessons carried from the connectivity spike (docs/review/2026-09-13-connectivity-spike-findings.md):
-// cleanup runs after the receive loop returns on every path, never inside the throwing block; a
-// connection's bookkeeping is removed only if it is still the one on record; sends to one connection
-// are serialised so envelopes cannot reorder.
+// Lessons carried from the connectivity spike (docs/review/2026-09-13-connectivity-spike-findings.md)
+// and the transport review of 9b6f3f2:
+// - cleanup runs after the receive loop returns on every path, and only for the link still on record;
+// - sends to one connection are ordered and bounded (Outbox); closing drains what is queued first;
+// - the listener's newConnectionLimit is a lifetime budget that Network decrements on every accept,
+//   so it is recomputed from the open connections after each accept and each close;
+// - inbound accepts are rate limited (SPEC section 2);
+// - a cancelled listener or browser from an earlier start never reports a failure.
 
 private let serviceType = "_cravage._tcp"
+private let drainMs: UInt64 = 1_500
 
 @MainActor
 final class NetworkTransport: RoundTransport {
     var onEvent: ((TransportEvent) -> Void)?
 
+    private var listener: NetworkListener<TCP>?
     private var listenerTask: Task<Void, Never>?
     private var browserTask: Task<Void, Never>?
+    /// Bumped by every start and stop, so work from an earlier start can recognise itself as stale.
+    private var startToken = 0
     private var endpoints: [String: Bonjour.Endpoint] = [:]
     private var nextPeer = 1
     private var links: [PeerID: Link] = [:]
+    private var limiter = AcceptLimiter()
+    private let origin = ContinuousClock.now
 
-    /// One open connection: its receive loop and its ordered outbox.
+    /// One open connection: its receive loop, its outbox, and whoever waits for it to close.
+    @MainActor
     private final class Link {
-        let connection: NetworkConnection<TCP>
-        let outbox: AsyncStream<Data>.Continuation
-        var tasks: [Task<Void, Never>] = []
-        init(connection: NetworkConnection<TCP>, outbox: AsyncStream<Data>.Continuation) {
-            self.connection = connection
-            self.outbox = outbox
+        let outbox: Outbox
+        var receiveTask: Task<Void, Never>?
+        private var closedWaiters: [CheckedContinuation<Void, Never>] = []
+        private var closing = false
+
+        init(outbox: Outbox) { self.outbox = outbox }
+
+        func waitUntilClosed() async {
+            if closing && closedWaiters.isEmpty && receiveTask == nil { return }
+            await withCheckedContinuation { closedWaiters.append($0) }
         }
-        func close() {
-            outbox.finish()
-            tasks.forEach { $0.cancel() }
+
+        /// Drain the outbox (bounded), then stop receiving and release anyone waiting.
+        func close(drain: Bool) async {
+            guard !closing else { return }
+            closing = true
+            await outbox.close(drainMs: drain ? drainMs : 0)
+            receiveTask?.cancel()
+            receiveTask = nil
+            let waiters = closedWaiters
+            closedWaiters = []
+            waiters.forEach { $0.resume() }
         }
+    }
+
+    private func nowMs() -> UInt64 {
+        let (seconds, attoseconds) = (ContinuousClock.now - origin).components
+        return UInt64(max(seconds, 0)) * 1_000 + UInt64(max(attoseconds, 0) / 1_000_000_000_000_000)
     }
 
     // MARK: - Host
 
     func startHosting(label: String, size: Int, hostNickname: String) {
         stopAll()
+        let token = startToken
         let txt = NWTXTRecord(["v": String(CravageCore.protocolVersion), "label": label, "size": String(size), "host": hostNickname])
         let listener: NetworkListener<TCP>
         do {
@@ -51,49 +80,62 @@ final class NetworkTransport: RoundTransport {
             onEvent?(.hostingFailed(Self.problem(from: error)))
             return
         }
-        listener.newConnectionLimit = RoundEngine.maxConnections
+        self.listener = listener
+        limiter = AcceptLimiter()
+        refreshConnectionBudget()
         listener.onStateUpdate { [weak self] _, state in
             Task { @MainActor in
-                switch state {
-                case let .failed(error), let .waiting(error):
-                    self?.onEvent?(.hostingFailed(Self.problem(from: error)))
-                default:
-                    break
-                }
+                guard let self, self.startToken == token, let problem = Self.fatalProblem(state) else { return }
+                self.onEvent?(.hostingFailed(problem))
             }
         }
         listenerTask = Task { [weak self] in
             do {
                 try await listener.run { connection in
-                    await self?.hostAccepted(connection)
+                    await self?.hostAccepted(connection, token: token)
                 }
             } catch {
-                self?.onEvent?(.hostingFailed(Self.problem(from: error)))
+                guard let self, self.startToken == token, !(error is CancellationError), !Task.isCancelled else { return }
+                self.onEvent?(.hostingFailed(Self.problem(from: error)))
             }
         }
     }
 
-    /// Runs for the life of one inbound connection; returning ends it.
-    private func hostAccepted(_ connection: NetworkConnection<TCP>) async {
+    /// Runs for the life of one inbound connection; returning lets Network close it.
+    private func hostAccepted(_ connection: NetworkConnection<TCP>, token: Int) async {
+        defer { refreshConnectionBudget() }
+        guard startToken == token, limiter.allow(nowMs: nowMs()) else { return }
         let peer = PeerID(nextPeer)
         nextPeer += 1
         let link = open(connection, as: peer)
         onEvent?(.peerConnected(peer))
-        await link.tasks.first?.value
+        await link.waitUntilClosed()
+    }
+
+    /// Network decrements newConnectionLimit on every accept and stops accepting at zero, so the
+    /// budget is reset from the number of connections actually open.
+    private func refreshConnectionBudget() {
+        let open = links.keys.filter { $0 != .host }.count
+        listener?.newConnectionLimit = max(0, RoundEngine.maxConnections - open)
     }
 
     // MARK: - Joiner
 
     func startBrowsing() {
         browserTask?.cancel()
+        startToken += 1
+        let token = startToken
         let parameters = NWParameters.tcp
         parameters.includePeerToPeer = true
         let browser = NetworkBrowser(for: .bonjour(serviceType, includeTxtRecord: true), using: parameters)
         browser.onStateUpdate { [weak self] _, state in
             Task { @MainActor in
+                guard let self, self.startToken == token else { return }
                 switch state {
-                case let .failed(error), let .waiting(error):
-                    self?.onEvent?(.discoveryFailed(Self.problem(from: error)))
+                case let .failed(error):
+                    self.onEvent?(.discoveryFailed(Self.problem(from: error)))
+                case let .waiting(error) where Self.problem(from: error) == .localNetworkDenied:
+                    self.onEvent?(.discoveryFailed(.localNetworkDenied))
                 default:
                     break
                 }
@@ -102,10 +144,12 @@ final class NetworkTransport: RoundTransport {
         browserTask = Task { [weak self] in
             do {
                 try await browser.run { found in
-                    self?.roomsFound(found)
+                    guard let self, self.startToken == token else { return }
+                    self.roomsFound(found)
                 }
             } catch {
-                self?.onEvent?(.discoveryFailed(Self.problem(from: error)))
+                guard let self, self.startToken == token, !(error is CancellationError), !Task.isCancelled else { return }
+                self.onEvent?(.discoveryFailed(Self.problem(from: error)))
             }
         }
     }
@@ -124,10 +168,11 @@ final class NetworkTransport: RoundTransport {
     }
 
     func connect(to roomID: String) {
-        links[.host]?.close()
-        links[.host] = nil
+        if let old = links.removeValue(forKey: .host) {
+            Task { await old.close(drain: false) }
+        }
         guard let endpoint = endpoints[roomID] else {
-            onEvent?(.peerDisconnected(.host))
+            Task { [weak self] in self?.onEvent?(.peerDisconnected(.host)) }
             return
         }
         let connection = NetworkConnection(to: endpoint, using: .parameters { TCP() }.peerToPeerIncluded(true))
@@ -137,54 +182,74 @@ final class NetworkTransport: RoundTransport {
     // MARK: - Shared
 
     private func open(_ connection: NetworkConnection<TCP>, as peer: PeerID) -> Link {
-        let (stream, continuation) = AsyncStream<Data>.makeStream(bufferingPolicy: .bufferingNewest(64))
-        let link = Link(connection: connection, outbox: continuation)
+        let outbox = Outbox(send: { data in
+            try await connection.send(try Framing.encode(data))
+        })
+        let link = Link(outbox: outbox)
         links[peer] = link
-        let receive = Task { [weak self] in
+        link.receiveTask = Task { [weak self] in
             _ = await Framing.pump(receiveExactly: { count in
                 try await connection.receive(exactly: count).content
             }, deliver: { [weak self] data in
-                await self?.delivered(data, from: peer)
+                await self?.delivered(data, from: peer, on: link)
             })
             // Cleanup after the loop, whatever ended it; only if this link is still the one on record.
-            guard let self, self.links[peer] === link else { return }
+            guard let self, self.links[peer] === link else {
+                await link.close(drain: false)
+                return
+            }
             self.links[peer] = nil
-            link.close()
+            await link.close(drain: false)
+            self.refreshConnectionBudget()
             self.onEvent?(.peerDisconnected(peer))
         }
-        let send = Task {
-            for await data in stream {
-                do { try await connection.send(Framing.encode(data)) } catch { break }
-            }
-        }
-        link.tasks = [receive, send]
         return link
     }
 
-    private func delivered(_ data: Data, from peer: PeerID) {
-        guard links[peer] != nil else { return }
+    private func delivered(_ data: Data, from peer: PeerID, on link: Link) {
+        guard links[peer] === link else { return }
         onEvent?(.received(data, from: peer))
     }
 
     func send(_ data: Data, to peer: PeerID) {
-        links[peer]?.outbox.yield(data)
+        guard let link = links[peer] else { return }
+        if !link.outbox.enqueue(data) {
+            // Full or failed: the peer is not reading. Drop the connection rather than lose envelopes quietly.
+            disconnect(peer)
+        }
     }
 
     func disconnect(_ peer: PeerID) {
         guard let link = links.removeValue(forKey: peer) else { return }
-        link.close()
-        // Reported on the next main-actor turn: the caller is still carrying out engine effects.
-        Task { [weak self] in self?.onEvent?(.peerDisconnected(peer)) }
+        Task { [weak self] in
+            await link.close(drain: true)
+            self?.refreshConnectionBudget()
+            self?.onEvent?(.peerDisconnected(peer))
+        }
     }
 
     func stopAll() {
+        startToken += 1
         listenerTask?.cancel()
         listenerTask = nil
+        listener = nil
         browserTask?.cancel()
         browserTask = nil
-        for link in links.values { link.close() }
+        let closing = Array(links.values)
         links = [:]
         endpoints = [:]
+        for link in closing { Task { await link.close(drain: true) } }
+    }
+
+    private static func fatalProblem(_ state: NetworkListener<TCP>.State) -> TransportProblem? {
+        switch state {
+        case let .failed(error):
+            return problem(from: error)
+        case let .waiting(error):
+            return problem(from: error) == .localNetworkDenied ? .localNetworkDenied : nil
+        default:
+            return nil
+        }
     }
 
     private static func problem(from error: Error) -> TransportProblem {
