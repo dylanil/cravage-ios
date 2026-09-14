@@ -88,5 +88,5 @@ signature over the result digest recomputed from the listed shares.
 Not covered, by construction: the roster hash itself cannot be recomputed (the file carries
 neither mask keys nor nicknames), so the file shows that everyone signed the same roster hash,
 not which mask keys or nicknames it contained.
-Implementations: `TranscriptVerifier` (Swift) and `Tools/check_transcript_v2.py` (Python, interim
-until the version-2 mode lands in the SMPC repository's `verify_round.py`).
+Implementations: `TranscriptVerifier` (Swift) and `verify_round.py --transcript` in the SMPC
+repository (vendored and pinned here as `Tools/verify_round.py`).

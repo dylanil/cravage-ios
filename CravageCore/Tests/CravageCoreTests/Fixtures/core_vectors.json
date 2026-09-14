@@ -49,9 +49,9 @@
    "average": "20",
    "claim": "This transcript shows that the listed keys signed the listed shares, that they sum and average as stated, and that every listed key signed agreement to this exact set of shares. It does not prove who the participants were, that separate devices or people were involved, or that any input was truthful.",
    "confirms": {
-    "A": "TVrqHb188ad0OxZLsqsqwoBclGAbgss0oVsMurWhJLQfC94TSL1JdTRM8fLhOeC3wcK+2W5ymJfzQiltJFB6Fg==",
-    "B": "1rBIOhkZOTpxeVkEmpjt11TaEfyVO2JD4tDo7EtX9RH4MYyQ5xU73w92mv1UEwQtgMj4IL4/igoX6sZXb6KIZg==",
-    "C": "bivL+AWlvFpwKdzq0re2hAAbo82xf8wxplWaaHqbS4Oz2peS/YgwyzG/dgDLgSXzmgWA6nGiES5w7kl3wAnM5Q=="
+    "A": "nepAT0Tnw3zyiC4rrPA0cuCauJDVtqvaDlZa9E9dst2gmqxMS7+gjEEpYYTAU0GLgA+RS/hc7MckAdDNXMW7wQ==",
+    "B": "+6koJbR9hlXMlLXM1vReoyQmoCbKu4xH+8TAIIy2pETL8jC5FB2grNi47vX+aFWsPrDgYSbSKop6IK8R2aFEuA==",
+    "C": "JT6gCfol12Q6VWqTVplnYdUsR7Xle1Bk5boLBIGJasrdJzZs2vkknCVtcYczcdBago++0CNIhnx5O+qP/T9gpA=="
    },
    "format": "cravage-transcript-2",
    "label": "Golden round",
@@ -62,16 +62,16 @@
     "C"
    ],
    "roomcode_confirms": {
-    "A": "jrbnHoKv4m25bggrTHHX1svS3oCAq+lNxi3bKQ75vtA3rNlj8V3P58wyrieFe+kG7yKVxyudWt0Hi19YdJz9WQ==",
-    "B": "h5o5NuyyxuEdFJX6FUB/NqfCw0pxR4jlSqOYcidVkhcSeH4FqRHbQuzLlnOTRs31njDiUj5IGEW4Ztfo6rTRUg==",
-    "C": "+BXhzDKhnRDnUSI4NnaBTbOBz1CzsrDgj5AhuCgA97sDwUb7Ds4G+JFOHkmjfwwdifDBuKBChn2W0fIrO/dz4w=="
+    "A": "U/eEZmmGciUEIkupKwCUDzjtckMv0xxSyfF8Jm8vzf7/2y3knSNuEZap+Wm4aZWvExVqaOw/SY3ayYDAZqyvWg==",
+    "B": "ePJHErZ2DR6tXZUQL1lE+V0EWQy14KKDimdcoKnYqtsO8Gar4+ATvrPyz2qq7ddHExtfsm2ym2w//kubcH0JOg==",
+    "C": "M76AfB44WCCMsHC0nE24EdQPnmLdncx0QkcCb0F72exl05m6MRZ8DipKBT09RJ1iWn8KrEY2del8KLc+Dl4L5g=="
    },
    "scale": "1000000",
    "session": "abababababababababababababababab.91672ce973090c241c4c8b1a6d66b62559c1f78548c02ce9a74e9bd9c4f07e6c",
    "share_sigs": {
-    "A": "IVFm3xxtmracaG2xkmMY8bmscAidD9D//ZFcRFbYBtyC3Ls+oS/gZnd/ZOEYUnZhHgYYyUgGapVIUERkUz8nNA==",
-    "B": "6MOm185Z1pUEQID8AYAB+UkoU4nEQWoXFwiDsa0UguZgsCxhuWnbEIKdWfL4MdElmsTXx9nQppwpy8JhHqvLug==",
-    "C": "ISBYHxgFl/m77OvSZJ/nz5qP5wGkYcpczIEg8q+RauGMuO0PfBrjSLyo1b+DMQxxWkZ3lz3cSTHAtnOFxlCxOQ=="
+    "A": "MpRyrz/Gaz+DNspGiZ7tfew/Y1fh+QF8MTlSOP6IzP0kworSor0yAQNWrkIbAqqHLOX92e6XaK0bwfnR/xdCQQ==",
+    "B": "c1Ak8HtYesGBiSDWbn3K2GUp+gkwg/WnHW3o0FIkF3RceNJwgqpa9BPHNeLVRKw7jQANdbi9BadCvYawhk0umw==",
+    "C": "9EwsYaGAyEj7No4SI5bxrNZu+7tULAvfSt+lBHTOl2tE2jABXmW+ezf06pPfiA4veo9Sxgeblc5vpbpo1dlxHA=="
    },
    "shares": {
     "A": "8101034332236751752",
@@ -3220,31 +3220,31 @@
   {
    "message": "share|ABCDEF|A|123",
    "private_scalar_hex": "1111111111111111111111111111111111111111111111111111111111111111",
-   "signature": "DlqC5pb584uEFU+mrj8YeSBwKUhwRmA00TP+zMLbA/rYpM2JCtb19O83dJMbcwFqdpzUGCLErcyisM4D5kYVGQ==",
+   "signature": "5kb+bODHxuuuOd9Ng0x5DoojXT0OExQ3BNUo2dqc5VoIJQsGoIlwjqdQ7wi5GCSMb9LkHGW21Xy31xqj3z/zSA==",
    "vk": "BAIX5hfwtkQ5KCePlpmeaaI6TywVK99tbN9m5bgCgtTtGUp968uXcS0t2jyoWqh2Wlb0X8dYWZZS8ol8ZTBuV5Q="
   },
   {
    "message": "pubkey|ROOM1|B|BASE64==",
    "private_scalar_hex": "2222222222222222222222222222222222222222222222222222222222222222",
-   "signature": "eXZZdyRVYCqIGt46b+Rd/EazFHFZqGnVS3vVoM3OE+z1wWBIU12G0myl5QnXyRZRbU9MO76rwQsDT4H2O5AZKA==",
+   "signature": "HhQio/Mp5qpwXdk0XS6ZNT6+VRAdhQEHXrhvnX9mIZg5CCHBD36fP7zccAcoX8DfgiK1/DiRUfhrsZufSz9Isw==",
    "vk": "BNZak5d8qj0bCBhS/1ennkZfFmBXcwS66tUF3TpIWJzzUBheiVNy32Ih6joTdVfkc/3bZ1XwW9UHw8Uz/OnJEoU="
   },
   {
    "message": "control|S|host|{\"a\":1}",
    "private_scalar_hex": "0000000000000000000000000000000000000000000000000000000000000003",
-   "signature": "wnvuDyhkY/oJzH35idhpqyQUbR4WWoa+IUipFh4LE0uru5qkrYiIrGJOjFVzje2knLAYxH6h1DgEAd1Xfyi1XQ==",
+   "signature": "Ji9e4IZN6kVpyy4waKH30dBUS0EWOLviMjaQnMpuT8AcIdJlpWTy0DwpZgCDiHYPqreHb4x4AlRwSEcKKDReog==",
    "vk": "BF7L5NGmMwpEyPfvlR1L8WXmxrch762phftBZhvG5/1shzRkDEmY/343SwbOGmSi7NgqsDY4T7g9mnmxJ6J9UDI="
   },
   {
    "message": "",
    "private_scalar_hex": "7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-   "signature": "Wc5wMPcv8qY3q6n/oZsE8i0C6NSh6WjbEU/kzWAlun2bzcMhVcxtQ7FN5alKFeoI7c0u6bPuOCRt+ZRwgbpozg==",
+   "signature": "9OZ+1udwNUKaQf+bLAiPyx7R5F33pJWGrIX13auraK2jkqgveH8PFzYqX/ZUY4VpK+noypRpZ35DKsiS9ex5zg==",
    "vk": "BMHRcmnkbjh6y+KZ7CzJzC2to/BeTPQS8q2Ua3AKomE67bd0TzcME6T0mVfVT/eYEZ0RH2kSnCTbX1+4QWKQnbs="
   },
   {
    "message": "unicode \u00a3 \u2603 test",
    "private_scalar_hex": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-   "signature": "JRsgQZbjLK7JpgkN9v8d6bpJO6iGzoCyDo6NmFt2QKytRD1tYgcb9s53EpLC23rV72XpOuNjJ826if0vWG7iNg==",
+   "signature": "dB+jRSYUru6sW0ZZ1v55ahPQjbhkJoOjKSTtHwLo7Wwu+2au1AJqLOfxWo6tXXFKkIewd4Q01htMd2f9hu/Kpg==",
    "vk": "BNjNEupcZ/L4oAwRJIk+3PpnVMTWzt5r4TvfIpXIEKl/paidLSo2DAyppNbHye1LKNPhmdZify5pbWicMQpbD0g="
   }
  ],

@@ -334,8 +334,7 @@ out of release).
    (CravageCore committed and CI green 2026-09-13, f9166a1 through ffe8155: FixedPoint,
    wraparound and crypto, roster and fingerprint, envelope, RoundEngine, transcript v2; fresh
    read-only review done and its fixes committed. Wire bytes in docs/WIRE.md. Python v2
-   acceptance runs in CI against the interim Tools/check_transcript_v2.py; the verify_round.py v2
-   mode in the SMPC repo is still approved, not yet implemented. Review findings M2 and L5 and the
+   acceptance runs in CI against the pinned verify_round.py (SMPC bf72734). Review findings M2 and L5 and the
    transcript label resolved by the owner and committed in 650b845: warn on every restart, ask
    before rejoining, room code signatures in the transcript. Warning copy still to approve.)
 4. Mockups on a design canvas: the whole journey sketched cheaply; the screens for the first
@@ -348,8 +347,7 @@ out of release).
    binding code.
    (Groundwork committed 2026-09-13, 9b6f3f2: XcodeGen project with the team ID in an ignored
    xcconfig, NetworkTransport, RoundCoordinator with entitlement at creation, coordinator tests on
-   the simulator. Screens wait for mockup approval; the device run needs the owner and three phones.
-   The verify_round.py v2 mode is open as dylanil/SMPC pull request 1, unmerged.)
+   the simulator. Screens wait for mockup approval; the device run needs the owner and three phones.)
 6. Restart, timeouts, failure and disagreement states; interruption acceptance tests (app switch,
    lock, call, host leaves, cancel, rapid restart, permission denied then granted, silent peer).
 7. Transcript v2 export; Python acceptance; temp-file cleanup.
@@ -383,6 +381,7 @@ out of release).
 - R3 App name availability: reserve immediately after enrolment.
 - R4 App Review with one device: video and note; practice mode fallback.
 - R5 iOS 26 minimum excludes some phones; accepted, revisit if TestFlight friends are blocked.
-- R6 verify_round.py v2 extension is a change to the SMPC repo (approved, not yet implemented).
+- R6 verify_round.py v2 extension: done 2026-09-14, SMPC pull request 1 merged (bf72734), re-vendored and
+  pinned; CI runs it against the Swift-produced transcript.
 - R8 Link security choice: resolved 2026-09-13, signatures-only, no link-layer TLS (docs/SPEC.md
   §2 has the reasoning).

@@ -108,9 +108,8 @@ to share. The Limitations text is council-approved; change it only with the owne
 
 - `swift test --package-path CravageCore` - contract pins, engine negative tests through the real
   message route, transcript golden test, message-domain fuzz.
-- `Tools/transcript_acceptance.sh <file>` - the Python v2 check accepts a Swift-produced transcript
-  and rejects a tampered one. Interim: it uses `Tools/check_transcript_v2.py` until the v2 mode in
-  SMPC (pull request 1) is merged, re-vendored and re-pinned. `Tools/check_verifier_sync.sh` - pin
+- `Tools/transcript_acceptance.sh <file>` - the pinned `verify_round.py --transcript` accepts a
+  Swift-produced v2 transcript and rejects a tampered one. `Tools/check_verifier_sync.sh` - pin
   intact.
 - `xcodebuild test -project Cravage.xcodeproj -scheme Cravage -destination 'platform=iOS Simulator,name=iPhone 17 Pro'
   CODE_SIGNING_ALLOWED=NO` on a simulator, plus a Release build; release has no test hooks.

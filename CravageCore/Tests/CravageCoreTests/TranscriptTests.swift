@@ -4,7 +4,7 @@ import Foundation
 
 /// Transcript v2 (docs/SPEC.md section 4; PLAN.md TranscriptGolden). Cross-language in both
 /// directions: a Python-signed golden transcript must verify here, and a Swift-produced one is
-/// written to CRAVAGE_TRANSCRIPT_OUT for CI to check with Tools/check_transcript_v2.py.
+/// written to CRAVAGE_TRANSCRIPT_OUT for CI to check with the pinned Tools/verify_round.py.
 final class TranscriptTests: XCTestCase {
 
     struct Golden: Decodable {

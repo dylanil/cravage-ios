@@ -217,9 +217,9 @@ def roster_vectors():
 
 def golden_transcript():
     """TranscriptGolden (PLAN.md Tests): deterministic keys, figures 10, 20, 30. Shares are pinned;
-    the Python-signed transcript must verify under Swift, and check_transcript_v2 must accept it."""
+    the Python-signed transcript must verify under Swift, and the pinned verifier must accept it."""
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-    import check_transcript_v2 as v2
+    import verify_round as vr  # the vendored, pinned SMPC verifier
 
     session = "ab" * 16
     label = "Golden round"
@@ -256,19 +256,19 @@ def golden_transcript():
     parties = [e["letter"] for e in ordered]
     total = to_signed(sum(int(shares[p]) for p in parties))
     assert total == 60_000_000
-    digest = v2.result_digest(session, roster_hash, [shares[p] for p in parties])
-    roomcode = v2.roomcode_digest(roster_hash, label, [e["vk"] for e in ordered])
+    digest = vr.v2_result_digest(session, roster_hash, [shares[p] for p in parties])
+    roomcode = vr.v2_roomcode_digest(roster_hash, label, [e["vk"] for e in ordered])
     transcript = {
-        "format": v2.FORMAT, "session": bound, "label": label, "parties": parties,
+        "format": vr.V2_FORMAT, "session": bound, "label": label, "parties": parties,
         "scale": "1000000", "modulus": str(TWO64),
         "shares": shares,
         "share_sigs": {e["letter"]: sign_raw(e["sk"], "share|%s|%s|%s" % (bound, e["letter"], shares[e["letter"]])) for e in ordered},
         "vks": {e["letter"]: b64(e["vk"]) for e in ordered},
         "confirms": {e["letter"]: sign_raw(e["sk"], "result_confirm|%s|%s|%s" % (bound, e["letter"], digest)) for e in ordered},
         "roomcode_confirms": {e["letter"]: sign_raw(e["sk"], "roomcode_confirm|%s|%s|%s" % (bound, e["letter"], roomcode)) for e in ordered},
-        "sum": str(total), "average": v2.format_average_fixed(total, len(parties)), "claim": v2.CLAIM,
+        "sum": str(total), "average": vr.format_average_fixed(total, len(parties)), "claim": vr.V2_CLAIM,
     }
-    assert v2.check_transcript_v2(transcript) == [], v2.check_transcript_v2(transcript)
+    assert vr.check_transcript_v2(transcript) == [], vr.check_transcript_v2(transcript)
     assert transcript["average"] == "20"
     return {
         "session": session, "label": label,

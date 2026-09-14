@@ -4,8 +4,8 @@
 # checksum: upstream changes are adopted deliberately (re-vendor, re-pin, review), never silently.
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
-EXPECTED_SHA256="879f990218b7174e4c884d6877b301bdd55d763e99a9e5cc380e7c2758b99736"
-PINNED_COMMIT="06b70614b0d4fae763e931f0eab5cc47d231ce0b"
+EXPECTED_SHA256="44bbb0aa1d56f21d2981f985bca3c5675b0598ccf48f424ec0c141f555c4ae4d"
+PINNED_COMMIT="bf7273489807ac72910e59e12896d9da2c0c162f"
 ACTUAL="$(shasum -a 256 "$HERE/verify_round.py" 2>/dev/null | cut -d' ' -f1 || sha256sum "$HERE/verify_round.py" | cut -d' ' -f1)"
 if [ "$ACTUAL" = "$EXPECTED_SHA256" ]; then
   echo "verify_round.py matches the pinned copy (SMPC commit $PINNED_COMMIT)"
