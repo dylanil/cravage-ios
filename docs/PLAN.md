@@ -340,8 +340,11 @@ out of release).
 4. Mockups on a design canvas: the whole journey sketched cheaply; the screens for the first
    end-to-end round polished and approved; remaining screens approved feature by feature as device
    behaviour becomes known.
-   (Drafted 2026-09-13, awaiting owner approval: design/mockups/, published as a private design
-   canvas. Nine polished first-round screens and sixteen sketched states; draft copy is marked.)
+   (Drafted 2026-09-13, design/mockups/, published as a private design canvas. 2026-09-14 the owner
+   chose look C "Paper" from three Home directions: editorial serif headings, hairline rules,
+   numbered steps and drawn illustrations over standard iOS controls; monospace still only for
+   figures and the room code. Nine first-round screens restyled in it; sixteen states sketched;
+   draft copy and the unlock price still marked.)
 5. Vertical slice on three phones: NetworkTransport + Home/New Room/Join/Lobby/Confirm/Enter
    Figure/Waiting/Result, real round end to end. Fresh read-only review of the protocol, parser and
    binding code.

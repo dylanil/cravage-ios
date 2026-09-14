@@ -3,10 +3,10 @@
 
     python3 design/mockups/gen_mockups.py design/mockups
 
-Direction "Warm glow" (2026-09-14, after owner feedback that v1 looked plain): iOS structure and
-controls, a warm cream ground with an orange glow, SF Pro Rounded for display type, drawn
-illustrations, soft-shadowed cards. Monospace stays reserved for figures and the room code.
-Two alternative Home looks sit on their own page for comparison.
+Look C "Paper", chosen by the owner on 2026-09-14 from three Home directions: editorial serif
+headings, hairline rules, numbered rhythm and drawn illustrations over standard iOS controls.
+Monospace stays reserved for figures and the room code. The two Home looks not chosen (Warm glow,
+Night) are kept on their own page for reference.
 """
 import json
 import os
@@ -257,182 +257,234 @@ STEPS = [
 
 screens = {}
 
-# 1 Home (warm glow)
-screens["Main"] = page(f"""
+# ---- Look C "Paper" (owner's choice, 2026-09-14): editorial serif display, hairline rules, -----
+# ---- numbered rhythm, drawn illustrations; monospace still only for figures and the room code --
+PAPER_SERIF = 'ui-serif, "New York", Georgia, "Times New Roman", serif'
+PAPER = "#FBF6EE"
+RULE = "#E6DACB"
+PAPER_CSS = BASE_CSS.replace(f"background: {CREAM};", f"background: {PAPER};") + f"\n.serif {{ font-family: {PAPER_SERIF}; }}\n"
+
+
+def ppage(body):
+    return page(body, css=PAPER_CSS, bg=PAPER)
+
+
+def kicker(text):
+    return f'<div style="font-size: 12px; font-weight: 700; letter-spacing: 2px; color: {ORANGE_TEXT};">{text}</div>'
+
+
+def headline(kick, title, size=34):
+    return f"""<div style="padding: 6px 26px 0; display: flex; flex-direction: column; gap: 8px;">
+  {kicker(kick)}
+  <div class="serif" style="font-size: {size}px; line-height: {size + 4}px; font-weight: 600; letter-spacing: -0.3px; text-wrap: pretty;">{title}</div>
+</div>"""
+
+
+def p_primary(label, disabled=False):
+    bg, fg = ("#E9DFD3", "#A3968A") if disabled else (ORANGE_DEEP, "#FFFFFF")
+    return f'<div style="height: 54px; border-radius: 14px; background: {bg}; color: {fg}; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 600;">{label}</div>'
+
+
+def p_secondary(label, color=INK):
+    return f'<div style="height: 54px; border-radius: 14px; border: 1.5px solid {INK}; box-sizing: border-box; color: {color}; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 600;">{label}</div>'
+
+
+def p_section(text):
+    return f'<div style="margin: 24px 26px 0; padding-top: 10px; border-top: 1.5px solid {INK}; font-size: 12px; font-weight: 700; letter-spacing: 1.6px; color: {INK};">{text}</div>'
+
+
+def p_foot(text):
+    return f'<div style="padding: 10px 26px 0; font-size: 14px; line-height: 20px; color: {MUTED}; text-wrap: pretty;">{text}</div>'
+
+
+def p_row(main, sub="", trailing="", leading="", last=False, serif=True):
+    border = "" if last else f"border-bottom: 1px solid {RULE};"
+    cls = ' class="serif"' if serif else ""
+    size = 20 if serif else 17
+    sub_html = f'<div style="font-size: 14px; color: {MUTED}; margin-top: 2px;">{sub}</div>' if sub else ""
+    lead = f'<div style="display: flex; align-items: center;">{leading}</div>' if leading else ""
+    return f"""<div style="min-height: 58px; margin: 0 26px; padding: 10px 0; box-sizing: border-box; display: flex; align-items: center; gap: 14px; {border}">
+  {lead}<div style="flex-grow: 1; display: flex; flex-direction: column;"><div{cls} style="font-size: {size}px;">{main}</div>{sub_html}</div>
+  <div style="display: flex; align-items: center; gap: 8px;">{trailing}</div>
+</div>"""
+
+
+def p_initial(name):
+    return f'<div class="serif" style="width: 36px; height: 36px; border-radius: 18px; border: 1.5px solid {INK}; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 600;">{name[0]}</div>'
+
+
+def p_letter(ch, filled=True):
+    style = f"background: {INK}; color: #FFFFFF;" if filled else f"border: 1.5px solid {RULE}; color: {MUTED};"
+    return f'<div class="mono" style="width: 32px; height: 32px; border-radius: 16px; box-sizing: border-box; {style} display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700;">{ch}</div>'
+
+
+def p_status(text, ok=True):
+    color = GREEN if ok else MUTED
+    icon = i_check(GREEN, 14) if ok else ""
+    return f'<div style="display: flex; align-items: center; gap: 4px; font-size: 14px; font-weight: 600; color: {color};">{icon}{text}</div>'
+
+
+def p_bottom(*items):
+    return f'<div style="margin-top: auto; padding: 12px 22px 34px; display: flex; flex-direction: column; gap: 10px;">{"".join(items)}</div>'
+
+
+def p_box(inner):
+    return f'<div style="margin: 14px 26px 0; padding: 14px 16px; border: 1px solid {RULE}; border-radius: 14px; background: #FFFDF9; display: flex; gap: 12px; align-items: flex-start;">{inner}</div>'
+
+
+paper_steps = "".join(
+    f'<div style="display: flex; gap: 16px; padding: 16px 0; border-top: 1px solid {RULE};">'
+    f'<div class="serif" style="font-size: 44px; line-height: 44px; color: {ORANGE_DEEP}; width: 34px;">{n}</div>'
+    f'<div style="display: flex; flex-direction: column; gap: 4px; flex-grow: 1;"><div class="serif" style="font-size: 21px; font-weight: 600;">{t}</div>'
+    f'<div style="font-size: 15px; line-height: 21px; color: {MUTED};">{b}</div></div>'
+    f'<div style="display: flex; align-items: center;">{ill(72, 56)}</div></div>'
+    for (n, t, b, _), ill in zip(STEPS, [ill_room, ill_code, ill_average]))
+
+# 1 Home
+screens["Main"] = ppage(f"""
 {nav(right=i_gear())}
-<div style="padding: 8px 24px 0; display: flex; align-items: center; gap: 14px;">
-  <div style="border-radius: 16px; box-shadow: 0 10px 24px rgba(217, 72, 15, 0.22);">{mark(60)}</div>
-  <div style="display: flex; flex-direction: column;">
-    <div class="display" style="font-size: 36px; font-weight: 800; letter-spacing: -0.5px; line-height: 40px;">Cravage</div>
-    <div style="font-size: 15px; color: {MUTED};">Group average, kept private</div>
-  </div>
+<div style="padding: 10px 26px 0; display: flex; flex-direction: column; gap: 8px;">
+  {kicker("CRAVAGE")}
+  <div class="serif" style="font-size: 38px; line-height: 42px; font-weight: 600; letter-spacing: -0.3px;">An average everyone trusts, a number nobody sees.</div>
 </div>
-<div style="padding: 22px 16px 0; display: flex; flex-direction: column; gap: 10px;">
-  {"".join(step(*s) for s in STEPS)}
-</div>
-{bottom(primary("New room"), secondary("Join a room"), note(f'You appear as <strong style="color: {INK};">Dee</strong>. <a>Change</a>', size=15))}
+<div style="padding: 18px 26px 0; display: flex; flex-direction: column;">{paper_steps}</div>
+{p_bottom(p_primary("New room"), p_secondary("Join a room"), note(f'You appear as <strong style="color: {INK};">Dee</strong>. <a>Change</a>', size=15))}
 """)
 
 # 2 New room
-seg = "".join(
-    f'<div class="mono" style="height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 3px; font-size: 16px; font-weight: 700; '
-    f'{"background: #FFFFFF; box-shadow: 0 2px 8px rgba(120,70,30,0.16); color: " + INK + ";" if n == 3 else "color: " + MUTED + ";"}">{n}{"" if n == 3 else i_lock()}</div>'
+sizes = "".join(
+    f'<div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">'
+    f'<div class="serif" style="width: 44px; height: 44px; border-radius: 22px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 600; '
+    f'{"background: " + INK + "; color: #FFFFFF;" if n == 3 else "border: 1.5px solid " + RULE + "; color: " + INK + ";"}">{n}</div>'
+    f'<div style="height: 12px;">{"" if n == 3 else i_lock()}</div></div>'
     for n in range(3, 9))
-screens["NewRoom"] = page(f"""
-{nav("New room", left="Cancel")}
-<div style="padding: 10px 24px 0; display: flex; align-items: center; gap: 12px;">
-  {badge(i_people(), size=44)}
-  <div class="display" style="font-size: 26px; font-weight: 800;">Set up the room</div>
+screens["NewRoom"] = ppage(f"""
+{nav("", left="Cancel")}
+{headline("NEW ROOM", "What are you averaging?")}
+<div style="margin: 18px 26px 0; padding-bottom: 8px; border-bottom: 2px solid {ORANGE_DEEP};">
+  <div class="serif" style="font-size: 26px;">Annual bonus</div>
 </div>
-{label("WHAT ARE YOU AVERAGING?")}
-{card(f'<div style="padding: 16px 18px; font-size: 19px; font-weight: 500;">Annual bonus</div>', pad="0")}
-{foot("Everyone in the room sees this. Nearby phones can see it too, with your nickname and the group size, but never anyone's number.")}
-{label("HOW MANY PEOPLE, INCLUDING YOU")}
-<div style="margin: 0 16px; padding: 4px; background: #F3E8DE; border-radius: 16px; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 3px;">{seg}</div>
-{foot("3 people is free. 4 to 8 people is a one-off unlock.")}
-{bottom(primary("Open room"))}
+{p_foot("Everyone in the room sees this. Nearby phones can see it too, with your nickname and the group size, but never anyone's number.")}
+{p_section("HOW MANY PEOPLE, INCLUDING YOU")}
+<div style="margin: 14px 26px 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px;">{sizes}</div>
+{p_foot("3 people is free. 4 to 8 people is a one-off unlock.")}
+{p_bottom(p_primary("Open room"))}
 """)
 
 # 3 Join
-screens["Join"] = page(f"""
-{nav("Join a room", left=i_back() + "Back")}
-<div style="padding: 10px 24px 4px;"><div class="display" style="font-size: 26px; font-weight: 800;">Rooms nearby</div></div>
-<div style="padding: 12px 16px 0; display: flex; flex-direction: column; gap: 10px;">
-  {card(row("Annual bonus", "Host: Sam &#183; 3 people", i_chev(), last=True, leading=avatar("Sam", ORANGE)), pad="4px 0", margin="0")}
-  {card(row("Team lunch budget", "Host: Morgan &#183; 5 people", i_chev(), last=True, leading=avatar("Morgan", CORAL)), pad="4px 0", margin="0")}
-</div>
-<div style="padding: 18px 24px 0; display: flex; align-items: center; gap: 10px; color: {MUTED}; font-size: 15px;">
-  <div style="width: 10px; height: 10px; border-radius: 5px; background: {ORANGE}; box-shadow: 0 0 0 6px rgba(242,107,33,0.18);"></div>
+screens["Join"] = ppage(f"""
+{nav("", left=i_back() + "Back")}
+{headline("JOIN A ROOM", "Rooms nearby")}
+<div style="margin-top: 18px; border-top: 1.5px solid {INK}; margin-left: 26px; margin-right: 26px;"></div>
+{p_row("Annual bonus", "Host: Sam &#183; 3 people", i_chev(MUTED))}
+{p_row("Team lunch budget", "Host: Morgan &#183; 5 people", i_chev(MUTED))}
+<div style="margin: 0 26px; padding: 16px 0; display: flex; align-items: center; gap: 10px; color: {MUTED}; font-size: 15px;">
+  <div style="width: 8px; height: 8px; border-radius: 4px; background: {ORANGE_DEEP}; box-shadow: 0 0 0 5px rgba(217,72,15,0.15);"></div>
   <span>Looking for more rooms&#8230;</span>
 </div>
-{foot("Rooms appear when you are close to the host's phone and the host has the app open.")}
-{bottom(note(f'Joining as <strong style="color: {INK};">Dee</strong>', size=15))}
+{p_foot("Rooms appear when you are close to the host's phone and the host has the app open.")}
+{p_bottom(note(f'Joining as <strong style="color: {INK};">Dee</strong>', size=15))}
 """)
 
 # 4 Lobby, host
-screens["LobbyHost"] = page(f"""
-{nav("Annual bonus", left="Close")}
-<div style="padding: 6px 24px 0; display: flex; align-items: baseline; gap: 8px;">
-  <div class="display" style="font-size: 44px; font-weight: 800;">2<span style="color: #D8C6B7;">/3</span></div>
-  <div style="font-size: 17px; color: {MUTED};">in the room</div>
-</div>
-{label("ASKING TO JOIN")}
-{card(row("Priya", "Only admit someone you can see in the room",
-    f'<div style="height: 36px; padding: 0 13px; border-radius: 18px; background: #F5ECE4; color: {INK}; display: flex; align-items: center; font-size: 15px;">Decline</div><div style="height: 36px; padding: 0 15px; border-radius: 18px; background: {ORANGE_DEEP}; color: #FFFFFF; display: flex; align-items: center; font-size: 15px; font-weight: 600;">Admit</div>',
-    last=True, leading=avatar("Priya", AMBER)), pad="4px 0")}
-{label("IN THE ROOM")}
-{card(row("Sam", "You, host", pill("This phone", MUTED, "#F5ECE4"), leading=avatar("Sam", ORANGE)) + row("Alex", last=True, trailing=pill(i_phone(GREEN, 14) + "Connected", GREEN, GREEN_TINT), leading=avatar("Alex", CORAL)), pad="4px 0")}
-{foot("1 other phone connected. Keep the app open on every phone until the round ends.")}
-{bottom(primary("Start round", disabled=True), note("Start needs 3 people. Admit Priya to begin."), deadline("Room closes in 14:12 if the round has not started"))}
+screens["LobbyHost"] = ppage(f"""
+{nav("", left="Close")}
+{headline("ANNUAL BONUS", "2 of 3 in the room", size=36)}
+{p_section("ASKING TO JOIN")}
+{p_row("Priya", "",
+    f'<div style="height: 36px; padding: 0 13px; border-radius: 18px; border: 1.5px solid {INK}; box-sizing: border-box; display: flex; align-items: center; font-size: 15px;">Decline</div><div style="height: 36px; padding: 0 15px; border-radius: 18px; background: {ORANGE_DEEP}; color: #FFFFFF; display: flex; align-items: center; font-size: 15px; font-weight: 600;">Admit</div>',
+    leading=p_initial("Priya"), last=True)}
+{p_foot("Only admit someone you can see in the room.")}
+{p_section("IN THE ROOM")}
+{p_row("Sam", "You, host", p_status("This phone", ok=False), leading=p_initial("Sam"))}
+{p_row("Alex", "", p_status("Connected"), leading=p_initial("Alex"), last=True)}
+{p_foot("1 other phone connected. Keep the app open on every phone until the round ends.")}
+{p_bottom(p_primary("Start round", disabled=True), note("Start needs 3 people. Admit Priya to begin."), deadline("Room closes in 14:12 if the round has not started"))}
 """)
 
 # 5 Lobby, joiner
-screens["LobbyJoiner"] = page(f"""
-{nav("Annual bonus", left="Leave")}
-<div style="padding: 30px 28px 0; display: flex; flex-direction: column; align-items: center; gap: 14px;">
-  <div style="width: 150px; height: 116px; border-radius: 28px; background: #FFFFFF; box-shadow: 0 12px 30px rgba(120,70,30,0.10); display: flex; align-items: center; justify-content: center;">{ill_room(128, 98)}</div>
-  <div class="display" style="font-size: 24px; font-weight: 800; text-align: center;">Waiting for Sam to start</div>
-  <div style="font-size: 16px; line-height: 22px; color: {MUTED}; text-align: center; text-wrap: pretty;">You are in. Keep the app open; the round begins when the room is full.</div>
+screens["LobbyJoiner"] = ppage(f"""
+{nav("", left="Leave")}
+<div style="padding: 10px 26px 0; display: flex; flex-direction: column; gap: 10px;">
+  <div style="display: flex; justify-content: flex-start;">{ill_room(150, 115)}</div>
+  {kicker("ANNUAL BONUS")}
+  <div class="serif" style="font-size: 32px; line-height: 36px; font-weight: 600;">Waiting for Sam to start</div>
+  <div style="font-size: 16px; line-height: 22px; color: {MUTED}; text-wrap: pretty;">You are in. Keep the app open; the round begins when the room is full.</div>
 </div>
-{label("IN THE ROOM")}
-{card(row("Sam", "Host", leading=avatar("Sam", ORANGE)) + row("Alex", leading=avatar("Alex", CORAL)) + row("Dee", "You", last=True, leading=avatar("Dee", AMBER)), pad="4px 0")}
-{bottom(deadline("Stops waiting in 14:05"))}
+{p_section("IN THE ROOM")}
+{p_row("Sam", "Host", leading=p_initial("Sam"))}
+{p_row("Alex", leading=p_initial("Alex"))}
+{p_row("Dee", "You", leading=p_initial("Dee"), last=True)}
+{p_bottom(deadline("Stops waiting in 14:05"))}
 """)
 
 # 6 Check the code
-screens["ConfirmCode"] = page(f"""
-{nav("Check the code")}
-<div style="padding: 2px 16px 0; display: flex; flex-direction: column; gap: 12px;">
-  <div style="padding: 20px 18px 18px; border-radius: 26px; background: linear-gradient(160deg, #2A211C 0%, #1B1512 100%); box-shadow: 0 16px 36px rgba(31,26,23,0.28); display: flex; flex-direction: column; align-items: center; gap: 8px;">
-    <div style="font-size: 14px; color: #D9C8BA;">Annual bonus &#183; 3 people</div>
-    <div class="mono" style="font-size: 44px; font-weight: 700; letter-spacing: 3px; color: #FFFFFF;">K7QM<span style="color: {ORANGE};">-</span>3XRD</div>
-    <div style="display: flex; gap: 6px; margin-top: 4px;">
-      <div style="width: 22px; height: 6px; border-radius: 3px; background: {AMBER};"></div>
-      <div style="width: 22px; height: 6px; border-radius: 3px; background: {ORANGE};"></div>
-      <div style="width: 22px; height: 6px; border-radius: 3px; background: {CORAL};"></div>
-    </div>
-  </div>
-  <div style="padding: 14px 16px; border-radius: 20px; background: {CARD}; box-shadow: 0 1px 0 {HAIR}, 0 10px 26px rgba(120,70,30,0.07); display: flex; gap: 12px; align-items: center;">
-    {badge(i_phone(ORANGE_TEXT, 20))}
-    <div style="font-size: 15px; line-height: 21px; text-wrap: pretty;">Look up and find the <strong>2 other phones</strong>. Each must show exactly this code. If you count more or fewer, or a code differs, stop.</div>
-  </div>
+screens["ConfirmCode"] = ppage(f"""
+{nav("")}
+{headline("CHECK THE CODE", "Is this on every phone?", size=28)}
+<div style="margin: 18px 26px 0; padding: 18px 0 16px; border-top: 2px solid {INK}; border-bottom: 2px solid {INK}; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+  <div style="font-size: 13px; color: {MUTED};">Annual bonus &#183; 3 people</div>
+  <div class="mono" style="font-size: 44px; font-weight: 700; letter-spacing: 3px;">K7QM<span style="color: {ORANGE_DEEP};">-</span>3XRD</div>
 </div>
-{label("CONFIRMED")}
-{card(row("Sam", "Host", pill(i_check(GREEN, 14) + "Checked", GREEN, GREEN_TINT), leading=letter("A")) + row("Alex", "", pill("Checking", MUTED, "#F5ECE4"), leading=letter("B", False)) + row("Dee", "You", "", last=True, leading=letter("C", False)), pad="4px 0")}
-{bottom(primary("I checked, the codes match"), plain("The codes don't match", RED), deadline("Stops waiting in 2:48"))}
+{p_box(f'<div style="padding-top: 2px;">{i_phone(ORANGE_TEXT, 20)}</div><div style="font-size: 15px; line-height: 21px; text-wrap: pretty;"><span class="serif" style="font-size: 17px; font-weight: 600;">Look up and count the other phones.</span> There should be exactly 2, each showing this code. If you count more or fewer, or a code differs, stop.</div>')}
+{p_section("CONFIRMED")}
+{p_row("Sam", "Host", p_status("Checked"), leading=p_letter("A"))}
+{p_row("Alex", "", p_status("Checking", ok=False), leading=p_letter("B", False))}
+{p_row("Dee", "You", "", leading=p_letter("C", False), last=True)}
+{p_bottom(p_primary("I checked, the codes match"), plain("The codes don't match", RED), deadline("Stops waiting in 2:48"))}
 """)
 
 # 7 Enter figure
-screens["EnterFigure"] = page(f"""
-{nav("Your figure", left="Leave")}
-<div style="padding: 4px 24px 0; display: flex; flex-direction: column; gap: 2px;">
-  <div style="font-size: 15px; color: {MUTED};">Annual bonus</div>
-  <div class="display" style="font-size: 26px; font-weight: 800;">What's your number?</div>
-</div>
-<div style="margin: 14px 16px 0; padding: 20px 18px; background: {CARD}; border-radius: 22px; border: 2px solid {ORANGE}; box-shadow: 0 0 0 6px rgba(242,107,33,0.12); display: flex; align-items: center; gap: 6px;">
+screens["EnterFigure"] = ppage(f"""
+{nav("", left="Leave")}
+{headline("ANNUAL BONUS", "Your figure")}
+<div style="margin: 18px 26px 0; padding-bottom: 6px; border-bottom: 2px solid {ORANGE_DEEP}; display: flex; align-items: center; gap: 6px;">
   <div class="mono" style="font-size: 42px; font-weight: 600;">42500.50</div>
-  <div style="width: 2px; height: 40px; background: {ORANGE};"></div>
+  <div style="width: 2px; height: 40px; background: {ORANGE_DEEP};"></div>
 </div>
-{foot("Up to 999,999,999,999.99. Use your decimal mark; leave out thousands separators.")}
-<div style="padding: 16px 16px 0; display: flex; flex-direction: column; gap: 10px;">
-  <div style="padding: 14px 16px; background: {CARD}; border-radius: 20px; box-shadow: 0 1px 0 {HAIR}, 0 10px 26px rgba(120,70,30,0.07); display: flex; gap: 12px; align-items: center;">
-    {badge(i_shield())}
-    <div style="font-size: 15px; line-height: 21px; text-wrap: pretty;">Your figure is processed on your phone; the app sends a masked share to the other participants.</div>
-  </div>
-  <div style="padding: 14px 16px; background: #FFF1E6; border-radius: 20px; display: flex; gap: 12px; align-items: center;">
-    {badge(i_people(), bg="#FFFFFF")}
-    <div style="font-size: 15px; line-height: 21px; color: #4A3B32; text-wrap: pretty;">With 3 people, the other 2 could work out your figure if they shared theirs with each other.</div>
-  </div>
-</div>
-{bottom(primary("Send masked share"), note("Once sent, your figure can't be changed for this round."))}
+{p_foot("Up to 999,999,999,999.99. Use your decimal mark; leave out thousands separators.")}
+{p_box(f'<div style="padding-top: 1px;">{i_shield()}</div><div style="font-size: 15px; line-height: 21px; text-wrap: pretty;">Your figure is processed on your phone; the app sends a masked share to the other participants.</div>')}
+{p_box(f'<div style="padding-top: 1px;">{i_people()}</div><div style="font-size: 15px; line-height: 21px; color: #4A3B32; text-wrap: pretty;">With 3 people, the other 2 could work out your figure if they shared theirs with each other.</div>')}
+{p_bottom(p_primary("Send masked share"), note("Once sent, your figure can't be changed for this round."))}
 """)
 
 # 8 Waiting
-ring = f"""<svg width="176" height="176" viewBox="0 0 176 176">
-  <circle cx="88" cy="88" r="74" fill="none" stroke="#F1E3D7" stroke-width="14"></circle>
-  <circle cx="88" cy="88" r="74" fill="none" stroke="url(#wr)" stroke-width="14" stroke-linecap="round" stroke-dasharray="310 465" transform="rotate(-90 88 88)"></circle>
-  <defs><linearGradient id="wr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="{AMBER}"></stop><stop offset="1" stop-color="{ORANGE_DEEP}"></stop></linearGradient></defs>
-</svg>"""
-screens["Waiting"] = page(f"""
-{nav("Annual bonus", left="Cancel")}
-<div style="padding: 18px 0 0; display: flex; justify-content: center;">
-  <div style="position: relative; width: 176px; height: 176px;">
-    {ring}
-    <div style="position: absolute; left: 0; top: 0; width: 176px; height: 176px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-      <div class="display" style="font-size: 48px; font-weight: 800; line-height: 52px;">2<span style="color: #D8C6B7;">/3</span></div>
-      <div style="font-size: 14px; color: {MUTED};">shares in</div>
-    </div>
-  </div>
-</div>
-{label("PHONES")}
-{card(row("Sam", "", pill(i_check(GREEN, 14) + "Sent", GREEN, GREEN_TINT), leading=letter("A")) + row("Alex", "Still entering a figure", pill("Waiting", MUTED, "#F5ECE4"), leading=letter("B", False)) + row("Dee", "You", pill(i_check(GREEN, 14) + "Sent", GREEN, GREEN_TINT), last=True, leading=letter("C")), pad="4px 0")}
-{bottom(deadline("Stops waiting in 4:21; the round then fails and the host can restart"))}
+segments = "".join(
+    f'<div style="height: 6px; border-radius: 3px; background: {c};"></div>' for c in [INK, "#E9DFD3", INK])
+screens["Waiting"] = ppage(f"""
+{nav("", left="Cancel")}
+{headline("ANNUAL BONUS", "2 of 3 masked shares in", size=32)}
+<div style="margin: 18px 26px 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px;">{segments}</div>
+{p_section("PHONES")}
+{p_row("Sam", "", p_status("Sent"), leading=p_letter("A"))}
+{p_row("Alex", "Still entering a figure", p_status("Waiting", ok=False), leading=p_letter("B", False))}
+{p_row("Dee", "You", p_status("Sent"), leading=p_letter("C"), last=True)}
+{p_bottom(deadline("Stops waiting in 4:21; the round then fails and the host can restart"))}
 """)
 
 # 9 Result
-screens["Result"] = page(f"""
-{nav("Result", right="Done")}
-<div style="padding: 6px 16px 0;">
-  <div style="padding: 26px 20px 22px; border-radius: 28px; background: linear-gradient(155deg, #F47A34 0%, {ORANGE_DEEP} 70%, #B83A0B 100%); box-shadow: 0 18px 40px rgba(217,72,15,0.32); color: #FFFFFF; display: flex; flex-direction: column; align-items: center; gap: 4px; position: relative; overflow: hidden;">
-    <div style="position: absolute; right: -40px; top: -40px; width: 160px; height: 160px; border-radius: 80px; background: rgba(255,255,255,0.10);"></div>
-    <div style="position: absolute; left: -30px; bottom: -50px; width: 140px; height: 140px; border-radius: 70px; background: rgba(255,255,255,0.08);"></div>
-    <div style="font-size: 16px; opacity: 0.9;">Average annual bonus</div>
-    <div class="mono" style="font-size: 50px; font-weight: 700; letter-spacing: -1px;">37,166.83</div>
-    <div style="font-size: 15px; opacity: 0.9;">from 3 people</div>
+screens["Result"] = ppage(f"""
+{nav("", right="Done")}
+<div style="padding: 6px 26px 0; display: flex; flex-direction: column; gap: 6px;">
+  {kicker("RESULT")}
+  <div class="serif" style="font-size: 26px; line-height: 30px; font-weight: 600;">Average annual bonus</div>
+  <div style="padding: 10px 0 12px; border-bottom: 3px solid {ORANGE_DEEP};">
+    <div class="mono" style="font-size: 52px; font-weight: 700; letter-spacing: -1px;">37,166.83</div>
   </div>
+  <div style="font-size: 15px; color: {MUTED};">from 3 people</div>
 </div>
-<div style="margin: 12px 16px 0; padding: 13px 16px; background: {GREEN_TINT}; border-radius: 18px; display: flex; gap: 12px; align-items: center;">
-  {badge(i_check(GREEN, 18), bg="#FFFFFF", size=34)}<div style="font-size: 15px; line-height: 21px; color: #1E5A32; text-wrap: pretty;">All 3 phones signed agreement to the same set of shares.</div>
+<div style="margin: 16px 26px 0; display: flex; gap: 10px; align-items: center;">
+  {i_check(GREEN, 18)}<div style="font-size: 15px; line-height: 21px; color: #1E5A32; text-wrap: pretty;">All 3 phones signed agreement to the same set of shares.</div>
 </div>
-<div style="padding: 12px 0 0;">
-{card(row("Show the shares", "", i_chev(), leading=badge(i_eye(), size=34)) + row("Share transcript", "A file anyone can check", i_chev(), last=True, leading=badge(i_file(), size=34)), pad="4px 0")}
-</div>
-{foot("The app can't check that the figures people entered were true. Round history is not saved.")}
-{bottom(secondary("Run again"), plain("Leave room"))}
+{p_section("THIS ROUND")}
+{p_row("Show the shares", "", i_chev(MUTED), serif=False)}
+{p_row("Share transcript", "A file anyone can check", i_chev(MUTED), serif=False, last=True)}
+{p_foot("The app can't check that the figures people entered were true. Round history is not saved.")}
+{p_bottom(p_secondary("Run again"), plain("Leave room"))}
 """)
 
 
-# ---- Alternative Home looks, for comparison ---------------------------------------------------
+# ---- Alternative Home looks the owner did not choose, kept for reference ---------------------------------------------------
 NIGHT_CSS = BASE_CSS.replace(f"background: {CREAM}; color: {INK};", "background: #120E0C; color: #F7EFE8;")
 screens["HomeNight"] = page(f"""
 <div style="height: 44px; margin-top: 54px; padding: 0 16px; display: flex; align-items: center; justify-content: flex-end;">{i_gear("#E9D8CA")}</div>
@@ -449,24 +501,21 @@ screens["HomeNight"] = page(f"""
 </div>
 """, css=NIGHT_CSS, bg="radial-gradient(90% 50% at 80% 0%, rgba(242,107,33,0.35) 0%, rgba(18,14,12,0) 60%), #120E0C")
 
-PAPER_SERIF = 'ui-serif, "New York", Georgia, "Times New Roman", serif'
-PAPER_CSS = BASE_CSS.replace(f"background: {CREAM};", "background: #FBF6EE;") + f"\n.serif {{ font-family: {PAPER_SERIF}; }}\n"
-paper_steps = "".join(
-    f'<div style="display: flex; gap: 16px; padding: 16px 0; border-top: 1px solid #E6DACB;">'
-    f'<div class="serif" style="font-size: 44px; line-height: 44px; color: {ORANGE_DEEP}; width: 34px;">{n}</div>'
-    f'<div style="display: flex; flex-direction: column; gap: 4px; flex-grow: 1;"><div class="serif" style="font-size: 21px; font-weight: 600;">{t}</div>'
-    f'<div style="font-size: 15px; line-height: 21px; color: {MUTED};">{b}</div></div>'
-    f'<div style="display: flex; align-items: center;">{ill(72, 56)}</div></div>'
-    for (n, t, b, _), ill in zip(STEPS, [ill_room, ill_code, ill_average]))
-screens["HomePaper"] = page(f"""
+# Alternative Home look A: Warm glow
+screens["HomeWarm"] = page(f"""
 {nav(right=i_gear())}
-<div style="padding: 10px 26px 0; display: flex; flex-direction: column; gap: 8px;">
-  <div style="font-size: 13px; font-weight: 700; letter-spacing: 2px; color: {ORANGE_TEXT};">CRAVAGE</div>
-  <div class="serif" style="font-size: 38px; line-height: 42px; font-weight: 600; letter-spacing: -0.3px;">An average everyone trusts, a number nobody sees.</div>
+<div style="padding: 8px 24px 0; display: flex; align-items: center; gap: 14px;">
+  <div style="border-radius: 16px; box-shadow: 0 10px 24px rgba(217, 72, 15, 0.22);">{mark(60)}</div>
+  <div style="display: flex; flex-direction: column;">
+    <div class="display" style="font-size: 36px; font-weight: 800; letter-spacing: -0.5px; line-height: 40px;">Cravage</div>
+    <div style="font-size: 15px; color: {MUTED};">Group average, kept private</div>
+  </div>
 </div>
-<div style="padding: 18px 26px 0; display: flex; flex-direction: column;">{paper_steps}</div>
-{bottom(primary("New room"), secondary("Join a room"))}
-""", css=PAPER_CSS, bg="#FBF6EE")
+<div style="padding: 22px 16px 0; display: flex; flex-direction: column; gap: 10px;">
+  {"".join(step(*s) for s in STEPS)}
+</div>
+{bottom(primary("New room"), secondary("Join a room"), note(f'You appear as <strong style="color: {INK};">Dee</strong>. <a>Change</a>', size=15))}
+""")
 
 
 # ---- Sketches: other states, deliberately low-fi ----------------------------------------------
@@ -546,22 +595,18 @@ for i, (name, title) in enumerate(polished):
 for i, (name, title, *_rest) in enumerate(sketches):
     artboards.append({"file": name + ".dc.html", "title": title, "x": (i % 6) * 470, "y": (i // 6) * 1000,
                       "w": 390, "h": 844, "page": "page-2"})
-for i, (name, title) in enumerate([("Main", None), ("HomeNight", "Home look B: Night"), ("HomePaper", "Home look C: Paper")]):
-    if name == "Main":
-        continue
-    artboards.append({"file": name + ".dc.html", "title": title, "x": (i - 1) * 470, "y": 0, "w": 390, "h": 844, "page": "page-3"})
+for i, (name, title) in enumerate([("HomeWarm", "Home look A: Warm glow"), ("HomeNight", "Home look B: Night")]):
+    artboards.append({"file": name + ".dc.html", "title": title, "x": i * 470, "y": 0, "w": 390, "h": 844, "page": "page-3"})
 
 canvas = {
     "pages": [{"id": "page-1", "name": "First round (polished)"}, {"id": "page-2", "name": "Other states (sketches)"},
-              {"id": "page-3", "name": "Home: other looks"}],
+              {"id": "page-3", "name": "Looks not chosen"}],
     "artboards": artboards,
     "annotations": [
         {"id": "brief-round", "page": "page-1", "x": 1880, "y": 1000, "w": 420,
-         "text": "Look A, \"Warm glow\" (2026-09-14): iOS structure and controls, a warm cream ground with an orange glow, rounded display type, drawn illustrations, soft cards.\n\nFlow: Home > New room (host) or Join > Lobby > Check the code > Enter figure > Waiting > Result.\n\nMonospace only for figures and the room code. Light mode shown; dark mode follows the system."},
-        {"id": "open-questions", "page": "page-1", "x": 1880, "y": 1440, "w": 420,
-         "text": "Worth checking:\n- Home now carries the three-step explainer with illustrations.\n- The code screen tells you how many other phones to look for. That count is what catches a host who invents extra participants.\n- The unlock price stays a placeholder."},
-        {"id": "brief-looks", "page": "page-3", "x": 0, "y": -170, "w": 860,
-         "text": "Two other directions for Home only, to compare with look A on the first page. B \"Night\": dark, glowing orange, bolder headline. C \"Paper\": editorial serif type and numbered steps. Pick one and the rest of the screens follow it."},
+         "text": "Look C, \"Paper\", chosen by the owner on 2026-09-14: editorial serif headings, hairline rules, numbered steps and drawn illustrations over standard iOS controls. Monospace only for figures and the room code.\n\nFlow: Home > New room (host) or Join > Lobby > Check the code > Enter figure > Waiting > Result.\n\nLight mode shown; dark mode follows the system."},
+        {"id": "brief-looks", "page": "page-3", "x": 0, "y": -150, "w": 860,
+         "text": "The two Home looks not chosen, kept for reference: A \"Warm glow\" and B \"Night\"."},
         {"id": "brief-states", "page": "page-2", "x": 0, "y": -150, "w": 620,
          "text": "Every other state, sketched cheaply. Approve these feature by feature as device behaviour becomes known (PLAN step 4). Tags mark new owner decisions and copy not yet approved."},
     ],

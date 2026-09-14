@@ -13,12 +13,11 @@ Three pages:
 - **Other states (sketches):** nothing nearby, requesting, declined, full, old app, local-network
   permission off, connection lost, timeout, restart offer, restart warning, partial agreement,
   disagreement, disputed, paywall, settings, limitations.
-- **Home: other looks:** two alternative directions for Home (Night, Paper) to compare with the
-  warm-glow look used on the first page.
+- **Looks not chosen:** the Warm glow and Night Home directions, kept for reference.
 
 Visual rules come from `docs/PLAN.md` (standard iOS controls, orange accent, monospace only for
-figures and the room code). Look A, "Warm glow", adds a cream ground with an orange glow, rounded
-display type and drawn illustrations, after the owner found the first draft too plain. Copy follows CLAUDE.md's honesty rules and the
+figures and the room code). The owner chose look C, "Paper" (2026-09-14): editorial serif
+headings, hairline rules, numbered steps and drawn illustrations. The first draft was judged too
+plain; Warm glow and Night were the other two directions. Copy follows CLAUDE.md's honesty rules and the
 SPEC 7 copy rule. Strings marked "Copy not yet approved" or "Draft copy" need the owner's sign-off;
-the unlock price is a placeholder. Status: drafted and awaiting owner review; not approved and not
-implemented.
+the unlock price is a placeholder. Status: look chosen; screens not yet built in the app.
