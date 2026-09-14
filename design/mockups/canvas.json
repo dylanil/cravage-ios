@@ -7,6 +7,10 @@
     {
       "id": "page-2",
       "name": "Other states (sketches)"
+    },
+    {
+      "id": "page-3",
+      "name": "Home: other looks"
     }
   ],
   "artboards": [
@@ -234,6 +238,24 @@
       "w": 390,
       "h": 844,
       "page": "page-2"
+    },
+    {
+      "file": "HomeNight.dc.html",
+      "title": "Home look B: Night",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "page": "page-3"
+    },
+    {
+      "file": "HomePaper.dc.html",
+      "title": "Home look C: Paper",
+      "x": 470,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "page": "page-3"
     }
   ],
   "annotations": [
@@ -243,15 +265,23 @@
       "x": 1880,
       "y": 1000,
       "w": 420,
-      "text": "First end-to-end round, for approval.\n\nFollows PLAN.md Visual: system font, standard iOS controls, orange accent, monospace only for figures and the room code.\n\nFlow: Home > New room (host) or Join > Lobby > Check the code > Enter figure > Waiting > Result.\n\nLight mode shown; dark mode follows the system.\n\nFilled-button orange is darkened from system orange so white text stays readable."
+      "text": "Look A, \"Warm glow\" (2026-09-14): iOS structure and controls, a warm cream ground with an orange glow, rounded display type, drawn illustrations, soft cards.\n\nFlow: Home > New room (host) or Join > Lobby > Check the code > Enter figure > Waiting > Result.\n\nMonospace only for figures and the room code. Light mode shown; dark mode follows the system."
     },
     {
       "id": "open-questions",
       "page": "page-1",
       "x": 1880,
-      "y": 1420,
+      "y": 1440,
       "w": 420,
-      "text": "Worth checking:\n- The Home three-step explainer: keep or cut?\n- Room code shown with a count of other phones (SPEC 12).\n- Collusion note sits on the figure screen (PLAN).\n- The unlock price is left as a placeholder."
+      "text": "Worth checking:\n- Home now carries the three-step explainer with illustrations.\n- The code screen tells you how many other phones to look for. That count is what catches a host who invents extra participants.\n- The unlock price stays a placeholder."
+    },
+    {
+      "id": "brief-looks",
+      "page": "page-3",
+      "x": 0,
+      "y": -170,
+      "w": 860,
+      "text": "Two other directions for Home only, to compare with look A on the first page. B \"Night\": dark, glowing orange, bolder headline. C \"Paper\": editorial serif type and numbered steps. Pick one and the rest of the screens follow it."
     },
     {
       "id": "brief-states",

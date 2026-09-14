@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
-"""Writes the Cravage step-4 mockup artboards (.dc.html) and canvas.json into design/mockups/."""
+"""Writes the Cravage step-4 mockup artboards (.dc.html) and canvas.json.
+
+    python3 design/mockups/gen_mockups.py design/mockups
+
+Direction "Warm glow" (2026-09-14, after owner feedback that v1 looked plain): iOS structure and
+controls, a warm cream ground with an orange glow, SF Pro Rounded for display type, drawn
+illustrations, soft-shadowed cards. Monospace stays reserved for figures and the room code.
+Two alternative Home looks sit on their own page for comparison.
+"""
 import json
 import os
 import sys
@@ -7,10 +15,31 @@ import sys
 OUT = sys.argv[1]
 os.makedirs(OUT, exist_ok=True)
 
-BASE_CSS = """
-body { margin: 0; background: #F2F2F7; color: #1C1C1E; font-family: -apple-system, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
-a { color: #C2410C; text-decoration: none; } a:hover { color: #9A3412; }
-.mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; }
+# ---- Palette (warm glow) ---------------------------------------------------------------------
+CREAM = "#FFF8F1"
+INK = "#1F1A17"
+MUTED = "#6F625A"
+HAIR = "#EFE2D6"
+CARD = "#FFFFFF"
+ORANGE = "#F26B21"
+ORANGE_DEEP = "#D9480F"
+ORANGE_TEXT = "#C2410C"
+CORAL = "#F58B6B"
+AMBER = "#F6B24A"
+TINT = "#FFEBDD"
+GREEN = "#2F8F4E"
+GREEN_TINT = "#E6F4EA"
+RED = "#C62828"
+
+DISPLAY = 'ui-rounded, "SF Pro Rounded", -apple-system, "Helvetica Neue", Arial, sans-serif'
+TEXT = '-apple-system, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif'
+MONO = 'ui-monospace, "SF Mono", Menlo, Consolas, monospace'
+
+BASE_CSS = f"""
+body {{ margin: 0; background: {CREAM}; color: {INK}; font-family: {TEXT}; -webkit-font-smoothing: antialiased; }}
+a {{ color: {ORANGE_TEXT}; text-decoration: none; }} a:hover {{ color: #9A3412; }}
+.mono {{ font-family: {MONO}; font-variant-numeric: tabular-nums; }}
+.display {{ font-family: {DISPLAY}; }}
 """
 
 SKETCH_CSS = """
@@ -19,32 +48,10 @@ a { color: #C2410C; } a:hover { color: #9A3412; }
 .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; }
 """
 
-ORANGE = "#D9480F"      # filled buttons: white text passes AA for 17pt semibold
-ORANGE_TEXT = "#C2410C"
-TINT = "#FFF1E8"
-SECONDARY = "#6C6C70"
-SEPARATOR = "#D1D1D6"
-GREEN = "#1F8A3B"
-RED = "#C62828"
-
-ICON = {
-    "gear": '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="%s" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg>',
-    "chev": '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="%s" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"></polyline></svg>',
-    "back": '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="%s" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 6 9 12 15 18"></polyline></svg>',
-    "check": '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="%s" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12.5 10 17 19 7"></polyline></svg>',
-    "clock": '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%s" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><polyline points="12 7 12 12 15 14"></polyline></svg>',
-    "lock": '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="%s" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>',
-    "phone": '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="%s" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.5"></rect><line x1="11" y1="18.5" x2="13" y2="18.5"></line></svg>',
-    "warn": '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="%s" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>',
-    "spin": '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%s" stroke-width="2.4" stroke-linecap="round"><path d="M12 3a9 9 0 1 0 9 9"></path></svg>',
-}
+GLOW = f"radial-gradient(120% 60% at 50% -10%, #FFD2B0 0%, #FFE6D3 35%, {CREAM} 70%)"
 
 
-def icon(name, color):
-    return ICON[name] % color
-
-
-def page(body, css=BASE_CSS, bg="#F2F2F7"):
+def page(body, css=BASE_CSS, bg=f"{GLOW}, {CREAM}"):
     return f"""<!doctype html>
 <html>
 <head>
@@ -68,207 +75,398 @@ class Component extends DCLogic {{}}
 """
 
 
-def nav(title="", left="", right="", large=None):
-    left_html = f'<div style="display: flex; align-items: center; gap: 2px; color: {ORANGE_TEXT}; font-size: 17px;">{left}</div>'
-    right_html = f'<div style="display: flex; align-items: center; justify-content: flex-end; color: {ORANGE_TEXT}; font-size: 17px; font-weight: 600;">{right}</div>'
-    bar = f"""<div style="height: 44px; margin-top: 54px; padding: 0 16px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: center;">
-  {left_html}
+# ---- Icons (stroke, 24 grid) -----------------------------------------------------------------
+def svg(inner, size=20, color=INK, width=1.9):
+    return (f'<svg width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="{color}" '
+            f'stroke-width="{width}" stroke-linecap="round" stroke-linejoin="round">{inner}</svg>')
+
+
+def i_gear(c=INK): return svg('<circle cx="12" cy="12" r="3.2"></circle><path d="M12 2.8v2.4M12 18.8v2.4M4.2 12H2.8M21.2 12h-1.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7"></path>', 22, c)
+def i_back(c=ORANGE_TEXT): return svg('<polyline points="15 5 8 12 15 19"></polyline>', 22, c, 2.4)
+def i_chev(c="#C9B8AA"): return svg('<polyline points="9 6 15 12 9 18"></polyline>', 16, c, 2.4)
+def i_check(c=GREEN, s=16): return svg('<polyline points="5 12.5 10 17 19 7"></polyline>', s, c, 2.8)
+def i_clock(c=MUTED): return svg('<circle cx="12" cy="12" r="9"></circle><polyline points="12 7 12 12 15.5 14"></polyline>', 15, c, 2)
+def i_lock(c=MUTED): return svg('<rect x="5" y="11" width="14" height="10" rx="2.5"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path>', 12, c, 2.4)
+def i_phone(c=ORANGE_TEXT, s=18): return svg('<rect x="7" y="2.5" width="10" height="19" rx="2.6"></rect><line x1="11" y1="18.3" x2="13" y2="18.3"></line>', s, c, 2)
+def i_shield(c=ORANGE_TEXT): return svg('<path d="M12 3 5 6v5c0 4.5 3 8.3 7 10 4-1.7 7-5.5 7-10V6z"></path><polyline points="9 12 11.2 14.2 15.5 9.8"></polyline>', 20, c, 2)
+def i_people(c=ORANGE_TEXT): return svg('<circle cx="9" cy="8" r="3"></circle><path d="M3.5 19c.8-3 3-4.6 5.5-4.6s4.7 1.6 5.5 4.6"></path><circle cx="17" cy="9" r="2.4"></circle><path d="M15.5 14.6c2.3.1 4.1 1.6 4.8 4.1"></path>', 20, c, 2)
+def i_file(c=ORANGE_TEXT): return svg('<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><polyline points="14 3 14 8 19 8"></polyline><line x1="9" y1="13" x2="15" y2="13"></line><line x1="9" y1="17" x2="13" y2="17"></line>', 20, c, 2)
+def i_eye(c=ORANGE_TEXT): return svg('<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"></path><circle cx="12" cy="12" r="2.8"></circle>', 20, c, 2)
+
+
+# ---- Brand mark and illustrations ------------------------------------------------------------
+def mark(size=64):
+    """Three overlapping discs whose shared centre is the average."""
+    return f"""<svg width="{size}" height="{size}" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="mk1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="{AMBER}"></stop><stop offset="1" stop-color="{ORANGE}"></stop></linearGradient>
+    <linearGradient id="mk2" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="{CORAL}"></stop><stop offset="1" stop-color="{ORANGE_DEEP}"></stop></linearGradient>
+  </defs>
+  <rect x="0" y="0" width="64" height="64" rx="16" fill="#FFFFFF"></rect>
+  <circle cx="25" cy="26" r="14" fill="url(#mk1)" opacity="0.92"></circle>
+  <circle cx="39" cy="26" r="14" fill="url(#mk2)" opacity="0.85"></circle>
+  <circle cx="32" cy="38" r="14" fill="{ORANGE}" opacity="0.78"></circle>
+  <circle cx="32" cy="30.5" r="4.2" fill="#FFFFFF"></circle>
+</svg>"""
+
+
+def ill_room(w=104, h=80):
+    """Step 1: three phones around a table."""
+    def phone(x, y, rot, tone):
+        return (f'<g transform="translate({x} {y}) rotate({rot})">'
+                f'<rect x="-9" y="-15" width="18" height="30" rx="4.5" fill="#FFFFFF" stroke="{INK}" stroke-width="1.6"></rect>'
+                f'<rect x="-6" y="-11" width="12" height="17" rx="2" fill="{tone}"></rect>'
+                f'<line x1="-2.5" y1="10.5" x2="2.5" y2="10.5" stroke="{INK}" stroke-width="1.4" stroke-linecap="round"></line></g>')
+    return f"""<svg width="{w}" height="{h}" viewBox="0 0 104 80">
+  <ellipse cx="52" cy="50" rx="40" ry="18" fill="{TINT}"></ellipse>
+  <ellipse cx="52" cy="48" rx="40" ry="18" fill="none" stroke="#F3C9AA" stroke-width="1.4"></ellipse>
+  {phone(22, 42, -16, AMBER)}
+  {phone(52, 30, 0, ORANGE)}
+  {phone(82, 42, 16, CORAL)}
+</svg>"""
+
+
+def ill_code(w=104, h=80):
+    """Step 2: two phones showing the same code, joined by a check."""
+    def phone(x):
+        return (f'<g transform="translate({x} 40)">'
+                f'<rect x="-15" y="-26" width="30" height="52" rx="7" fill="#FFFFFF" stroke="{INK}" stroke-width="1.6"></rect>'
+                f'<rect x="-10" y="-12" width="20" height="5" rx="2.5" fill="{INK}"></rect>'
+                f'<rect x="-10" y="-3" width="20" height="5" rx="2.5" fill="{INK}"></rect>'
+                f'<rect x="-10" y="6" width="12" height="5" rx="2.5" fill="{ORANGE}"></rect></g>')
+    return f"""<svg width="{w}" height="{h}" viewBox="0 0 104 80">
+  {phone(26)}
+  {phone(78)}
+  <path d="M41 26 Q52 14 63 26" fill="none" stroke="{GREEN}" stroke-width="1.8" stroke-dasharray="3 3"></path>
+  <circle cx="52" cy="17" r="9" fill="{GREEN}"></circle>
+  <polyline points="47.5 17.2 50.8 20.3 56.5 14" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></polyline>
+</svg>"""
+
+
+def ill_average(w=104, h=80):
+    """Step 3: three masked shares flow together; only the average comes out."""
+    def chip(y, tone):
+        return (f'<g transform="translate(8 {y})"><rect width="34" height="16" rx="8" fill="{tone}"></rect>'
+                f'<path d="M7 11 L12 5 M14 11 L19 5 M21 11 L26 5" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity="0.85"></path></g>')
+    return f"""<svg width="{w}" height="{h}" viewBox="0 0 104 80">
+  {chip(10, AMBER)}
+  {chip(32, ORANGE)}
+  {chip(54, CORAL)}
+  <path d="M44 18 C58 18 60 40 70 40 M44 40 L70 40 M44 62 C58 62 60 40 70 40" fill="none" stroke="#E9B895" stroke-width="1.8" stroke-linecap="round"></path>
+  <circle cx="84" cy="40" r="15" fill="{ORANGE}"></circle>
+  <circle cx="84" cy="40" r="15" fill="none" stroke="#FFFFFF" stroke-width="2" opacity="0.5"></circle>
+  <line x1="77" y1="40" x2="91" y2="40" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round"></line>
+  <circle cx="84" cy="34" r="2" fill="#FFFFFF"></circle>
+  <circle cx="84" cy="46" r="2" fill="#FFFFFF"></circle>
+</svg>"""
+
+
+# ---- Building blocks -------------------------------------------------------------------------
+def nav(title="", left="", right=""):
+    return f"""<div style="height: 44px; margin-top: 54px; padding: 0 16px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: center;">
+  <div style="display: flex; align-items: center; gap: 2px; color: {ORANGE_TEXT}; font-size: 17px;">{left}</div>
   <div style="text-align: center; font-size: 17px; font-weight: 600;">{title}</div>
-  {right_html}
+  <div style="display: flex; align-items: center; justify-content: flex-end; color: {ORANGE_TEXT}; font-size: 17px; font-weight: 600;">{right}</div>
 </div>"""
-    if large:
-        bar += f'<div style="padding: 4px 20px 8px; font-size: 34px; font-weight: 700; letter-spacing: 0.3px;">{large}</div>'
-    return bar
 
 
 def primary(label, disabled=False):
-    bg = "#E5E5EA" if disabled else ORANGE
-    fg = "#8E8E93" if disabled else "#FFFFFF"
-    return f'<div style="height: 52px; border-radius: 14px; background: {bg}; color: {fg}; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 600;">{label}</div>'
+    if disabled:
+        return f'<div style="height: 56px; border-radius: 18px; background: #EDE3DA; color: #A8998D; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 600;">{label}</div>'
+    return (f'<div style="height: 56px; border-radius: 18px; background: linear-gradient(180deg, #F47A34 0%, {ORANGE_DEEP} 100%); '
+            f'box-shadow: 0 8px 20px rgba(217, 72, 15, 0.28), inset 0 1px 0 rgba(255,255,255,0.25); color: #FFFFFF; '
+            f'display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 600;">{label}</div>')
 
 
 def secondary(label, color=ORANGE_TEXT):
-    return f'<div style="height: 52px; border-radius: 14px; background: {TINT}; color: {color}; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 600;">{label}</div>'
+    return f'<div style="height: 56px; border-radius: 18px; background: {CARD}; box-shadow: 0 1px 0 {HAIR}, 0 4px 14px rgba(120, 70, 30, 0.08); color: {color}; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 600;">{label}</div>'
 
 
 def plain(label, color=ORANGE_TEXT):
     return f'<div style="height: 44px; display: flex; align-items: center; justify-content: center; color: {color}; font-size: 17px;">{label}</div>'
 
 
-def section(title, rows, footer=""):
-    head = f'<div style="padding: 0 36px 6px; font-size: 13px; color: {SECONDARY}; text-transform: uppercase; letter-spacing: 0.4px;">{title}</div>' if title else ""
-    inner = f'<div style="margin: 0 16px; background: #FFFFFF; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;">{"".join(rows)}</div>'
-    foot = f'<div style="padding: 6px 36px 0; font-size: 13px; line-height: 18px; color: {SECONDARY}; text-wrap: pretty;">{footer}</div>' if footer else ""
-    return f'<div style="display: flex; flex-direction: column; padding-top: 22px;">{head}{inner}{foot}</div>'
+def card(inner, pad="6px 0", margin="0 16px"):
+    return f'<div style="margin: {margin}; padding: {pad}; background: {CARD}; border-radius: 20px; box-shadow: 0 1px 0 {HAIR}, 0 10px 30px rgba(120, 70, 30, 0.07); display: flex; flex-direction: column;">{inner}</div>'
+
+
+def label(text):
+    return f'<div style="padding: 22px 32px 8px; font-size: 13px; font-weight: 600; color: {MUTED}; letter-spacing: 0.3px;">{text}</div>'
+
+
+def foot(text):
+    return f'<div style="padding: 8px 32px 0; font-size: 13px; line-height: 18px; color: {MUTED}; text-wrap: pretty;">{text}</div>'
 
 
 def row(main, sub="", trailing="", last=False, leading=""):
-    border = "" if last else f"border-bottom: 0.5px solid {SEPARATOR};"
-    sub_html = f'<div style="font-size: 14px; color: {SECONDARY}; margin-top: 2px;">{sub}</div>' if sub else ""
+    border = "" if last else f"border-bottom: 1px solid {HAIR};"
+    sub_html = f'<div style="font-size: 14px; color: {MUTED}; margin-top: 2px;">{sub}</div>' if sub else ""
     lead = f'<div style="display: flex; align-items: center;">{leading}</div>' if leading else ""
-    return f"""<div style="min-height: 52px; padding: 10px 16px; box-sizing: border-box; display: flex; align-items: center; gap: 12px; {border}">
+    return f"""<div style="min-height: 56px; margin: 0 16px; padding: 10px 0; box-sizing: border-box; display: flex; align-items: center; gap: 12px; {border}">
   {lead}<div style="flex-grow: 1; display: flex; flex-direction: column;"><div style="font-size: 17px;">{main}</div>{sub_html}</div>
   <div style="display: flex; align-items: center; gap: 8px;">{trailing}</div>
 </div>"""
 
 
+def avatar(name, tone):
+    return f'<div class="display" style="width: 36px; height: 36px; border-radius: 18px; background: {tone}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700;">{name[0]}</div>'
+
+
 def letter(ch, filled=True):
-    bg = "#1C1C1E" if filled else "#E5E5EA"
-    fg = "#FFFFFF" if filled else SECONDARY
-    return f'<div class="mono" style="width: 30px; height: 30px; border-radius: 15px; background: {bg}; color: {fg}; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600;">{ch}</div>'
+    bg = INK if filled else "#F1E7DE"
+    fg = "#FFFFFF" if filled else MUTED
+    return f'<div class="mono" style="width: 32px; height: 32px; border-radius: 16px; background: {bg}; color: {fg}; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700;">{ch}</div>'
 
 
 def pill(text, fg, bg):
-    return f'<div style="height: 26px; padding: 0 10px; border-radius: 13px; background: {bg}; color: {fg}; display: flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600;">{text}</div>'
+    return f'<div style="height: 28px; padding: 0 11px; border-radius: 14px; background: {bg}; color: {fg}; display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 600;">{text}</div>'
 
 
 def bottom(*items):
     return f'<div style="margin-top: auto; padding: 12px 20px 34px; display: flex; flex-direction: column; gap: 10px;">{"".join(items)}</div>'
 
 
-def note(text, color=SECONDARY, size=13):
+def note(text, color=MUTED, size=13):
     return f'<div style="font-size: {size}px; line-height: {size + 5}px; color: {color}; text-align: center; text-wrap: pretty;">{text}</div>'
 
 
 def deadline(text):
-    return f'<div style="display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 13px; color: {SECONDARY};">{icon("clock", SECONDARY)}<span>{text}</span></div>'
+    return f'<div style="display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 13px; color: {MUTED};">{i_clock()}<span>{text}</span></div>'
 
+
+def badge(icon_html, bg=TINT, size=40):
+    return f'<div style="width: {size}px; height: {size}px; border-radius: {size // 2 - 6}px; background: {bg}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">{icon_html}</div>'
+
+
+def step(number, title, body, illustration):
+    return f"""<div style="display: flex; align-items: center; gap: 14px; padding: 12px 14px; background: {CARD}; border-radius: 20px; box-shadow: 0 1px 0 {HAIR}, 0 10px 26px rgba(120, 70, 30, 0.07);">
+  <div style="width: 104px; height: 80px; border-radius: 16px; background: #FFF4EA; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">{illustration}</div>
+  <div style="display: flex; flex-direction: column; gap: 3px;">
+    <div class="display" style="font-size: 13px; font-weight: 700; color: {ORANGE_TEXT}; letter-spacing: 0.4px;">STEP {number}</div>
+    <div class="display" style="font-size: 17px; font-weight: 700; line-height: 21px;">{title}</div>
+    <div style="font-size: 14px; line-height: 19px; color: {MUTED}; text-wrap: pretty;">{body}</div>
+  </div>
+</div>"""
+
+
+STEPS = [
+    ("1", "Gather in one room", "Everyone opens Cravage on their own phone.", ill_room()),
+    ("2", "Match the code", "Each screen shows the same room code. Check it together.", ill_code()),
+    ("3", "Only the average appears", "Each phone sends a masked share. Nobody sees a number.", ill_average()),
+]
 
 screens = {}
 
-# 1 Home
+# 1 Home (warm glow)
 screens["Main"] = page(f"""
-{nav(right=icon("gear", ORANGE_TEXT))}
-<div style="padding: 60px 28px 0; display: flex; flex-direction: column; gap: 10px;">
-  <div style="font-size: 44px; font-weight: 800; letter-spacing: -0.5px;">Cravage</div>
-  <div style="font-size: 22px; line-height: 28px; color: #3A3A3C; text-wrap: pretty;">Work out a group average without anyone showing their number.</div>
+{nav(right=i_gear())}
+<div style="padding: 8px 24px 0; display: flex; align-items: center; gap: 14px;">
+  <div style="border-radius: 16px; box-shadow: 0 10px 24px rgba(217, 72, 15, 0.22);">{mark(60)}</div>
+  <div style="display: flex; flex-direction: column;">
+    <div class="display" style="font-size: 36px; font-weight: 800; letter-spacing: -0.5px; line-height: 40px;">Cravage</div>
+    <div style="font-size: 15px; color: {MUTED};">Group average, kept private</div>
+  </div>
 </div>
-<div style="padding: 36px 28px 0; display: flex; flex-direction: column; gap: 14px;">
-  <div style="display: flex; align-items: center; gap: 12px;"><div class="mono" style="width: 28px; height: 28px; border-radius: 14px; background: {TINT}; color: {ORANGE_TEXT}; display: flex; align-items: center; justify-content: center; font-weight: 700;">1</div><div style="font-size: 16px;">Everyone opens the app in the same room</div></div>
-  <div style="display: flex; align-items: center; gap: 12px;"><div class="mono" style="width: 28px; height: 28px; border-radius: 14px; background: {TINT}; color: {ORANGE_TEXT}; display: flex; align-items: center; justify-content: center; font-weight: 700;">2</div><div style="font-size: 16px;">You check your screens show the same code</div></div>
-  <div style="display: flex; align-items: center; gap: 12px;"><div class="mono" style="width: 28px; height: 28px; border-radius: 14px; background: {TINT}; color: {ORANGE_TEXT}; display: flex; align-items: center; justify-content: center; font-weight: 700;">3</div><div style="font-size: 16px;">Each phone sends a masked share; only the average comes out</div></div>
+<div style="padding: 22px 16px 0; display: flex; flex-direction: column; gap: 10px;">
+  {"".join(step(*s) for s in STEPS)}
 </div>
-{bottom(primary("New room"), secondary("Join a room"), note('You appear as <strong style="color: #1C1C1E;">Dee</strong>. <a>Change</a>', size=15))}
+{bottom(primary("New room"), secondary("Join a room"), note(f'You appear as <strong style="color: {INK};">Dee</strong>. <a>Change</a>', size=15))}
 """)
 
 # 2 New room
 seg = "".join(
-    f'<div class="mono" style="height: 40px; border-radius: 9px; display: flex; align-items: center; justify-content: center; gap: 3px; font-size: 16px; font-weight: 600; {"background: #FFFFFF; box-shadow: 0 1px 3px rgba(0,0,0,0.14); color: #1C1C1E;" if n == 3 else "color: " + SECONDARY + ";"}">{n}{"" if n == 3 else icon("lock", SECONDARY)}</div>'
+    f'<div class="mono" style="height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 3px; font-size: 16px; font-weight: 700; '
+    f'{"background: #FFFFFF; box-shadow: 0 2px 8px rgba(120,70,30,0.16); color: " + INK + ";" if n == 3 else "color: " + MUTED + ";"}">{n}{"" if n == 3 else i_lock()}</div>'
     for n in range(3, 9))
 screens["NewRoom"] = page(f"""
 {nav("New room", left="Cancel")}
-{section("What are you averaging?", [row('<span style="color: #1C1C1E;">Annual bonus</span>', last=True)], "Everyone in the room sees this. Nearby phones can see it too, with your nickname and the group size, but never anyone's number.")}
-<div style="display: flex; flex-direction: column; padding-top: 26px;">
-  <div style="padding: 0 36px 6px; font-size: 13px; color: {SECONDARY}; text-transform: uppercase; letter-spacing: 0.4px;">How many people, including you</div>
-  <div style="margin: 0 16px; padding: 3px; background: #E5E5EA; border-radius: 12px; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 2px;">{seg}</div>
-  <div style="padding: 8px 36px 0; font-size: 13px; line-height: 18px; color: {SECONDARY};">3 people is free. 4 to 8 people is a one-off unlock.</div>
+<div style="padding: 10px 24px 0; display: flex; align-items: center; gap: 12px;">
+  {badge(i_people(), size=44)}
+  <div class="display" style="font-size: 26px; font-weight: 800;">Set up the room</div>
 </div>
+{label("WHAT ARE YOU AVERAGING?")}
+{card(f'<div style="padding: 16px 18px; font-size: 19px; font-weight: 500;">Annual bonus</div>', pad="0")}
+{foot("Everyone in the room sees this. Nearby phones can see it too, with your nickname and the group size, but never anyone's number.")}
+{label("HOW MANY PEOPLE, INCLUDING YOU")}
+<div style="margin: 0 16px; padding: 4px; background: #F3E8DE; border-radius: 16px; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 3px;">{seg}</div>
+{foot("3 people is free. 4 to 8 people is a one-off unlock.")}
 {bottom(primary("Open room"))}
 """)
 
 # 3 Join
 screens["Join"] = page(f"""
-{nav("Join a room", left=icon("back", ORANGE_TEXT) + "Back")}
-{section("Rooms nearby", [
-    row("Annual bonus", "Host: Sam &#183; 3 people", icon("chev", "#C7C7CC")),
-    row("Team lunch budget", "Host: Morgan &#183; 5 people", icon("chev", "#C7C7CC")),
-    row(f'<span style="color: {SECONDARY};">Looking for more&#8230;</span>', trailing=icon("spin", SECONDARY), last=True),
-], "Rooms appear when you are close to the host's phone and the host has the app open.")}
-{bottom(note('Joining as <strong style="color: #1C1C1E;">Dee</strong>', size=15))}
+{nav("Join a room", left=i_back() + "Back")}
+<div style="padding: 10px 24px 4px;"><div class="display" style="font-size: 26px; font-weight: 800;">Rooms nearby</div></div>
+<div style="padding: 12px 16px 0; display: flex; flex-direction: column; gap: 10px;">
+  {card(row("Annual bonus", "Host: Sam &#183; 3 people", i_chev(), last=True, leading=avatar("Sam", ORANGE)), pad="4px 0", margin="0")}
+  {card(row("Team lunch budget", "Host: Morgan &#183; 5 people", i_chev(), last=True, leading=avatar("Morgan", CORAL)), pad="4px 0", margin="0")}
+</div>
+<div style="padding: 18px 24px 0; display: flex; align-items: center; gap: 10px; color: {MUTED}; font-size: 15px;">
+  <div style="width: 10px; height: 10px; border-radius: 5px; background: {ORANGE}; box-shadow: 0 0 0 6px rgba(242,107,33,0.18);"></div>
+  <span>Looking for more rooms&#8230;</span>
+</div>
+{foot("Rooms appear when you are close to the host's phone and the host has the app open.")}
+{bottom(note(f'Joining as <strong style="color: {INK};">Dee</strong>', size=15))}
 """)
 
 # 4 Lobby, host
 screens["LobbyHost"] = page(f"""
 {nav("Annual bonus", left="Close")}
-<div style="padding: 18px 20px 0; display: flex; align-items: center; gap: 10px;">
-  <div style="font-size: 28px; font-weight: 700;">2 of 3</div><div style="font-size: 17px; color: {SECONDARY};">in the room</div>
+<div style="padding: 6px 24px 0; display: flex; align-items: baseline; gap: 8px;">
+  <div class="display" style="font-size: 44px; font-weight: 800;">2<span style="color: #D8C6B7;">/3</span></div>
+  <div style="font-size: 17px; color: {MUTED};">in the room</div>
 </div>
-{section("Asking to join", [row("Priya", "Only admit someone you can see in the room",
-    '<div style="height: 34px; padding: 0 12px; border-radius: 17px; background: #F2F2F7; color: #1C1C1E; display: flex; align-items: center; font-size: 15px;">Decline</div><div style="height: 34px; padding: 0 14px; border-radius: 17px; background: ' + ORANGE + '; color: #FFFFFF; display: flex; align-items: center; font-size: 15px; font-weight: 600;">Admit</div>', last=True)])}
-{section("In the room", [row("Sam", "You, host", pill("This phone", SECONDARY, "#F2F2F7")), row("Alex", last=True, trailing=pill(icon("phone", GREEN) + "Connected", GREEN, "#E8F5EC"))],
-    "1 other phone connected. Keep the app open on every phone until the round ends.")}
+{label("ASKING TO JOIN")}
+{card(row("Priya", "Only admit someone you can see in the room",
+    f'<div style="height: 36px; padding: 0 13px; border-radius: 18px; background: #F5ECE4; color: {INK}; display: flex; align-items: center; font-size: 15px;">Decline</div><div style="height: 36px; padding: 0 15px; border-radius: 18px; background: {ORANGE_DEEP}; color: #FFFFFF; display: flex; align-items: center; font-size: 15px; font-weight: 600;">Admit</div>',
+    last=True, leading=avatar("Priya", AMBER)), pad="4px 0")}
+{label("IN THE ROOM")}
+{card(row("Sam", "You, host", pill("This phone", MUTED, "#F5ECE4"), leading=avatar("Sam", ORANGE)) + row("Alex", last=True, trailing=pill(i_phone(GREEN, 14) + "Connected", GREEN, GREEN_TINT), leading=avatar("Alex", CORAL)), pad="4px 0")}
+{foot("1 other phone connected. Keep the app open on every phone until the round ends.")}
 {bottom(primary("Start round", disabled=True), note("Start needs 3 people. Admit Priya to begin."), deadline("Room closes in 14:12 if the round has not started"))}
 """)
 
 # 5 Lobby, joiner
 screens["LobbyJoiner"] = page(f"""
 {nav("Annual bonus", left="Leave")}
-<div style="padding: 60px 28px 0; display: flex; flex-direction: column; align-items: center; gap: 14px;">
-  <div style="width: 64px; height: 64px; border-radius: 32px; background: {TINT}; display: flex; align-items: center; justify-content: center;">{icon("spin", ORANGE_TEXT)}</div>
-  <div style="font-size: 22px; font-weight: 700; text-align: center;">Waiting for Sam to start</div>
-  <div style="font-size: 16px; line-height: 22px; color: {SECONDARY}; text-align: center; text-wrap: pretty;">You are in. Keep the app open; the round begins when the room is full.</div>
+<div style="padding: 30px 28px 0; display: flex; flex-direction: column; align-items: center; gap: 14px;">
+  <div style="width: 150px; height: 116px; border-radius: 28px; background: #FFFFFF; box-shadow: 0 12px 30px rgba(120,70,30,0.10); display: flex; align-items: center; justify-content: center;">{ill_room(128, 98)}</div>
+  <div class="display" style="font-size: 24px; font-weight: 800; text-align: center;">Waiting for Sam to start</div>
+  <div style="font-size: 16px; line-height: 22px; color: {MUTED}; text-align: center; text-wrap: pretty;">You are in. Keep the app open; the round begins when the room is full.</div>
 </div>
-{section("In the room", [row("Sam", "Host"), row("Alex"), row("Dee", "You", last=True)])}
+{label("IN THE ROOM")}
+{card(row("Sam", "Host", leading=avatar("Sam", ORANGE)) + row("Alex", leading=avatar("Alex", CORAL)) + row("Dee", "You", last=True, leading=avatar("Dee", AMBER)), pad="4px 0")}
 {bottom(deadline("Stops waiting in 14:05"))}
 """)
 
-# 6 Confirm code
+# 6 Check the code
 screens["ConfirmCode"] = page(f"""
 {nav("Check the code")}
-<div style="padding: 20px 24px 0; display: flex; flex-direction: column; align-items: center; gap: 10px;">
-  <div style="font-size: 15px; color: {SECONDARY};">Annual bonus &#183; 3 people</div>
-  <div class="mono" style="font-size: 46px; font-weight: 700; letter-spacing: 3px; color: #1C1C1E;">K7QM-3XRD</div>
-  <div style="margin-top: 6px; padding: 14px 16px; border-radius: 14px; background: #FFFFFF; display: flex; gap: 12px; align-items: flex-start;">
-    <div style="padding-top: 1px;">{icon("phone", ORANGE_TEXT)}</div>
-    <div style="font-size: 16px; line-height: 22px; text-wrap: pretty;">Look at the <strong>2 other phones</strong> in the room. Each must show exactly this code. If there are more or fewer phones, or a code differs, do not continue.</div>
+<div style="padding: 2px 16px 0; display: flex; flex-direction: column; gap: 12px;">
+  <div style="padding: 20px 18px 18px; border-radius: 26px; background: linear-gradient(160deg, #2A211C 0%, #1B1512 100%); box-shadow: 0 16px 36px rgba(31,26,23,0.28); display: flex; flex-direction: column; align-items: center; gap: 8px;">
+    <div style="font-size: 14px; color: #D9C8BA;">Annual bonus &#183; 3 people</div>
+    <div class="mono" style="font-size: 44px; font-weight: 700; letter-spacing: 3px; color: #FFFFFF;">K7QM<span style="color: {ORANGE};">-</span>3XRD</div>
+    <div style="display: flex; gap: 6px; margin-top: 4px;">
+      <div style="width: 22px; height: 6px; border-radius: 3px; background: {AMBER};"></div>
+      <div style="width: 22px; height: 6px; border-radius: 3px; background: {ORANGE};"></div>
+      <div style="width: 22px; height: 6px; border-radius: 3px; background: {CORAL};"></div>
+    </div>
+  </div>
+  <div style="padding: 14px 16px; border-radius: 20px; background: {CARD}; box-shadow: 0 1px 0 {HAIR}, 0 10px 26px rgba(120,70,30,0.07); display: flex; gap: 12px; align-items: center;">
+    {badge(i_phone(ORANGE_TEXT, 20))}
+    <div style="font-size: 15px; line-height: 21px; text-wrap: pretty;">Look up and find the <strong>2 other phones</strong>. Each must show exactly this code. If you count more or fewer, or a code differs, stop.</div>
   </div>
 </div>
-{section("Confirmed", [
-    row("Sam", "Host", pill(icon("check", GREEN) + "Checked", GREEN, "#E8F5EC"), leading=letter("A")),
-    row("Alex", "", pill("Checking", SECONDARY, "#F2F2F7"), leading=letter("B", False)),
-    row("Dee", "You", "", last=True, leading=letter("C", False)),
-])}
+{label("CONFIRMED")}
+{card(row("Sam", "Host", pill(i_check(GREEN, 14) + "Checked", GREEN, GREEN_TINT), leading=letter("A")) + row("Alex", "", pill("Checking", MUTED, "#F5ECE4"), leading=letter("B", False)) + row("Dee", "You", "", last=True, leading=letter("C", False)), pad="4px 0")}
 {bottom(primary("I checked, the codes match"), plain("The codes don't match", RED), deadline("Stops waiting in 2:48"))}
 """)
 
 # 7 Enter figure
 screens["EnterFigure"] = page(f"""
 {nav("Your figure", left="Leave")}
-<div style="padding: 18px 20px 0; font-size: 15px; color: {SECONDARY};">Annual bonus</div>
-<div style="margin: 10px 16px 0; padding: 18px 16px; background: #FFFFFF; border-radius: 14px; border: 2px solid {ORANGE}; display: flex; align-items: baseline; gap: 6px;">
-  <div class="mono" style="font-size: 40px; font-weight: 600; color: #1C1C1E;">42500.50</div>
-  <div style="width: 2px; height: 40px; background: {ORANGE}; align-self: center;"></div>
+<div style="padding: 4px 24px 0; display: flex; flex-direction: column; gap: 2px;">
+  <div style="font-size: 15px; color: {MUTED};">Annual bonus</div>
+  <div class="display" style="font-size: 26px; font-weight: 800;">What's your number?</div>
 </div>
-<div style="padding: 8px 32px 0; font-size: 13px; line-height: 18px; color: {SECONDARY};">Up to 999,999,999,999.99. Use your decimal mark; leave out thousands separators.</div>
-<div style="margin: 22px 16px 0; padding: 14px 16px; background: #FFFFFF; border-radius: 14px; display: flex; flex-direction: column; gap: 10px;">
-  <div style="font-size: 15px; line-height: 21px; text-wrap: pretty;">Your figure is processed on your phone; the app sends a masked share to the other participants.</div>
-  <div style="height: 0.5px; background: {SEPARATOR};"></div>
-  <div style="font-size: 15px; line-height: 21px; color: #3A3A3C; text-wrap: pretty;">With 3 people, the other 2 could work out your figure if they shared theirs with each other.</div>
+<div style="margin: 14px 16px 0; padding: 20px 18px; background: {CARD}; border-radius: 22px; border: 2px solid {ORANGE}; box-shadow: 0 0 0 6px rgba(242,107,33,0.12); display: flex; align-items: center; gap: 6px;">
+  <div class="mono" style="font-size: 42px; font-weight: 600;">42500.50</div>
+  <div style="width: 2px; height: 40px; background: {ORANGE};"></div>
+</div>
+{foot("Up to 999,999,999,999.99. Use your decimal mark; leave out thousands separators.")}
+<div style="padding: 16px 16px 0; display: flex; flex-direction: column; gap: 10px;">
+  <div style="padding: 14px 16px; background: {CARD}; border-radius: 20px; box-shadow: 0 1px 0 {HAIR}, 0 10px 26px rgba(120,70,30,0.07); display: flex; gap: 12px; align-items: center;">
+    {badge(i_shield())}
+    <div style="font-size: 15px; line-height: 21px; text-wrap: pretty;">Your figure is processed on your phone; the app sends a masked share to the other participants.</div>
+  </div>
+  <div style="padding: 14px 16px; background: #FFF1E6; border-radius: 20px; display: flex; gap: 12px; align-items: center;">
+    {badge(i_people(), bg="#FFFFFF")}
+    <div style="font-size: 15px; line-height: 21px; color: #4A3B32; text-wrap: pretty;">With 3 people, the other 2 could work out your figure if they shared theirs with each other.</div>
+  </div>
 </div>
 {bottom(primary("Send masked share"), note("Once sent, your figure can't be changed for this round."))}
 """)
 
 # 8 Waiting
+ring = f"""<svg width="176" height="176" viewBox="0 0 176 176">
+  <circle cx="88" cy="88" r="74" fill="none" stroke="#F1E3D7" stroke-width="14"></circle>
+  <circle cx="88" cy="88" r="74" fill="none" stroke="url(#wr)" stroke-width="14" stroke-linecap="round" stroke-dasharray="310 465" transform="rotate(-90 88 88)"></circle>
+  <defs><linearGradient id="wr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="{AMBER}"></stop><stop offset="1" stop-color="{ORANGE_DEEP}"></stop></linearGradient></defs>
+</svg>"""
 screens["Waiting"] = page(f"""
 {nav("Annual bonus", left="Cancel")}
-<div style="padding: 36px 24px 0; display: flex; flex-direction: column; align-items: center; gap: 12px;">
-  <div class="mono" style="font-size: 52px; font-weight: 700;">2<span style="color: #C7C7CC;"> / 3</span></div>
-  <div style="font-size: 17px; color: {SECONDARY};">masked shares in</div>
-  <div style="width: 240px; height: 6px; border-radius: 3px; background: #E5E5EA; overflow: hidden;"><div style="width: 66%; height: 6px; background: {ORANGE};"></div></div>
+<div style="padding: 18px 0 0; display: flex; justify-content: center;">
+  <div style="position: relative; width: 176px; height: 176px;">
+    {ring}
+    <div style="position: absolute; left: 0; top: 0; width: 176px; height: 176px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+      <div class="display" style="font-size: 48px; font-weight: 800; line-height: 52px;">2<span style="color: #D8C6B7;">/3</span></div>
+      <div style="font-size: 14px; color: {MUTED};">shares in</div>
+    </div>
+  </div>
 </div>
-{section("", [
-    row("Sam", "", pill(icon("check", GREEN) + "Sent", GREEN, "#E8F5EC"), leading=letter("A")),
-    row("Alex", "Still entering a figure", icon("spin", SECONDARY), leading=letter("B", False)),
-    row("Dee", "You", pill(icon("check", GREEN) + "Sent", GREEN, "#E8F5EC"), last=True, leading=letter("C")),
-])}
+{label("PHONES")}
+{card(row("Sam", "", pill(i_check(GREEN, 14) + "Sent", GREEN, GREEN_TINT), leading=letter("A")) + row("Alex", "Still entering a figure", pill("Waiting", MUTED, "#F5ECE4"), leading=letter("B", False)) + row("Dee", "You", pill(i_check(GREEN, 14) + "Sent", GREEN, GREEN_TINT), last=True, leading=letter("C")), pad="4px 0")}
 {bottom(deadline("Stops waiting in 4:21; the round then fails and the host can restart"))}
 """)
 
-# 9 Result, agreed
+# 9 Result
 screens["Result"] = page(f"""
 {nav("Result", right="Done")}
-<div style="padding: 36px 24px 0; display: flex; flex-direction: column; align-items: center; gap: 6px;">
-  <div style="font-size: 17px; color: {SECONDARY};">Average annual bonus</div>
-  <div class="mono" style="font-size: 54px; font-weight: 700; letter-spacing: -1px;">37,166.83</div>
-  <div style="font-size: 15px; color: {SECONDARY};">from 3 people</div>
+<div style="padding: 6px 16px 0;">
+  <div style="padding: 26px 20px 22px; border-radius: 28px; background: linear-gradient(155deg, #F47A34 0%, {ORANGE_DEEP} 70%, #B83A0B 100%); box-shadow: 0 18px 40px rgba(217,72,15,0.32); color: #FFFFFF; display: flex; flex-direction: column; align-items: center; gap: 4px; position: relative; overflow: hidden;">
+    <div style="position: absolute; right: -40px; top: -40px; width: 160px; height: 160px; border-radius: 80px; background: rgba(255,255,255,0.10);"></div>
+    <div style="position: absolute; left: -30px; bottom: -50px; width: 140px; height: 140px; border-radius: 70px; background: rgba(255,255,255,0.08);"></div>
+    <div style="font-size: 16px; opacity: 0.9;">Average annual bonus</div>
+    <div class="mono" style="font-size: 50px; font-weight: 700; letter-spacing: -1px;">37,166.83</div>
+    <div style="font-size: 15px; opacity: 0.9;">from 3 people</div>
+  </div>
 </div>
-<div style="margin: 24px 16px 0; padding: 14px 16px; background: #E8F5EC; border-radius: 14px; display: flex; gap: 12px; align-items: center;">
-  {icon("check", GREEN)}<div style="font-size: 15px; line-height: 21px; color: #14532D; text-wrap: pretty;">All 3 phones signed agreement to the same set of shares.</div>
+<div style="margin: 12px 16px 0; padding: 13px 16px; background: {GREEN_TINT}; border-radius: 18px; display: flex; gap: 12px; align-items: center;">
+  {badge(i_check(GREEN, 18), bg="#FFFFFF", size=34)}<div style="font-size: 15px; line-height: 21px; color: #1E5A32; text-wrap: pretty;">All 3 phones signed agreement to the same set of shares.</div>
 </div>
-{section("", [row("Show the shares", "", icon("chev", "#C7C7CC")), row("Share transcript", "A file anyone can check", icon("chev", "#C7C7CC"), last=True)],
-    "The app can't check that the figures people entered were true. Round history is not saved.")}
+<div style="padding: 12px 0 0;">
+{card(row("Show the shares", "", i_chev(), leading=badge(i_eye(), size=34)) + row("Share transcript", "A file anyone can check", i_chev(), last=True, leading=badge(i_file(), size=34)), pad="4px 0")}
+</div>
+{foot("The app can't check that the figures people entered were true. Round history is not saved.")}
 {bottom(secondary("Run again"), plain("Leave room"))}
 """)
+
+
+# ---- Alternative Home looks, for comparison ---------------------------------------------------
+NIGHT_CSS = BASE_CSS.replace(f"background: {CREAM}; color: {INK};", "background: #120E0C; color: #F7EFE8;")
+screens["HomeNight"] = page(f"""
+<div style="height: 44px; margin-top: 54px; padding: 0 16px; display: flex; align-items: center; justify-content: flex-end;">{i_gear("#E9D8CA")}</div>
+<div style="padding: 12px 24px 0; display: flex; flex-direction: column; gap: 10px;">
+  {mark(56)}
+  <div class="display" style="font-size: 40px; font-weight: 800; letter-spacing: -0.6px; line-height: 44px; color: #FFF6EE;">Know the average.<br><span style="color: {ORANGE};">Keep your number.</span></div>
+</div>
+<div style="padding: 24px 16px 0; display: flex; flex-direction: column; gap: 10px;">
+  {"".join(f'<div style="display: flex; align-items: center; gap: 14px; padding: 10px 12px; border-radius: 20px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08);"><div style="width: 88px; height: 68px; border-radius: 14px; background: #FFF4EA; display: flex; align-items: center; justify-content: center;">{ill(88, 68)}</div><div style="display: flex; flex-direction: column; gap: 2px;"><div class="display" style="font-size: 17px; font-weight: 700; color: #FFF6EE;">{t}</div><div style="font-size: 14px; line-height: 19px; color: #BFAEA1;">{b}</div></div></div>' for (_, t, b, _), ill in zip(STEPS, [ill_room, ill_code, ill_average]))}
+</div>
+<div style="margin-top: auto; padding: 12px 20px 34px; display: flex; flex-direction: column; gap: 10px;">
+  {primary("New room")}
+  <div style="height: 56px; border-radius: 18px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.14); color: #FFE2CF; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 600;">Join a room</div>
+</div>
+""", css=NIGHT_CSS, bg="radial-gradient(90% 50% at 80% 0%, rgba(242,107,33,0.35) 0%, rgba(18,14,12,0) 60%), #120E0C")
+
+PAPER_SERIF = 'ui-serif, "New York", Georgia, "Times New Roman", serif'
+PAPER_CSS = BASE_CSS.replace(f"background: {CREAM};", "background: #FBF6EE;") + f"\n.serif {{ font-family: {PAPER_SERIF}; }}\n"
+paper_steps = "".join(
+    f'<div style="display: flex; gap: 16px; padding: 16px 0; border-top: 1px solid #E6DACB;">'
+    f'<div class="serif" style="font-size: 44px; line-height: 44px; color: {ORANGE_DEEP}; width: 34px;">{n}</div>'
+    f'<div style="display: flex; flex-direction: column; gap: 4px; flex-grow: 1;"><div class="serif" style="font-size: 21px; font-weight: 600;">{t}</div>'
+    f'<div style="font-size: 15px; line-height: 21px; color: {MUTED};">{b}</div></div>'
+    f'<div style="display: flex; align-items: center;">{ill(72, 56)}</div></div>'
+    for (n, t, b, _), ill in zip(STEPS, [ill_room, ill_code, ill_average]))
+screens["HomePaper"] = page(f"""
+{nav(right=i_gear())}
+<div style="padding: 10px 26px 0; display: flex; flex-direction: column; gap: 8px;">
+  <div style="font-size: 13px; font-weight: 700; letter-spacing: 2px; color: {ORANGE_TEXT};">CRAVAGE</div>
+  <div class="serif" style="font-size: 38px; line-height: 42px; font-weight: 600; letter-spacing: -0.3px;">An average everyone trusts, a number nobody sees.</div>
+</div>
+<div style="padding: 18px 26px 0; display: flex; flex-direction: column;">{paper_steps}</div>
+{bottom(primary("New room"), secondary("Join a room"))}
+""", css=PAPER_CSS, bg="#FBF6EE")
 
 
 # ---- Sketches: other states, deliberately low-fi ----------------------------------------------
@@ -331,8 +529,7 @@ sketches = [
      ["Same room only; up to 8 people.", "The maths can't check honesty.", "A room letter proves a key, not a person: count the phones.",
       "Colluding people can recover a figure.", "The average itself can be revealing.", "(Approved text, shortened here)"], ["Done"], ""),
 ]
-for name, title, heading, lines, actions, tag in sketches:
-    screens[name] = page("", css=SKETCH_CSS)  # placeholder, replaced below
+for name, _title, heading, lines, actions, tag in sketches:
     screens[name] = sketch(heading, lines, actions, tag)
 
 for name, html in screens.items():
@@ -349,15 +546,22 @@ for i, (name, title) in enumerate(polished):
 for i, (name, title, *_rest) in enumerate(sketches):
     artboards.append({"file": name + ".dc.html", "title": title, "x": (i % 6) * 470, "y": (i // 6) * 1000,
                       "w": 390, "h": 844, "page": "page-2"})
+for i, (name, title) in enumerate([("Main", None), ("HomeNight", "Home look B: Night"), ("HomePaper", "Home look C: Paper")]):
+    if name == "Main":
+        continue
+    artboards.append({"file": name + ".dc.html", "title": title, "x": (i - 1) * 470, "y": 0, "w": 390, "h": 844, "page": "page-3"})
 
 canvas = {
-    "pages": [{"id": "page-1", "name": "First round (polished)"}, {"id": "page-2", "name": "Other states (sketches)"}],
+    "pages": [{"id": "page-1", "name": "First round (polished)"}, {"id": "page-2", "name": "Other states (sketches)"},
+              {"id": "page-3", "name": "Home: other looks"}],
     "artboards": artboards,
     "annotations": [
         {"id": "brief-round", "page": "page-1", "x": 1880, "y": 1000, "w": 420,
-         "text": "First end-to-end round, for approval.\n\nFollows PLAN.md Visual: system font, standard iOS controls, orange accent, monospace only for figures and the room code.\n\nFlow: Home > New room (host) or Join > Lobby > Check the code > Enter figure > Waiting > Result.\n\nLight mode shown; dark mode follows the system.\n\nFilled-button orange is darkened from system orange so white text stays readable."},
-        {"id": "open-questions", "page": "page-1", "x": 1880, "y": 1420, "w": 420,
-         "text": "Worth checking:\n- The Home three-step explainer: keep or cut?\n- Room code shown with a count of other phones (SPEC 12).\n- Collusion note sits on the figure screen (PLAN).\n- The unlock price is left as a placeholder."},
+         "text": "Look A, \"Warm glow\" (2026-09-14): iOS structure and controls, a warm cream ground with an orange glow, rounded display type, drawn illustrations, soft cards.\n\nFlow: Home > New room (host) or Join > Lobby > Check the code > Enter figure > Waiting > Result.\n\nMonospace only for figures and the room code. Light mode shown; dark mode follows the system."},
+        {"id": "open-questions", "page": "page-1", "x": 1880, "y": 1440, "w": 420,
+         "text": "Worth checking:\n- Home now carries the three-step explainer with illustrations.\n- The code screen tells you how many other phones to look for. That count is what catches a host who invents extra participants.\n- The unlock price stays a placeholder."},
+        {"id": "brief-looks", "page": "page-3", "x": 0, "y": -170, "w": 860,
+         "text": "Two other directions for Home only, to compare with look A on the first page. B \"Night\": dark, glowing orange, bolder headline. C \"Paper\": editorial serif type and numbered steps. Pick one and the rest of the screens follow it."},
         {"id": "brief-states", "page": "page-2", "x": 0, "y": -150, "w": 620,
          "text": "Every other state, sketched cheaply. Approve these feature by feature as device behaviour becomes known (PLAN step 4). Tags mark new owner decisions and copy not yet approved."},
     ],
