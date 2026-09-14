@@ -92,6 +92,12 @@ to share. The Limitations text is council-approved; change it only with the owne
   entitlement and state-machine changes; never weaken a failing security test; finish with the
   commit hash, exact results and untested items.
 - Keep `README.md`'s "Known limitations" current in the same commit as any capability change.
+- A test named for a guarantee gets an entry in `Tools/mutations.json`; `python3 Tools/check_mutations.py`
+  (also in CI) must show every listed guard is caught when removed.
+- Before using an Apple framework property or call, read its doc comment in the framework's
+  `Headers/` as well as the `.swiftinterface` signature: `newConnectionLimit` is a lifetime budget,
+  which the signature alone does not say.
+- Protocol, entitlement, state-machine and transport slices end with the `fresh-review` skill.
 - Images are captures of the real app in deterministic scenarios (`Tools/screenshots.sh`), never
   drawn or hand-grabbed.
 - Never put backticks, dollar-parenthesis substitution or a double ampersand inside a double-quoted
