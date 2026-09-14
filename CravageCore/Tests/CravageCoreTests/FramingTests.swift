@@ -31,13 +31,13 @@ final class FramingTests: XCTestCase {
     }
 
     func testEncodeIsBigEndianLengthThenPayload() {
-        let frame = Framing.encode(Data("hi".utf8))
+        let frame = try! Framing.encode(Data("hi".utf8))
         XCTAssertEqual(Array(frame), [0, 0, 0, 2, UInt8(ascii: "h"), UInt8(ascii: "i")])
     }
 
     func testFramesRoundTripAcrossOneStream() async throws {
         let payloads = [Data("one".utf8), Data(repeating: 7, count: MessageDomain.maxEnvelopeBytes), Data("three".utf8)]
-        let source = ScriptedSource(Array(payloads.map(Framing.encode).reduce(Data(), +)))
+        let source = ScriptedSource(Array(try payloads.map { try Framing.encode($0) }.reduce(Data(), +)))
         for payload in payloads {
             let frame = try await Framing.readFrame(receiveExactly: source.receiveExactly)
             XCTAssertEqual(frame, payload)
@@ -67,8 +67,8 @@ final class FramingTests: XCTestCase {
     }
 
     func testPumpDeliversCompleteFramesThenReportsAThrownFailureWithoutThrowing() async {
-        let good = Framing.encode(Data("first".utf8)) + Framing.encode(Data("second".utf8))
-        let partial = Framing.encode(Data("never delivered".utf8)).prefix(9)
+        let good = try! Framing.encode(Data("first".utf8)) + Framing.encode(Data("second".utf8))
+        let partial = try! Framing.encode(Data("never delivered".utf8)).prefix(9)
         let source = ScriptedSource(Array(good + partial))
         let delivered = Collector()
         let end = await Framing.pump(receiveExactly: source.receiveExactly) { delivered.add($0) }
@@ -77,20 +77,33 @@ final class FramingTests: XCTestCase {
     }
 
     func testPumpStopsOnAProtocolViolationAndSaysSo() async {
-        let source = ScriptedSource(Array(Framing.encode(Data("ok".utf8))) + [0xff, 0xff, 0xff, 0xff])
+        let source = ScriptedSource(Array(try! Framing.encode(Data("ok".utf8))) + [0xff, 0xff, 0xff, 0xff])
         let delivered = Collector()
         let end = await Framing.pump(receiveExactly: source.receiveExactly) { delivered.add($0) }
         XCTAssertEqual(delivered.items.count, 1)
         XCTAssertEqual(end, .rejected(.oversized))
     }
 
-    func testPumpHonoursCancellation() async {
-        let source = ScriptedSource(Array(Framing.encode(Data("x".utf8))))
-        let task = Task { () -> Framing.ConnectionEnd in
-            withUnsafeCurrentTask { $0?.cancel() }
-            return await Framing.pump(receiveExactly: source.receiveExactly) { _ in }
+    func testEncodeRefusesOutOfRangePayloadsWithoutTrapping() {
+        XCTAssertThrowsError(try Framing.encode(Data())) { XCTAssertEqual($0 as? Framing.FrameError, .empty) }
+        XCTAssertThrowsError(try Framing.encode(Data(count: MessageDomain.maxEnvelopeBytes + 1))) {
+            XCTAssertEqual($0 as? Framing.FrameError, .oversized)
         }
+    }
+
+    /// A receive that is blocked waiting for bytes ends promptly when the loop's task is cancelled.
+    func testCancellingABlockedReceiveEndsTheLoop() async {
+        let task = Task {
+            await Framing.pump(receiveExactly: { _ in
+                try await Task.sleep(for: .seconds(60))
+                return Data()
+            }, deliver: { _ in })
+        }
+        try? await Task.sleep(for: .milliseconds(50))
+        let started = ContinuousClock.now
+        task.cancel()
         let end = await task.value
         XCTAssertEqual(end, .cancelled)
+        XCTAssertLessThan(ContinuousClock.now - started, .seconds(5))
     }
 }

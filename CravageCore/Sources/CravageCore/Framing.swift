@@ -25,8 +25,10 @@ public enum Framing {
         case cancelled
     }
 
-    public static func encode(_ payload: Data) -> Data {
-        precondition(!payload.isEmpty && payload.count <= MessageDomain.maxEnvelopeBytes, "frame payload out of range")
+    /// Throws instead of trapping: a payload out of range fails that send, it never crashes the app.
+    public static func encode(_ payload: Data) throws -> Data {
+        guard !payload.isEmpty else { throw FrameError.empty }
+        guard payload.count <= MessageDomain.maxEnvelopeBytes else { throw FrameError.oversized }
         let length = UInt32(payload.count)
         var frame = Data([UInt8(length >> 24), UInt8((length >> 16) & 0xff), UInt8((length >> 8) & 0xff), UInt8(length & 0xff)])
         frame.append(payload)
