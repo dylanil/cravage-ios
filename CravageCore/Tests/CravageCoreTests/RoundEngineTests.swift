@@ -367,6 +367,7 @@ final class RoundEngineTests: XCTestCase {
         XCTAssertEqual(bus.engines[2].phase, .complete(.disputed(letter)))
         XCTAssertEqual(bus.engines[2].sum, 6, "the record is kept, flagged")
         let disputed = try XCTUnwrap(bus.engines[2].record)
+        XCTAssertEqual(disputed.outcome, .disputed(letter))
         XCTAssertEqual(disputed.sum, 6)
         XCTAssertNil(Transcript.make(from: disputed), "a subsequent export must not claim clean agreement")
         XCTAssertEqual(exported.encoded(), exportedBytes, "an existing export is not rewritten")
@@ -375,6 +376,11 @@ final class RoundEngineTests: XCTestCase {
         let original = try XCTUnwrap(bus.originated(by: 1, .resultConfirm).first)
         bus.deliver(0, .received(bus.forged(by: 1, .resultConfirm, content: original.content), from: PeerID(1)))
         XCTAssertEqual(bus.host.phase, .complete(.agreed))
+        bus.deliver(0, .received(late, from: PeerID(1)))
+        bus.run()
+        let hostRecord = try XCTUnwrap(bus.host.record)
+        XCTAssertEqual(hostRecord.outcome, .disputed(letter))
+        XCTAssertNil(Transcript.make(from: hostRecord))
     }
 
     // MARK: - Invariant 8: deadlines

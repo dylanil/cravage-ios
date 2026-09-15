@@ -106,7 +106,10 @@ P1 follow-up: the completed record now retains its agreement outcome and is mark
 on a late conflicting confirmation. Transcript.make refuses records without clean agreement;
 the v2 schema and previously exported files are unchanged. The regression failed before the fix
 and passed afterward; both new guards have mutation entries. Core suite: 141 tests passed;
-Python transcript acceptance and tamper rejection passed. Commit and CI identify the change.
+Python transcript acceptance and tamper rejection passed. Fix: `3b380fe`, CI green.
+Fresh review found no high or medium issue; its low finding tightened the test to assert the
+exact conflicting party in the record and cover host receipt too. An isolated wrong-party
+mutation fails that assertion; the correct implementation passes.
 
 S1, S2 and P2 remain open. Each fix needs a
 failing regression first and the normal fresh review and CI gates.
