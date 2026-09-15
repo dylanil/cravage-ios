@@ -98,6 +98,7 @@ print("Executed 1 test, with 0 failures (0 unexpected)")
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("unmutated suite does not pass", result.stdout)
         self.assertNotIn("caught:", result.stdout)
+        self.assertEqual(list((self.root / ".build/mutations").glob("*/mutation-*-build.log")), [])
 
     def test_mutation_never_changes_the_shared_checkout(self):
         result = self.run_gate("isolation")

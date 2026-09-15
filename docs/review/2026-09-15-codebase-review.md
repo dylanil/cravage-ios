@@ -98,7 +98,11 @@ relayed traffic from all eight parties. Disconnect excessive input before expens
 S3 follow-up: the harness now requires a successful build and a named failing XCTest case,
 retains evidence, and mutates an isolated source copy. Its compiler-failure regression failed
 against the original harness; all seven harness tests pass after the change. CI also runs those
-tests and uploads mutation evidence. The other four findings remain open. Each fix needs a
+tests and uploads mutation evidence. Implementation: `703f957`.
+An independent fresh review found no high or medium issues and one weak baseline-stop assertion.
+That assertion now checks that no mutated build was attempted; it fails when the early return
+is removed in an isolated copy and passes with the guard intact.
+The other four findings remain open. Each fix needs a
 failing regression first and the normal fresh review and CI gates.
 Coordinate ownership with the active implementation session before editing the
 transport, coordinator or engine. Codex initialization uses CLAUDE.md as the shared rules source
