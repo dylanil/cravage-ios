@@ -110,6 +110,7 @@ Python transcript acceptance and tamper rejection passed. Fix: `3b380fe`, CI gre
 Fresh review found no high or medium issue; its low finding tightened the test to assert the
 exact conflicting party in the record and cover host receipt too. An isolated wrong-party
 mutation fails that assertion; the correct implementation passes.
+Regression follow-up: `c907cba`, CI green.
 
 P2 follow-up: the incoming-message budget now applies to both roles before decoding and
 signature verification. Regressions cover host replays in lobby, confirming, complete and
@@ -124,13 +125,17 @@ before notifying the coordinator. Tests control TCP reads and writes at the real
 IO boundary, retaining its framing, outbox and teardown paths. Both stale-close regressions and
 the related queued missing-endpoint callback failed before the guards; the Join regression
 observed three connection attempts before its guard and one afterward.
+Fix: `8237748`. Fresh review found no high or medium issue. Its low finding added coverage for
+a missing-endpoint callback racing a replacement connection without a session change; removing
+that slot guard makes the expanded regression fail.
 
-Local validation: 20 simulator tests passed; Release build passed; all seven app mutations were
+Local validation: 20 simulator tests passed; Release build passed; all eight app mutations were
 caught after successful compilation. The mutation harness now supports an isolated simulator
 suite, excludes private signing configuration, and rejects unknown suite names. Nine harness
 tests pass, including compilation failure, source isolation and suite selection. CI runs both
 core and app mutations and retains their evidence. No production fake transport was added.
 
-All five original findings now have implementations. The app slice still needs its post-commit
-fresh review and CI result before it is reported complete. Physical-device NetworkTransport
-validation remains outstanding. Codex and Claude share CLAUDE.md and the canonical .claude skills.
+All five original findings now have implementations and independent source review. Both low
+coverage findings from fresh review have regression and mutation evidence. CI remains the
+required completion gate for each commit. Physical-device NetworkTransport validation remains
+outstanding. Codex and Claude share CLAUDE.md and the canonical .claude skills.

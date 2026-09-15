@@ -1,5 +1,5 @@
 {
-  "_about": "Guards that a test claims to protect. Each entry breaks one guard; the CravageCore suite must fail. Tools/check_mutations.py runs them. Add an entry whenever a test is named for a guarantee.",
+  "_about": "Guards that a test claims to protect. Each entry breaks one guard; its suite must compile and fail a named test. Tools/check_mutations.py runs core entries by default, and app entries with --suite app --destination. CI runs both suites. Add an entry whenever a test is named for a guarantee.",
   "mutations": [
     {"name": "share barrier needs the local confirm and every other confirm", "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
      "find": "guard phase == .confirming, localConfirmed, let roster, roomcodeConfirms.count == roster.size",
@@ -60,6 +60,7 @@
     {"name": "old explicit close cannot escape its session", "suite": "app", "file": "Cravage/Transport/NetworkTransport.swift", "find": "            guard let self, self.startToken == token, self.links[peer] == nil else { return }", "replace": "            guard let self, self.links[peer] == nil else { return }"},
     {"name": "old explicit close cannot report over a replacement", "suite": "app", "file": "Cravage/Transport/NetworkTransport.swift", "find": "            guard let self, self.startToken == token, self.links[peer] == nil else { return }", "replace": "            guard let self, self.startToken == token else { return }"},
     {"name": "missing endpoint callback is invalidated by Leave", "suite": "app", "file": "Cravage/Transport/NetworkTransport.swift", "find": "                guard let self, self.startToken == token, self.links[.host] == nil else { return }", "replace": "                guard let self, self.links[.host] == nil else { return }"},
-    {"name": "current receive failure is still reported", "suite": "app", "file": "Cravage/Transport/NetworkTransport.swift", "find": "            self.onEvent?(.peerDisconnected(peer))\n        }\n        return link", "replace": "            // mutation: silence a current failure\n        }\n        return link"}
+    {"name": "current receive failure is still reported", "suite": "app", "file": "Cravage/Transport/NetworkTransport.swift", "find": "            self.onEvent?(.peerDisconnected(peer))\n        }\n        return link", "replace": "            // mutation: silence a current failure\n        }\n        return link"},
+    {"name": "missing endpoint callback cannot report over a replacement", "suite": "app", "file": "Cravage/Transport/NetworkTransport.swift", "find": "                guard let self, self.startToken == token, self.links[.host] == nil else { return }", "replace": "                guard let self, self.startToken == token else { return }"}
   ]
 }

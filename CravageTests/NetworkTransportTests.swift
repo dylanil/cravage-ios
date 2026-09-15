@@ -107,13 +107,23 @@ final class NetworkTransportTests: XCTestCase {
         transport.stopAll()
     }
 
-    func testMissingEndpointFailureCannotEscapeLeave() async {
-        let transport = NetworkTransport()
-        let stale = expectation(description: "old missing endpoint reported after leaving")
-        stale.isInverted = true
-        transport.onEvent = { if case .peerDisconnected = $0 { stale.fulfill() } }
-        transport.connect(to: "no longer advertised")
-        transport.stopAll()
-        await fulfillment(of: [stale], timeout: 0.1)
+    func testMissingEndpointFailureCannotEscapeLeaveOrReplacement() async {
+        for replace in [false, true] {
+            let transport = NetworkTransport()
+            let stale = expectation(description: "old missing endpoint reported after leave or replacement")
+            stale.isInverted = true
+            transport.onEvent = { if case .peerDisconnected = $0 { stale.fulfill() } }
+            transport.connect(to: "no longer advertised")
+            let replacement = HeldTCP()
+            if replace {
+                transport.open(as: .host, send: replacement.send, receiveExactly: replacement.receiveExactly)
+            } else {
+                transport.stopAll()
+            }
+            await fulfillment(of: [stale], timeout: 0.1)
+            transport.onEvent = nil
+            transport.stopAll()
+            await replacement.failRead()
+        }
     }
 }
