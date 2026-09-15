@@ -116,9 +116,21 @@ signature verification. Regressions cover host replays in lobby, confirming, com
 failed states, rejection of queued malformed input after exhaustion, and repeated eight-party
 rounds with fresh restart budgets. The flood test failed before the fix; afterward all 143 core
 tests and all 21 core mutations passed locally.
+Fix: `f50c6b3`. Fresh review found no actionable defect.
 
-S1 and S2 remain open. Each fix needs a
-failing regression first and the normal fresh review and CI gates.
-Coordinate ownership with the active implementation session before editing the
-transport, coordinator or engine. Codex initialization uses CLAUDE.md as the shared rules source
-and thin .agents skill entries pointing to the canonical .claude skills.
+S1/S2 follow-up: repeated Join now stops before a second connection attempt. Receive-close,
+explicit-close and missing-endpoint callbacks recheck their session and connection ownership
+before notifying the coordinator. Tests control TCP reads and writes at the real transport's
+IO boundary, retaining its framing, outbox and teardown paths. Both stale-close regressions and
+the related queued missing-endpoint callback failed before the guards; the Join regression
+observed three connection attempts before its guard and one afterward.
+
+Local validation: 20 simulator tests passed; Release build passed; all seven app mutations were
+caught after successful compilation. The mutation harness now supports an isolated simulator
+suite, excludes private signing configuration, and rejects unknown suite names. Nine harness
+tests pass, including compilation failure, source isolation and suite selection. CI runs both
+core and app mutations and retains their evidence. No production fake transport was added.
+
+All five original findings now have implementations. The app slice still needs its post-commit
+fresh review and CI result before it is reported complete. Physical-device NetworkTransport
+validation remains outstanding. Codex and Claude share CLAUDE.md and the canonical .claude skills.

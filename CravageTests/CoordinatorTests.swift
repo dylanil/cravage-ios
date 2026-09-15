@@ -54,13 +54,17 @@ final class FakeStar {
         var hosting: (label: String, size: Int)?
         var browsing = false
         var sentCount = 0
+        var connectionAttempts = 0
         init(index: Int) { self.index = index }
         func startHosting(label: String, size: Int, hostNickname: String) { hosting = (label, size) }
         func startBrowsing() {
             browsing = true
             if let advert = star?.advert { onEvent?(.roomsChanged([advert])) }
         }
-        func connect(to roomID: String) { star?.connect(joiner: index) }
+        func connect(to roomID: String) {
+            connectionAttempts += 1
+            star?.connect(joiner: index)
+        }
         func send(_ data: Data, to peer: PeerID) { sentCount += 1; star?.enqueue(from: index, to: peer, data) }
         func disconnect(_ peer: PeerID) { star?.drop(index == 0 ? peer.raw : index) }
         func stopAll() { hosting = nil; browsing = false }
@@ -180,6 +184,32 @@ final class CoordinatorTests: XCTestCase {
         host.start(generation: host.engine.generation)
         star.flush()
         return star
+    }
+
+    func testRepeatedJoinKeepsTheConnectionAndCanCompleteAdmission() async {
+        let star = FakeStar(phones: 3, entitlement: FakeEntitlement(unlocked: false))
+        let host = star.coordinators[0]
+        let joiner = star.coordinators[1]
+        await host.createRoom(label: "Team", size: 3, nickname: "Host")
+        joiner.join(roomID: "room", nickname: "Alex")
+        joiner.join(roomID: "room", nickname: "Alex")
+        star.flush()
+        XCTAssertEqual(host.engine.pendingJoiners.count, 1)
+
+        // Repeat after the signed welcome has established the session, while awaiting admission.
+        joiner.join(roomID: "room", nickname: "Alex")
+        star.flush()
+        XCTAssertEqual(star.transports[1].connectionAttempts, 1)
+
+        star.coordinators[2].join(roomID: "room", nickname: "Dee")
+        star.flush()
+        for pending in host.engine.pendingJoiners {
+            host.admit(pending.verifyingKey, generation: host.engine.generation)
+        }
+        host.start(generation: host.engine.generation)
+        star.flush()
+        XCTAssertEqual(joiner.engine.phase, .confirming)
+        star.coordinators.forEach { $0.leave() }
     }
 
     func testARealRoundCompletesThroughCoordinatorsOverTheFakeTransport() async {

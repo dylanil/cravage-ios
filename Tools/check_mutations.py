@@ -5,7 +5,9 @@ Runs in an isolated source copy so another coding session never observes a mutan
 Build/test logs are retained under .build/mutations/. An error is never a caught guard.
 
     python3 Tools/check_mutations.py
+    python3 Tools/check_mutations.py --suite app --destination 'platform=iOS Simulator,name=iPhone 17 Pro'
 """
+import argparse
 import json
 from pathlib import Path
 import re
@@ -32,12 +34,21 @@ def command(args, work, log):
         return -1
 
 
-def run_tests(work, logs, name):
+def run_tests(work, logs, name, suite="core", destination=None):
+    if suite == "app":
+        options = ["-project", "Cravage.xcodeproj", "-scheme", "Cravage", "-destination", destination,
+                   "-derivedDataPath", str(work / ".build/DerivedData"), "-parallel-testing-enabled", "NO",
+                   "CODE_SIGNING_ALLOWED=NO"]
+        build = ["xcodebuild", "build-for-testing", *options]
+        test = ["xcodebuild", "test-without-building", *options]
+    else:
+        build = ["swift", "build", "--build-tests", "--package-path", "CravageCore"]
+        test = ["swift", "test", "--skip-build", "--package-path", "CravageCore"]
     build_log = logs / f"{name}-build.log"
-    if command(["swift", "build", "--build-tests", "--package-path", "CravageCore"], work, build_log) != 0:
+    if command(build, work, build_log) != 0:
         return "error", f"build failed; see {build_log}"
     test_log = logs / f"{name}-test.log"
-    code = command(["swift", "test", "--skip-build", "--package-path", "CravageCore"], work, test_log)
+    code = command(test, work, test_log)
     output = test_log.read_text(errors="replace")
     failures = FAILED_CASE.findall(output)
     if code > 0 and failures:
@@ -48,7 +59,16 @@ def run_tests(work, logs, name):
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--suite", choices=["core", "app"], default="core")
+    parser.add_argument("--destination", help="xcodebuild simulator destination, required for the app suite")
+    args = parser.parse_args()
+    if args.suite == "app" and not args.destination:
+        parser.error("--suite app requires --destination")
     mutations = json.loads((ROOT / "Tools/mutations.json").read_text())["mutations"]
+    if any(m.get("suite", "core") not in ("core", "app") for m in mutations):
+        parser.error("unknown mutation suite; expected core or app")
+    mutations = [m for m in mutations if m.get("suite", "core") == args.suite]
     logs = ROOT / ".build/mutations" / str(time.time_ns())
     logs.mkdir(parents=True)
     print(f"Evidence: {logs}", flush=True)
@@ -56,7 +76,11 @@ def main():
         work = Path(directory)
         shutil.copytree(ROOT / "CravageCore", work / "CravageCore",
                         ignore=shutil.ignore_patterns(".build", ".swiftpm"))
-        status, detail = run_tests(work, logs, "baseline")
+        if args.suite == "app":
+            for directory in ["Cravage", "CravageTests", "Cravage.xcodeproj", "Config"]:
+                shutil.copytree(ROOT / directory, work / directory,
+                                ignore=shutil.ignore_patterns(".build", "xcuserdata", "Local.xcconfig"))
+        status, detail = run_tests(work, logs, "baseline", args.suite, args.destination)
         if status != "passed":
             print(f"FAIL: the unmutated suite does not pass: {detail}")
             return 1
@@ -71,7 +95,7 @@ def main():
                 continue
             try:
                 path.write_text(original.replace(mutation["find"], mutation["replace"]))
-                status, detail = run_tests(work, logs, f"mutation-{index + 1}")
+                status, detail = run_tests(work, logs, f"mutation-{index + 1}", args.suite, args.destination)
             finally:
                 path.write_text(original)
             if status == "failed":

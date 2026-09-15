@@ -56,6 +56,7 @@ final class RoundCoordinator {
     }
 
     func join(roomID: String, nickname: String) {
+        guard engine.phase == .idle else { return }
         apply(.joinRoom(nickname: nickname))
         guard engine.phase == .lobby, engine.role == .joiner else { return }
         transport.connect(to: roomID)

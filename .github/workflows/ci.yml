@@ -77,6 +77,8 @@ jobs:
             -destination "platform=iOS Simulator,name=$SIM" \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
             -resultBundlePath "$RUNNER_TEMP/result.xcresult"
+          python3 Tools/check_mutations.py --suite app \
+            --destination "platform=iOS Simulator,name=$SIM"
       - name: Build the Release configuration (no test hooks, no signing)
         run: |
           if [ ! -d Cravage.xcodeproj ]; then exit 0; fi
@@ -92,3 +94,9 @@ jobs:
         with:
           name: xcresult
           path: ${{ runner.temp }}/result.xcresult
+      - name: Upload app mutation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-mutation-evidence
+          path: .build/mutations/

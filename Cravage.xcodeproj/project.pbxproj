@@ -19,6 +19,7 @@
 		BD26E8720D2FDD114746EFF6 /* OutboxTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC74F0981C7DACB7497F7D16 /* OutboxTests.swift */; };
 		CA27AC80245C6ACE0BC5E998 /* NetworkTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 951EB584BC0D3D35547C6CF5 /* NetworkTransport.swift */; };
 		D9D118087056C8E51411EF10 /* RoundCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0ED4CADDCFFD7E599A5606 /* RoundCoordinator.swift */; };
+		ED03844BACD8238558F40398 /* NetworkTransportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29239C57AFC5AEACFA1A679E /* NetworkTransportTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -34,6 +35,7 @@
 /* Begin PBXFileReference section */
 		172ADE99C9D870127282445D /* CravageCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = CravageCore; path = CravageCore; sourceTree = SOURCE_ROOT; };
 		21A9FDD6C6104FFE266357AF /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		29239C57AFC5AEACFA1A679E /* NetworkTransportTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkTransportTests.swift; sourceTree = "<group>"; };
 		5103289F3128432D9EE3F7D8 /* CravageApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CravageApp.swift; sourceTree = "<group>"; };
 		77FCC0B72CDFAE6326C6AF50 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		8C6194E42A838377EC9B5A6B /* Cravage.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Cravage.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -102,6 +104,7 @@
 			isa = PBXGroup;
 			children = (
 				DA617C1EE94277DED0F37644 /* CoordinatorTests.swift */,
+				29239C57AFC5AEACFA1A679E /* NetworkTransportTests.swift */,
 				AC74F0981C7DACB7497F7D16 /* OutboxTests.swift */,
 			);
 			path = CravageTests;
@@ -262,6 +265,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				7833B30895D6FC7CDF4F1191 /* CoordinatorTests.swift in Sources */,
+				ED03844BACD8238558F40398 /* NetworkTransportTests.swift in Sources */,
 				BD26E8720D2FDD114746EFF6 /* OutboxTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

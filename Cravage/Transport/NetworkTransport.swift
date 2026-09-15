@@ -35,7 +35,7 @@ final class NetworkTransport: RoundTransport {
 
     /// One open connection: its receive loop, its outbox, and whoever waits for it to close.
     @MainActor
-    private final class Link {
+    final class Link {
         let outbox: Outbox
         var receiveTask: Task<Void, Never>?
         private var closedWaiters: [CheckedContinuation<Void, Never>] = []
@@ -168,11 +168,15 @@ final class NetworkTransport: RoundTransport {
     }
 
     func connect(to roomID: String) {
+        let token = startToken
         if let old = links.removeValue(forKey: .host) {
             Task { await old.close(drain: false) }
         }
         guard let endpoint = endpoints[roomID] else {
-            Task { [weak self] in self?.onEvent?(.peerDisconnected(.host)) }
+            Task { [weak self] in
+                guard let self, self.startToken == token, self.links[.host] == nil else { return }
+                self.onEvent?(.peerDisconnected(.host))
+            }
             return
         }
         let connection = NetworkConnection(to: endpoint, using: .parameters { TCP() }.peerToPeerIncluded(true))
@@ -182,15 +186,25 @@ final class NetworkTransport: RoundTransport {
     // MARK: - Shared
 
     private func open(_ connection: NetworkConnection<TCP>, as peer: PeerID) -> Link {
+        open(as: peer, send: { data in
+            try await connection.send(data)
+        }, receiveExactly: { count in
+            try await connection.receive(exactly: count).content
+        })
+    }
+
+    /// TCP byte IO is supplied at this boundary; framing and connection lifetime stay here.
+    @discardableResult
+    func open(as peer: PeerID, send: @escaping @Sendable (Data) async throws -> Void,
+              receiveExactly: @escaping @Sendable (Int) async throws -> Data) -> Link {
+        let token = startToken
         let outbox = Outbox(send: { data in
-            try await connection.send(try Framing.encode(data))
+            try await send(try Framing.encode(data))
         })
         let link = Link(outbox: outbox)
         links[peer] = link
         link.receiveTask = Task { [weak self] in
-            _ = await Framing.pump(receiveExactly: { count in
-                try await connection.receive(exactly: count).content
-            }, deliver: { [weak self] data in
+            _ = await Framing.pump(receiveExactly: receiveExactly, deliver: { [weak self] data in
                 await self?.delivered(data, from: peer, on: link)
             })
             // Cleanup after the loop, whatever ended it; only if this link is still the one on record.
@@ -200,6 +214,7 @@ final class NetworkTransport: RoundTransport {
             }
             self.links[peer] = nil
             await link.close(drain: false)
+            guard self.startToken == token, self.links[peer] == nil else { return }
             self.refreshConnectionBudget()
             self.onEvent?(.peerDisconnected(peer))
         }
@@ -221,10 +236,12 @@ final class NetworkTransport: RoundTransport {
 
     func disconnect(_ peer: PeerID) {
         guard let link = links.removeValue(forKey: peer) else { return }
+        let token = startToken
         Task { [weak self] in
             await link.close(drain: true)
-            self?.refreshConnectionBudget()
-            self?.onEvent?(.peerDisconnected(peer))
+            guard let self, self.startToken == token, self.links[peer] == nil else { return }
+            self.refreshConnectionBudget()
+            self.onEvent?(.peerDisconnected(peer))
         }
     }
 
