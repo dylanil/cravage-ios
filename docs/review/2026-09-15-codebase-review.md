@@ -111,7 +111,13 @@ Fresh review found no high or medium issue; its low finding tightened the test t
 exact conflicting party in the record and cover host receipt too. An isolated wrong-party
 mutation fails that assertion; the correct implementation passes.
 
-S1, S2 and P2 remain open. Each fix needs a
+P2 follow-up: the incoming-message budget now applies to both roles before decoding and
+signature verification. Regressions cover host replays in lobby, confirming, complete and
+failed states, rejection of queued malformed input after exhaustion, and repeated eight-party
+rounds with fresh restart budgets. The flood test failed before the fix; afterward all 143 core
+tests and all 21 core mutations passed locally.
+
+S1 and S2 remain open. Each fix needs a
 failing regression first and the normal fresh review and CI gates.
 Coordinate ownership with the active implementation session before editing the
 transport, coordinator or engine. Codex initialization uses CLAUDE.md as the shared rules source

@@ -182,8 +182,8 @@ public struct RestartOffer: Equatable, Sendable {
 public final class RoundEngine {
     public static let maxConnections = 16
     public static let maxPending = 8
-    /// Messages accepted from one peer in one generation before it is disconnected. An honest
-    /// eight-party round needs well under twenty.
+    /// Messages accepted from one connection in one generation before it is disconnected.
+    /// Includes the host's relayed traffic on joiners; an honest eight-party round fits this budget.
     public static let maxMessagesPerPeer = 64
 
     public let deadlines: Deadlines
@@ -553,16 +553,18 @@ public final class RoundEngine {
         if role == .host {
             guard connected.contains(peer) else { return }
             if declinedPeers.contains(peer) { effects.append(.disconnect(peer)); return }
-            let count = (messageCounts[peer] ?? 0) + 1
-            messageCounts[peer] = count
-            guard count <= RoundEngine.maxMessagesPerPeer else {
-                effects.append(.rejected(.flood))
-                effects.append(.disconnect(peer))
-                return
-            }
         } else if peer != .host {
             return
         }
+        // Bound both roles before decoding or signature verification, including queued messages
+        // after a disconnect request. Saturation keeps that queue from growing the counter forever.
+        let count = messageCounts[peer] ?? 0
+        guard count < RoundEngine.maxMessagesPerPeer else {
+            effects.append(.rejected(.flood))
+            effects.append(.disconnect(peer))
+            return
+        }
+        messageCounts[peer] = count + 1
         let message: VerifiedMessage
         do {
             message = try Envelope.decodeAndVerify(data)

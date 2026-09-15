@@ -569,6 +569,41 @@ final class RoundEngineTests: XCTestCase {
 
     // MARK: - Message domain in the engine: floods, queues, versions, decline
 
+    func testJoinerBoundsHostReplaysBeforeDecodingInWaitingAndTerminalStates() throws {
+        let failed = StarBus.locked(nodes: 3)
+        failed.advance(ms: Deadlines.forTests.confirmingMs)
+        let cases = [StarBus.lobby(nodes: 3), StarBus.locked(nodes: 8),
+                     StarBus.completed(figures: Array(repeating: 1, count: 8)), failed]
+        for bus in cases {
+            let replay = try XCTUnwrap(bus.sent.first { $0.from == 0 && $0.to == 1 }?.data)
+            XCTAssertNoThrow(try Envelope.decodeAndVerify(replay))
+            for _ in 0...RoundEngine.maxMessagesPerPeer {
+                bus.deliver(1, .received(replay, from: .host))
+            }
+            XCTAssertFalse(bus.connected.contains(1), "excess host traffic closes the joiner's connection")
+            XCTAssertTrue(bus.rejections[1]?.contains(.flood) ?? false)
+            // Queued bytes after budget exhaustion must be rejected before JSON or signature work.
+            let effects = bus.engines[1].handle(.received(Data(), from: .host), now: bus.now)
+            XCTAssertEqual(effects, [.rejected(.flood), .disconnect(.host)])
+        }
+    }
+
+    func testEightPartyRestartGetsAFreshIncomingMessageBudget() {
+        let bus = StarBus.completed(figures: Array(repeating: 1, count: 8))
+        for _ in 0..<4 {
+            XCTAssertTrue(bus.phases().allSatisfy { $0 == .complete(.agreed) })
+            bus.deliver(0, .restart(generation: bus.host.generation))
+            bus.run()
+            for node in bus.joinerNodes {
+                bus.deliver(node, .acceptRestart(generation: bus.engines[node].generation))
+            }
+            bus.run()
+            bus.confirm()
+            bus.submit(Dictionary(uniqueKeysWithValues: (0..<8).map { ($0, Int64(1)) }))
+        }
+        XCTAssertTrue(bus.phases().allSatisfy { $0 == .complete(.agreed) })
+    }
+
     func testPendingQueueAndMessageFloodsAreBounded() throws {
         let bus = StarBus.lobby(nodes: 3)
         for k in 10..<(10 + RoundEngine.maxConnections) {

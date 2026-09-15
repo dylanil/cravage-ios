@@ -51,6 +51,8 @@
      "replace": "return me < other ? -1 : 1"},
     {"name": "late dispute updates the exportable record", "file": "CravageCore/Sources/CravageCore/RoundEngine.swift", "find": "            record?.outcome = .disputed(letter)", "replace": "            // mutation: retain the old record outcome"},
     {"name": "disputed records cannot export clean agreement", "file": "CravageCore/Sources/CravageCore/Transcript.swift", "find": "        guard record.outcome == .agreed else { return nil }", "replace": "        // mutation: ignore disputed agreement"},
-    {"name": "late dispute records the actual conflicting party", "file": "CravageCore/Sources/CravageCore/RoundEngine.swift", "find": "            record?.outcome = .disputed(letter)", "replace": "            record?.outcome = .disputed(myLetter!)"}
+    {"name": "late dispute records the actual conflicting party", "file": "CravageCore/Sources/CravageCore/RoundEngine.swift", "find": "            record?.outcome = .disputed(letter)", "replace": "            record?.outcome = .disputed(myLetter!)"},
+    {"name": "joiners bound host messages before verification", "file": "CravageCore/Sources/CravageCore/RoundEngine.swift", "find": "guard count < RoundEngine.maxMessagesPerPeer else {", "replace": "guard role == .joiner || count < RoundEngine.maxMessagesPerPeer else {"},
+    {"name": "accepted restarts reset the incoming message budget", "file": "CravageCore/Sources/CravageCore/RoundEngine.swift", "find": "        messageCounts = [:]\n        ownHelloSignature = nil", "replace": "        // mutation: retain prior message counts\n        ownHelloSignature = nil"}
   ]
 }
