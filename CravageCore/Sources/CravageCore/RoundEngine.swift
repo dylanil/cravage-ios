@@ -154,6 +154,8 @@ public struct PendingJoiner: Equatable, Sendable {
 
 /// What a finished round keeps for display and transcript export.
 public struct RoundRecord: Equatable, Sendable {
+    /// Agreement can be withdrawn by a late conflicting confirmation. Existing exports are values.
+    public fileprivate(set) var outcome: Outcome
     public let session: SessionID
     public let rosterHash: Data
     public let label: String
@@ -713,6 +715,7 @@ public final class RoundEngine {
             guard outcome == .agreed, message.action == .resultConfirm, let existing = resultConfirms[letter] else { return false }
             if existing.content == message.content { return false }
             phase = .complete(.disputed(letter))
+            record?.outcome = .disputed(letter)
             return true
         }
         guard letter != myLetter else { return false }
@@ -868,7 +871,7 @@ public final class RoundEngine {
         if !mismatched.isEmpty { outcome = .mismatch(mismatched) }
         else if !missing.isEmpty { outcome = .partial(missing: missing) }
         else { outcome = .agreed }
-        record = RoundRecord(session: session!, rosterHash: roster.rosterHash, label: roster.label, parties: roster.parties,
+        record = RoundRecord(outcome: outcome, session: session!, rosterHash: roster.rosterHash, label: roster.label, parties: roster.parties,
                              shares: shares.mapValues(\.content), shareSignatures: shares.mapValues(\.signature),
                              resultConfirmSignatures: resultConfirms.mapValues(\.signature),
                              roomcodeConfirmSignatures: roomcodeConfirms.mapValues(\.signature), sum: sum!)

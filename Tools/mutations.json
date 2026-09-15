@@ -48,6 +48,8 @@
      "replace": "        return try await receiveExactly(length)"},
     {"name": "lower letter adds its mask", "file": "CravageCore/Sources/CravageCore/Wraparound.swift",
      "find": "return me < other ? 1 : -1",
-     "replace": "return me < other ? -1 : 1"}
+     "replace": "return me < other ? -1 : 1"},
+    {"name": "late dispute updates the exportable record", "file": "CravageCore/Sources/CravageCore/RoundEngine.swift", "find": "            record?.outcome = .disputed(letter)", "replace": "            // mutation: retain the old record outcome"},
+    {"name": "disputed records cannot export clean agreement", "file": "CravageCore/Sources/CravageCore/Transcript.swift", "find": "        guard record.outcome == .agreed else { return nil }", "replace": "        // mutation: ignore disputed agreement"}
   ]
 }

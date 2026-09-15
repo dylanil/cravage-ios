@@ -102,7 +102,13 @@ tests and uploads mutation evidence. Implementation: `703f957`.
 An independent fresh review found no high or medium issues and one weak baseline-stop assertion.
 That assertion now checks that no mutated build was attempted; it fails when the early return
 is removed in an isolated copy and passes with the guard intact.
-The other four findings remain open. Each fix needs a
+P1 follow-up: the completed record now retains its agreement outcome and is marked disputed
+on a late conflicting confirmation. Transcript.make refuses records without clean agreement;
+the v2 schema and previously exported files are unchanged. The regression failed before the fix
+and passed afterward; both new guards have mutation entries. Core suite: 141 tests passed;
+Python transcript acceptance and tamper rejection passed. Commit and CI identify the change.
+
+S1, S2 and P2 remain open. Each fix needs a
 failing regression first and the normal fresh review and CI gates.
 Coordinate ownership with the active implementation session before editing the
 transport, coordinator or engine. Codex initialization uses CLAUDE.md as the shared rules source

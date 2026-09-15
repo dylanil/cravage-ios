@@ -39,6 +39,7 @@ public struct Transcript: Codable, Equatable, Sendable {
     /// Returns nil for anything else (missing or mismatched agreement), so a disagreement can
     /// never be exported as if it were a verifiable result.
     public static func make(from record: RoundRecord) -> Transcript? {
+        guard record.outcome == .agreed else { return nil }
         let letters = record.parties.map(\.label.letter)
         var confirms: [String: String] = [:]
         var roomcodeConfirms: [String: String] = [:]

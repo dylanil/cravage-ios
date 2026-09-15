@@ -359,11 +359,18 @@ final class RoundEngineTests: XCTestCase {
 
     func testLateConflictingResultConfirmMarksAnAgreedRoundDisputed() throws {
         let bus = StarBus.completed(figures: [1, 2, 3])
+        let exported = try XCTUnwrap(Transcript.make(from: XCTUnwrap(bus.engines[2].record)))
+        let exportedBytes = exported.encoded()
         let letter = try XCTUnwrap(bus.engines[1].myLetter)
         let late = bus.forged(by: 1, .resultConfirm, content: String(repeating: "0", count: 64))
         bus.deliver(2, .received(late, from: .host))
         XCTAssertEqual(bus.engines[2].phase, .complete(.disputed(letter)))
         XCTAssertEqual(bus.engines[2].sum, 6, "the record is kept, flagged")
+        let disputed = try XCTUnwrap(bus.engines[2].record)
+        XCTAssertEqual(disputed.sum, 6)
+        XCTAssertNil(Transcript.make(from: disputed), "a subsequent export must not claim clean agreement")
+        XCTAssertEqual(exported.encoded(), exportedBytes, "an existing export is not rewritten")
+        XCTAssertTrue(TranscriptVerifier.verify(exportedBytes).isEmpty)
         // An identical late resend changes nothing.
         let original = try XCTUnwrap(bus.originated(by: 1, .resultConfirm).first)
         bus.deliver(0, .received(bus.forged(by: 1, .resultConfirm, content: original.content), from: PeerID(1)))
