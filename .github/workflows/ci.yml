@@ -44,7 +44,15 @@ jobs:
           XCODE="$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)"
           sudo xcode-select -s "$XCODE"
       - name: Break each guard in Tools/mutations.json and require a failing test
-        run: python3 Tools/check_mutations.py
+        run: |
+          python3 -m unittest discover -s Tools -p test_check_mutations.py
+          python3 Tools/check_mutations.py
+      - name: Upload mutation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutation-evidence
+          path: .build/mutations/
 
   app:
     name: iOS app build + tests (simulator)
