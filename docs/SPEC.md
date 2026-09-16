@@ -114,8 +114,15 @@ distinct cases so a future change to one cannot accidentally widen the other's v
    distinguishes collecting / all N agree / mismatch (named) / missing. A mismatch is never shown
    as a success with a reduced badge. **New named transition**: `complete(agreed) -> disputed` is
    the sole permitted transition out of a completed state, triggered by a late-arriving conflicting
-   `result_confirm`. An already-exported transcript file is not mutated; only the on-device record
-   (and any subsequent display or re-export) carries the disputed flag.
+   `result_confirm`. An already-exported transcript file is not mutated; the on-device record and
+   any subsequent display carry the disputed flag.
+   **Revised by the owner, 2026-09-16, to match the implementation**: a disputed round produces no
+   further transcript. `Transcript.make` refuses any record whose outcome is not clean agreement,
+   so re-export is refused rather than flagged. Reason: `cravage-transcript-2` has no field for a
+   dispute and its verifier is deliberately pinned, so a re-export would be byte-indistinguishable
+   from a clean one and would overclaim agreement. Adding such a field would change the format and
+   the pinned verifier in the SMPC repository; that is not done, and is the alternative if a
+   disputed round ever needs an exportable artefact.
    **Copy rule (owner-agreed 2026-09-13, from the code review)**: a mismatch names the parties whose
    agreement differs from this phone's, which is not the same as naming who cheated. A dishonest
    relay can make two honest phones each name the other. The result screen says "did not agree
@@ -166,6 +173,8 @@ distinct cases so a future change to one cannot accidentally widen the other's v
 
 ## 4. Transcript honesty
 
+- Exported only for a round whose parties all signed agreement to the same shares, and never
+  again once that round is disputed (invariant 7).
 - Format `cravage-transcript-2`. Fields: format id, session id, room label, ordered parties, scale
   `"1000000"`, modulus `"18446744073709551616"`, shares (signed decimal strings), share signatures,
   verifying keys, `result_confirm` signatures, sum, average. **Added by the owner, 2026-09-13**:
@@ -232,4 +241,4 @@ where their wording changes; new items are marked **NEW**):
   and group size — not anyone's number.
 - **NEW**: if a result is later found inconsistent, an already-shown or exported result may be
   marked disputed afterward; the exported file itself does not change, only the app's own record of
-  it.
+  it, and the app will not export that round again.

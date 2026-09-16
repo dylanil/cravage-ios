@@ -69,7 +69,8 @@ than discovered. The in-app Limitations screen carries the same list in shorter 
   skips this, and it would skew everyone's average with no signature or verification failure.
 - **A dispute found after the fact doesn't rewrite an already-saved file.** If a conflict surfaces
   after a result was shown or exported, the app marks its own record disputed from then on; a file
-  already exported earlier is unchanged.
+  already exported earlier is unchanged, and the app will not export that round again, because the
+  file format cannot say a result is disputed.
 
 ## Repository layout
 
