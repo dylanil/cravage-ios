@@ -6,6 +6,9 @@ Build/test logs are retained under .build/mutations/. An error is never a caught
 
     python3 Tools/check_mutations.py
     python3 Tools/check_mutations.py --suite app --destination 'platform=iOS Simulator,name=iPhone 17 Pro'
+
+A runner that hangs after reporting its results (xcodebuild does this) is judged on the results it
+already printed, not on the hang: a named failing test still counts as caught.
 """
 import argparse
 import json
@@ -22,19 +25,24 @@ FAILED_CASE = re.compile(r"^Test Case '(.+)' failed \(", re.MULTILINE)
 PASSED_CASE = re.compile(r"^Test Case '.+' passed \(", re.MULTILINE)
 
 
-def command(args, work, log):
+def command(args, work, log, timeout):
+    """Returns (exit code, timed out). A timed-out or failed launch has no exit code of its own."""
     try:
         with log.open("w") as output:
             result = subprocess.run(args, cwd=work, stdout=output, stderr=subprocess.STDOUT,
-                                    timeout=600)
-        return result.returncode
-    except (OSError, subprocess.TimeoutExpired) as error:
+                                    timeout=timeout)
+        return result.returncode, False
+    except subprocess.TimeoutExpired as error:
         with log.open("a") as output:
             output.write(f"\nRunner error: {error}\n")
-        return -1
+        return -1, True
+    except OSError as error:
+        with log.open("a") as output:
+            output.write(f"\nRunner error: {error}\n")
+        return -1, False
 
 
-def run_tests(work, logs, name, suite="core", destination=None):
+def run_tests(work, logs, name, suite="core", destination=None, timeout=600):
     if suite == "app":
         options = ["-project", "Cravage.xcodeproj", "-scheme", "Cravage", "-destination", destination,
                    "-derivedDataPath", str(work / ".build/DerivedData"), "-parallel-testing-enabled", "NO",
@@ -45,26 +53,33 @@ def run_tests(work, logs, name, suite="core", destination=None):
         build = ["swift", "build", "--build-tests", "--package-path", "CravageCore"]
         test = ["swift", "test", "--skip-build", "--package-path", "CravageCore"]
     build_log = logs / f"{name}-build.log"
-    if command(build, work, build_log) != 0:
-        return "error", f"build failed; see {build_log}"
+    built, build_hung = command(build, work, build_log, timeout)
+    if built != 0:
+        reason = "build timed out" if build_hung else "build failed"
+        return "error", f"{reason}; see {build_log}"
     test_log = logs / f"{name}-test.log"
-    code = command(test, work, test_log)
+    code, hung = command(test, work, test_log, timeout)
     output = test_log.read_text(errors="replace")
     failures = FAILED_CASE.findall(output)
-    if code > 0 and failures:
-        return "failed", f"{', '.join(failures)}; see {test_log}"
+    if failures and (code > 0 or hung):
+        # A runner that hangs after naming a failing test has still proved the guard is covered.
+        note = " (runner hung after reporting; judged on its output)" if hung else ""
+        return "failed", f"{', '.join(failures)}{note}; see {test_log}"
     if code == 0 and not failures and PASSED_CASE.search(output):
         return "passed", str(test_log)
-    return "error", f"no reliable test result; see {test_log}"
+    reason = "runner hung with no failing test" if hung else "no reliable test result"
+    return "error", f"{reason}; see {test_log}"
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--suite", choices=["core", "app"], default="core")
     parser.add_argument("--destination", help="xcodebuild simulator destination, required for the app suite")
+    parser.add_argument("--timeout", type=float, help="seconds per build and per test run (default: 600 core, 1800 app)")
     args = parser.parse_args()
     if args.suite == "app" and not args.destination:
         parser.error("--suite app requires --destination")
+    timeout = args.timeout if args.timeout else (1800 if args.suite == "app" else 600)
     mutations = json.loads((ROOT / "Tools/mutations.json").read_text())["mutations"]
     if any(m.get("suite", "core") not in ("core", "app") for m in mutations):
         parser.error("unknown mutation suite; expected core or app")
@@ -80,7 +95,7 @@ def main():
             for directory in ["Cravage", "CravageTests", "Cravage.xcodeproj", "Config"]:
                 shutil.copytree(ROOT / directory, work / directory,
                                 ignore=shutil.ignore_patterns(".build", "xcuserdata", "Local.xcconfig"))
-        status, detail = run_tests(work, logs, "baseline", args.suite, args.destination)
+        status, detail = run_tests(work, logs, "baseline", args.suite, args.destination, timeout)
         if status != "passed":
             print(f"FAIL: the unmutated suite does not pass: {detail}")
             return 1
@@ -95,7 +110,7 @@ def main():
                 continue
             try:
                 path.write_text(original.replace(mutation["find"], mutation["replace"]))
-                status, detail = run_tests(work, logs, f"mutation-{index + 1}", args.suite, args.destination)
+                status, detail = run_tests(work, logs, f"mutation-{index + 1}", args.suite, args.destination, timeout)
             finally:
                 path.write_text(original)
             if status == "failed":

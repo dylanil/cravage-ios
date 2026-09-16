@@ -29,6 +29,7 @@ class MutationGateTests(unittest.TestCase):
 import os
 from pathlib import Path
 import sys
+import time
 mutated = "removed" in Path("CravageCore/Guard.swift").read_text()
 mode = os.environ.get("MUTATION_TEST_MODE", "compile")
 if mutated and mode == "compile":
@@ -47,6 +48,11 @@ if mutated and mode == "infrastructure":
     sys.exit(1)
 if mutated and mode == "empty":
     sys.exit(0)
+if mutated and mode == "hang":
+    print("Test Case 'Example.testGuard' failed (0.001 seconds).", flush=True)
+    time.sleep(30)
+if mutated and mode == "silenthang":
+    time.sleep(30)
 if mutated and mode == "isolation":
     if "removed" in Path(os.environ["MUTATION_ORIGINAL_SOURCE"]).read_text():
         print("error: working source was mutated")
@@ -77,6 +83,18 @@ print("Executed 1 test, with 0 failures (0 unexpected)")
         logs = list((self.root / ".build/mutations").glob("*/mutation-1-test.log"))
         self.assertEqual(len(logs), 1)
         self.assertIn("Example.testGuard", logs[0].read_text())
+
+    def test_runner_that_hangs_after_a_failing_test_still_counts_as_caught(self):
+        result = self.run_gate("hang", args=("--timeout", "3"))
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("caught: example guard", result.stdout)
+        self.assertIn("runner hung after reporting", result.stdout)
+
+    def test_runner_that_hangs_with_no_failing_test_is_not_caught(self):
+        result = self.run_gate("silenthang", args=("--timeout", "3"))
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("ERROR: example guard", result.stdout)
+        self.assertIn("runner hung with no failing test", result.stdout)
 
     def test_passing_mutation_is_reported_as_surviving(self):
         result = self.run_gate("pass")
