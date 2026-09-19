@@ -203,6 +203,13 @@
       "file": "Cravage/UI/OutcomeCopy.swift",
       "find": "        if case .agreed = outcome { return true }\n        return false",
       "replace": "        return true"
+    },
+    {
+      "name": "screens observe the round through live",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "        _ = revision\n        return engine",
+      "replace": "        return engine"
     }
   ]
 }

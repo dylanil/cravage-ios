@@ -11,7 +11,7 @@ struct ConfirmCodeView: View {
     let coordinator: RoundCoordinator
     let onStop: () -> Void
 
-    private var engine: RoundEngine { coordinator.engine }
+    private var engine: RoundEngine { coordinator.live }
 
     var body: some View {
         VStack(spacing: 0) {

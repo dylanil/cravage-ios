@@ -12,7 +12,7 @@ struct LobbyHostView: View {
     let nickname: String
     let onClose: () -> Void
 
-    private var engine: RoundEngine { coordinator.engine }
+    private var engine: RoundEngine { coordinator.live }
     private var inRoom: Int { engine.admittedCount + 1 }
 
     var body: some View {

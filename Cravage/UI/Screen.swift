@@ -48,9 +48,9 @@ enum Screen: Equatable {
 
     @MainActor
     init(_ coordinator: RoundCoordinator, idle: IdleScreen = .home) {
-        self = Screen.current(phase: coordinator.engine.phase,
-                              role: coordinator.engine.role,
-                              hasRestartOffer: coordinator.engine.restartOffer != nil,
+        self = Screen.current(phase: coordinator.live.phase,
+                              role: coordinator.live.role,
+                              hasRestartOffer: coordinator.live.restartOffer != nil,
                               idle: idle)
     }
 }

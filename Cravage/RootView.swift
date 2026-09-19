@@ -46,7 +46,7 @@ struct RootView: View {
             WaitingView(coordinator: coordinator, onCancel: leave)
         case let .result(outcome):
             ResultView(coordinator: coordinator, outcome: outcome,
-                       onRunAgain: { coordinator.restart(generation: coordinator.engine.generation) },
+                       onRunAgain: { coordinator.restart(generation: coordinator.live.generation) },
                        onLeave: leave)
         case .failed:
             Unbuilt(name: "Round ended", back: leave)

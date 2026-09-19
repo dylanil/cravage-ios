@@ -34,6 +34,17 @@ final class RoundCoordinator {
         transport.onEvent = { [weak self] event in self?.transportEvent(event) }
     }
 
+    /// The round, read so that a SwiftUI view re-renders when it moves.
+    ///
+    /// `RoundEngine` is a plain class: reading `coordinator.engine` registers nothing with
+    /// Observation, so a screen built on it would draw once and then never change. Touching the
+    /// observable `revision` first registers the dependency, and `apply` bumps `revision` after
+    /// every event. Screens read the round through here; tests read `engine` directly.
+    var live: RoundEngine {
+        _ = revision
+        return engine
+    }
+
     // MARK: - User actions
 
     /// New Room. A second tap while the entitlement check is running is one operation.

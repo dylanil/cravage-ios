@@ -14,7 +14,7 @@ struct EnterFigureView: View {
     @State private var error: FixedPointError?
     @FocusState private var focused: Bool
 
-    private var engine: RoundEngine { coordinator.engine }
+    private var engine: RoundEngine { coordinator.live }
 
     var body: some View {
         VStack(spacing: 0) {

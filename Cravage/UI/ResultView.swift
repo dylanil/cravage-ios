@@ -14,7 +14,7 @@ struct ResultView: View {
 
     @State private var showingShares = false
 
-    private var engine: RoundEngine { coordinator.engine }
+    private var engine: RoundEngine { coordinator.live }
     private var record: RoundRecord? { engine.record }
 
     var body: some View {

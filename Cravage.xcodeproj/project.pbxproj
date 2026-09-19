@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		021171D4E293C6C6B134E8F9 /* LiveEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 991AE898BCC3523DB6212961 /* LiveEngineTests.swift */; };
 		15F7C3CC3341390D21B49FB4 /* RoundTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = B905F281DE24FC1367631CFA /* RoundTransport.swift */; };
 		18A8899F8F94E03D11234E89 /* ScreenRoutingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9659C4B6987459D8281BB174 /* ScreenRoutingTests.swift */; };
 		1CC7D33BCE3C0D5BD9324B42 /* FigureCopyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 118BBDF85D480898B842CC0C /* FigureCopyTests.swift */; };
@@ -76,6 +77,7 @@
 		9359984CEC38993BFDD5CFE2 /* FigureCopy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FigureCopy.swift; sourceTree = "<group>"; };
 		951EB584BC0D3D35547C6CF5 /* NetworkTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkTransport.swift; sourceTree = "<group>"; };
 		9659C4B6987459D8281BB174 /* ScreenRoutingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenRoutingTests.swift; sourceTree = "<group>"; };
+		991AE898BCC3523DB6212961 /* LiveEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveEngineTests.swift; sourceTree = "<group>"; };
 		9F8CB2F73C35554CCC336113 /* LobbyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LobbyTests.swift; sourceTree = "<group>"; };
 		A45CA96D516226F7C46C15BC /* Outbox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Outbox.swift; sourceTree = "<group>"; };
 		A495B5689CF61A4CEF5B6711 /* JoinView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JoinView.swift; sourceTree = "<group>"; };
@@ -155,6 +157,7 @@
 			children = (
 				DA617C1EE94277DED0F37644 /* CoordinatorTests.swift */,
 				118BBDF85D480898B842CC0C /* FigureCopyTests.swift */,
+				991AE898BCC3523DB6212961 /* LiveEngineTests.swift */,
 				9F8CB2F73C35554CCC336113 /* LobbyTests.swift */,
 				29239C57AFC5AEACFA1A679E /* NetworkTransportTests.swift */,
 				B123DFBBA71BB2A4AF5C3EFA /* NewRoomFormTests.swift */,
@@ -364,6 +367,7 @@
 			files = (
 				7833B30895D6FC7CDF4F1191 /* CoordinatorTests.swift in Sources */,
 				1CC7D33BCE3C0D5BD9324B42 /* FigureCopyTests.swift in Sources */,
+				021171D4E293C6C6B134E8F9 /* LiveEngineTests.swift in Sources */,
 				41983D1D9876D2062AB73FD3 /* LobbyTests.swift in Sources */,
 				ED03844BACD8238558F40398 /* NetworkTransportTests.swift in Sources */,
 				C1A6D5ACA80261E9C8F48758 /* NewRoomFormTests.swift in Sources */,

@@ -14,7 +14,7 @@ struct LobbyJoinerView: View {
     let nickname: String
     let onLeave: () -> Void
 
-    private var engine: RoundEngine { coordinator.engine }
+    private var engine: RoundEngine { coordinator.live }
 
     var body: some View {
         VStack(spacing: 0) {
