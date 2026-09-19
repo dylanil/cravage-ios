@@ -16,15 +16,19 @@
 		4322902405A267EBB93AD5E5 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33F9679D87561E0A3F826411 /* HomeView.swift */; };
 		48658AA6ED174B46892BFD4C /* NicknameStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7676C5A7D7C50366A793B8C5 /* NicknameStore.swift */; };
 		49E1ECA3AEA4FA2EA0A4085C /* CravageCore in Frameworks */ = {isa = PBXBuildFile; productRef = B10152A40DA4D36B9A520DE7 /* CravageCore */; };
+		513BC713B45341E7672F7E2D /* NewRoomForm.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DA0DE0AAAF73D4BB7A469BE /* NewRoomForm.swift */; };
 		59974EF6E2E857EC41CA9645 /* CravageApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5103289F3128432D9EE3F7D8 /* CravageApp.swift */; };
 		5F97B4C7D9763C4AD60CD3D9 /* CravageCore in Frameworks */ = {isa = PBXBuildFile; productRef = 8E725B4E24F32822D251C859 /* CravageCore */; };
 		6D74038A628E5CF27CD79F16 /* Outbox.swift in Sources */ = {isa = PBXBuildFile; fileRef = A45CA96D516226F7C46C15BC /* Outbox.swift */; };
 		7833B30895D6FC7CDF4F1191 /* CoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA617C1EE94277DED0F37644 /* CoordinatorTests.swift */; };
 		888213663D878A6E4A9A1299 /* Paper.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3FF3D86BA5EB5F2B05C6B78 /* Paper.swift */; };
+		8E23A1CCE0AC1A432C8855FA /* JoinView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A495B5689CF61A4CEF5B6711 /* JoinView.swift */; };
 		8F6857EFC3B3F51319921153 /* EntitlementProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A545A19E718A3245869718AF /* EntitlementProvider.swift */; };
+		9C8D2271329C7FAE480DD37E /* NewRoomView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09571E95A72FCC25F9C2E0D3 /* NewRoomView.swift */; };
 		B4621E352937CDEC3A1A00DD /* PaperControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C22E69D638C63B5E16ACA99 /* PaperControls.swift */; };
 		BCD0FECF8A89B9A8259BCCA8 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21A9FDD6C6104FFE266357AF /* RootView.swift */; };
 		BD26E8720D2FDD114746EFF6 /* OutboxTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC74F0981C7DACB7497F7D16 /* OutboxTests.swift */; };
+		C1A6D5ACA80261E9C8F48758 /* NewRoomFormTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B123DFBBA71BB2A4AF5C3EFA /* NewRoomFormTests.swift */; };
 		CA27AC80245C6ACE0BC5E998 /* NetworkTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 951EB584BC0D3D35547C6CF5 /* NetworkTransport.swift */; };
 		D9D118087056C8E51411EF10 /* RoundCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0ED4CADDCFFD7E599A5606 /* RoundCoordinator.swift */; };
 		ED03844BACD8238558F40398 /* NetworkTransportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29239C57AFC5AEACFA1A679E /* NetworkTransportTests.swift */; };
@@ -41,6 +45,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		09571E95A72FCC25F9C2E0D3 /* NewRoomView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewRoomView.swift; sourceTree = "<group>"; };
 		172ADE99C9D870127282445D /* CravageCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = CravageCore; path = CravageCore; sourceTree = SOURCE_ROOT; };
 		21A9FDD6C6104FFE266357AF /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		29239C57AFC5AEACFA1A679E /* NetworkTransportTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkTransportTests.swift; sourceTree = "<group>"; };
@@ -48,15 +53,18 @@
 		33F9679D87561E0A3F826411 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		3C22E69D638C63B5E16ACA99 /* PaperControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaperControls.swift; sourceTree = "<group>"; };
 		5103289F3128432D9EE3F7D8 /* CravageApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CravageApp.swift; sourceTree = "<group>"; };
+		5DA0DE0AAAF73D4BB7A469BE /* NewRoomForm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewRoomForm.swift; sourceTree = "<group>"; };
 		7676C5A7D7C50366A793B8C5 /* NicknameStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NicknameStore.swift; sourceTree = "<group>"; };
 		77FCC0B72CDFAE6326C6AF50 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		8C6194E42A838377EC9B5A6B /* Cravage.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Cravage.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		951EB584BC0D3D35547C6CF5 /* NetworkTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkTransport.swift; sourceTree = "<group>"; };
 		9659C4B6987459D8281BB174 /* ScreenRoutingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenRoutingTests.swift; sourceTree = "<group>"; };
 		A45CA96D516226F7C46C15BC /* Outbox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Outbox.swift; sourceTree = "<group>"; };
+		A495B5689CF61A4CEF5B6711 /* JoinView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JoinView.swift; sourceTree = "<group>"; };
 		A545A19E718A3245869718AF /* EntitlementProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntitlementProvider.swift; sourceTree = "<group>"; };
 		AC74F0981C7DACB7497F7D16 /* OutboxTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OutboxTests.swift; sourceTree = "<group>"; };
 		AEEF7EDC2455B13692EDD44C /* Cravage.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Cravage.xcconfig; sourceTree = "<group>"; };
+		B123DFBBA71BB2A4AF5C3EFA /* NewRoomFormTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewRoomFormTests.swift; sourceTree = "<group>"; };
 		B448F5E83E17F6E781CD2002 /* CravageTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = CravageTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B905F281DE24FC1367631CFA /* RoundTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoundTransport.swift; sourceTree = "<group>"; };
 		B954966237000894C5656640 /* Screen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Screen.swift; sourceTree = "<group>"; };
@@ -123,6 +131,7 @@
 			children = (
 				DA617C1EE94277DED0F37644 /* CoordinatorTests.swift */,
 				29239C57AFC5AEACFA1A679E /* NetworkTransportTests.swift */,
+				B123DFBBA71BB2A4AF5C3EFA /* NewRoomFormTests.swift */,
 				29CB7E0003AC0B855547D475 /* NicknameStoreTests.swift */,
 				AC74F0981C7DACB7497F7D16 /* OutboxTests.swift */,
 				9659C4B6987459D8281BB174 /* ScreenRoutingTests.swift */,
@@ -145,6 +154,9 @@
 			isa = PBXGroup;
 			children = (
 				33F9679D87561E0A3F826411 /* HomeView.swift */,
+				A495B5689CF61A4CEF5B6711 /* JoinView.swift */,
+				5DA0DE0AAAF73D4BB7A469BE /* NewRoomForm.swift */,
+				09571E95A72FCC25F9C2E0D3 /* NewRoomView.swift */,
 				C3FF3D86BA5EB5F2B05C6B78 /* Paper.swift */,
 				3C22E69D638C63B5E16ACA99 /* PaperControls.swift */,
 				B954966237000894C5656640 /* Screen.swift */,
@@ -284,7 +296,10 @@
 				59974EF6E2E857EC41CA9645 /* CravageApp.swift in Sources */,
 				8F6857EFC3B3F51319921153 /* EntitlementProvider.swift in Sources */,
 				4322902405A267EBB93AD5E5 /* HomeView.swift in Sources */,
+				8E23A1CCE0AC1A432C8855FA /* JoinView.swift in Sources */,
 				CA27AC80245C6ACE0BC5E998 /* NetworkTransport.swift in Sources */,
+				513BC713B45341E7672F7E2D /* NewRoomForm.swift in Sources */,
+				9C8D2271329C7FAE480DD37E /* NewRoomView.swift in Sources */,
 				48658AA6ED174B46892BFD4C /* NicknameStore.swift in Sources */,
 				6D74038A628E5CF27CD79F16 /* Outbox.swift in Sources */,
 				888213663D878A6E4A9A1299 /* Paper.swift in Sources */,
@@ -304,6 +319,7 @@
 			files = (
 				7833B30895D6FC7CDF4F1191 /* CoordinatorTests.swift in Sources */,
 				ED03844BACD8238558F40398 /* NetworkTransportTests.swift in Sources */,
+				C1A6D5ACA80261E9C8F48758 /* NewRoomFormTests.swift in Sources */,
 				318543EC6B957C6D4A65E41B /* NicknameStoreTests.swift in Sources */,
 				BD26E8720D2FDD114746EFF6 /* OutboxTests.swift in Sources */,
 				18A8899F8F94E03D11234E89 /* ScreenRoutingTests.swift in Sources */,

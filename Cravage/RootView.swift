@@ -5,6 +5,7 @@ import CravageCore
 /// without rendering; this view only chooses what to show and where taps go.
 struct RootView: View {
     let coordinator: RoundCoordinator
+    let entitlement: EntitlementProvider
     @State private var idle: IdleScreen = .home
     @State private var nicknames = NicknameStore()
 
@@ -24,9 +25,10 @@ struct RootView: View {
                      onNewRoom: { idle = .newRoom },
                      onJoin: { idle = .join })
         case .newRoom:
-            Unbuilt(name: "New room", back: { idle = .home })
+            NewRoomView(coordinator: coordinator, nicknames: nicknames, entitlement: entitlement,
+                        onCancel: { idle = .home })
         case .join:
-            Unbuilt(name: "Join a room", back: { idle = .home })
+            JoinView(coordinator: coordinator, nicknames: nicknames, onBack: stopBrowsing)
         case .lobbyHost:
             Unbuilt(name: "Lobby (host)", back: leave)
         case .lobbyJoiner:
@@ -44,6 +46,12 @@ struct RootView: View {
         case .restartOffer:
             Unbuilt(name: "Restart offered", back: leave)
         }
+    }
+
+    /// Backing out of the room list stops the browse rather than leaving it running behind Home.
+    private func stopBrowsing() {
+        coordinator.leave()
+        idle = .home
     }
 
     private func leave() {

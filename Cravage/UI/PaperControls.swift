@@ -208,3 +208,47 @@ struct BottomStack<Content: View>: View {
             .padding(.bottom, Paper.bottomInset)
     }
 }
+
+/// The screen's top bar: one leading action, matching the mockups' 44pt row.
+struct PaperNavBar: View {
+    let title: String
+    var showsChevron = false
+    let action: () -> Void
+
+    var body: some View {
+        HStack {
+            Button(action: action) {
+                HStack(spacing: 2) {
+                    if showsChevron {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 17, weight: .semibold))
+                    }
+                    Text(title)
+                }
+                .font(Paper.sans(17))
+                .foregroundStyle(Paper.accent)
+            }
+            Spacer()
+        }
+        .frame(height: 44)
+        .padding(.horizontal, 16)
+    }
+}
+
+/// A rule with a letter-spaced caption under it, used to open a section ("CONFIRMED").
+struct SectionHeading: View {
+    let text: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Rectangle().fill(Paper.ink).frame(height: 1.5)
+            Text(text.uppercased())
+                .font(Paper.sans(12, weight: .bold))
+                .tracking(1.6)
+                .foregroundStyle(Paper.ink)
+                .padding(.top, 10)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityAddTraits(.isHeader)
+    }
+}
