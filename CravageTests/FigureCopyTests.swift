@@ -21,10 +21,16 @@ final class FigureCopyTests: XCTestCase {
                        "Your figure is processed on your phone; the app sends a masked share to the other participants.")
     }
 
-    /// The screen must not invite a decimal mark the parser rejects.
-    func testTheLimitLineDoesNotInviteACommaTheParserRejects() {
+    /// The screen must not invite a decimal mark the parser rejects, and must say why, because a
+    /// comma means opposite things in different countries.
+    func testTheLimitLineExplainsWhyACommaIsRefused() {
         XCTAssertTrue(FigureCopy.limit.contains("full stop"))
-        XCTAssertThrowsError(try FixedPoint.parseDecimalToFixed("1,5"))
+        XCTAssertTrue(FigureCopy.limit.contains("comma is not accepted"))
+        XCTAssertTrue(FigureCopy.limit.contains("separates thousands"))
+        XCTAssertThrowsError(try FixedPoint.parseDecimalToFixed("1,5"),
+                             "a comma meant as a decimal point is refused, not guessed at")
+        XCTAssertThrowsError(try FixedPoint.parseDecimalToFixed("1,500"),
+                             "a comma meant as a thousands separator is refused too")
         XCTAssertEqual(try FixedPoint.parseDecimalToFixed("1.5"), 1_500_000)
     }
 }

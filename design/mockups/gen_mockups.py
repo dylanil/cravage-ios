@@ -413,8 +413,8 @@ screens["LobbyJoiner"] = ppage(f"""
 </div>
 {p_section("IN THE ROOM")}
 {p_row("Sam", "Host", leading=p_initial("Sam"))}
-{p_row("Alex", leading=p_initial("Alex"))}
 {p_row("Dee", "You", leading=p_initial("Dee"), last=True)}
+{p_foot("Everyone else appears when the host starts and every phone shows the room code.")}
 {p_bottom(deadline("Stops waiting in 14:05"))}
 """)
 

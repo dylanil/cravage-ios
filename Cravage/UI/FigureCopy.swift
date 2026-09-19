@@ -5,9 +5,10 @@ import CravageCore
 /// the actual domain.
 enum FigureCopy {
     /// The mockup says "use your decimal mark". The parser is an exact port of the web app's and
-    /// takes an ASCII full stop only, so the line says so rather than inviting a comma that would
-    /// be rejected - or, worse, read as something else. Raised with the owner.
-    static let limit = "Up to 999,999,999,999.99. Use a full stop for the decimal point, and leave out thousands separators."
+    /// takes an ASCII full stop only. Owner decision 2026-09-19: say why a comma is refused, since
+    /// a comma means the decimal point in some countries and a thousands separator in others, and
+    /// silently converting one into the other would change the figure by a factor of a thousand.
+    static let limit = "Up to 999,999,999,999.99. Use a full stop for the decimal point. A comma is not accepted: it marks the decimal point in some countries and separates thousands in others, so it is never guessed at here."
 
     /// SPEC's honesty rule: a round of N protects one figure from any single other party, and from
     /// nobody if the rest pool what they know.

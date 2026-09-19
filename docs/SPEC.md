@@ -65,6 +65,16 @@ States (unchanged from PLAN.md): `idle -> lobby -> confirming -> keyExchange -> 
 collectingConfirmations -> complete(agreed | mismatch | partial) | failed(reason)`, plus a new
 explicit transition below.
 
+**What a joiner knows in `lobby`** (owner decision 2026-09-19, after the first three-phone round).
+A joiner is sent `welcome` (nonce, room label, size) and then the roster only when the host locks
+it. Before the lock its phone therefore knows the room it chose, its own nickname, and nothing
+about anyone else; the host's own nickname is known only from the untrusted Bonjour advert. The
+joiner's lobby screen must say so rather than list people, and the roster first appears on the
+code-check screen, where every name is carried by a signed roster and every phone shows the same
+code. Listing unverified names earlier would spend the user's confidence before the protocol has
+earned it; doing it truthfully would need a new host-to-joiner lobby message, which is a protocol
+change and not a screen change.
+
 ### Message/action taxonomy (revises `CanonicalMessage`'s action set)
 
 `CanonicalMessage` action values: `pubkey | share | roomcode_confirm | result_confirm | control`.

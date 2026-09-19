@@ -20,4 +20,4 @@ figures and the room code). The owner chose look C, "Paper" (2026-09-14): editor
 headings, hairline rules, numbered steps and drawn illustrations. The first draft was judged too
 plain; Warm glow and Night were the other two directions. Copy follows CLAUDE.md's honesty rules and the
 SPEC 7 copy rule. Strings marked "Copy not yet approved" or "Draft copy" need the owner's sign-off;
-the unlock price is a placeholder. Status: look chosen; screens not yet built in the app.
+the unlock price is a placeholder. Status: look chosen; the nine first-round screens are built in the app (delivery step 5), together with the restart offer, the restart warning and the round-ended screen. Where a screen and the protocol disagreed, the protocol won and the mockup was corrected: the joiner's lobby no longer lists people it cannot know about (see SPEC section 3).
