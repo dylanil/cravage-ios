@@ -211,24 +211,34 @@ struct BottomStack<Content: View>: View {
 
 /// The screen's top bar: one leading action, matching the mockups' 44pt row.
 struct PaperNavBar: View {
-    let title: String
+    var title: String?
     var showsChevron = false
-    let action: () -> Void
+    var action: (() -> Void)?
+    /// An action on the right of the bar, as the result screen's Done.
+    var trailingTitle: String?
+    var trailingAction: (() -> Void)?
 
     var body: some View {
         HStack {
-            Button(action: action) {
-                HStack(spacing: 2) {
-                    if showsChevron {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 17, weight: .semibold))
+            if let title, let action {
+                Button(action: action) {
+                    HStack(spacing: 2) {
+                        if showsChevron {
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 17, weight: .semibold))
+                        }
+                        Text(title)
                     }
-                    Text(title)
+                    .font(Paper.sans(17))
+                    .foregroundStyle(Paper.accent)
                 }
-                .font(Paper.sans(17))
-                .foregroundStyle(Paper.accent)
             }
             Spacer()
+            if let trailingTitle, let trailingAction {
+                Button(trailingTitle, action: trailingAction)
+                    .font(Paper.sans(17, weight: .semibold))
+                    .foregroundStyle(Paper.accent)
+            }
         }
         .frame(height: 44)
         .padding(.horizontal, 16)

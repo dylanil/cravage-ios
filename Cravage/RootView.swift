@@ -43,9 +43,11 @@ struct RootView: View {
         case .enterFigure:
             EnterFigureView(coordinator: coordinator, onLeave: leave)
         case .waiting:
-            Unbuilt(name: "Waiting for shares", back: leave)
-        case .result:
-            Unbuilt(name: "Result", back: leave)
+            WaitingView(coordinator: coordinator, onCancel: leave)
+        case let .result(outcome):
+            ResultView(coordinator: coordinator, outcome: outcome,
+                       onRunAgain: { coordinator.restart(generation: coordinator.engine.generation) },
+                       onLeave: leave)
         case .failed:
             Unbuilt(name: "Round ended", back: leave)
         case .restartOffer:

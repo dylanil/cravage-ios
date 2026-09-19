@@ -196,6 +196,13 @@
       "file": "Cravage/UI/FigureCopy.swift",
       "find": "        let others = size - 1",
       "replace": "        let others = size"
+    },
+    {
+      "name": "only an agreed round is exportable",
+      "suite": "app",
+      "file": "Cravage/UI/OutcomeCopy.swift",
+      "find": "        if case .agreed = outcome { return true }\n        return false",
+      "replace": "        return true"
     }
   ]
 }
