@@ -90,7 +90,16 @@ to share. The Limitations text is council-approved; change it only with the owne
   commit hash, exact results and untested items.
 - Keep `README.md`'s "Known limitations" current in the same commit as any capability change.
 - A test named for a guarantee gets an entry in `Tools/mutations.json`; `python3 Tools/check_mutations.py`
-  (also in CI) must show every listed guard is caught when removed.
+  (also in CI) must show every listed guard is caught when removed. Run the gate after the code has
+  settled: an edit that moves the line a mutation anchors to is reported as drift, and the run is
+  wasted.
+- A screen that is not built is not routed. Leave its case unhandled so the exhaustive switch
+  refuses to compile, rather than routing it to a stub; `Tools/check_no_placeholder_screens.sh`
+  (in CI) fails if a placeholder is reachable.
+- Every user-visible string passes `Tools/check_honesty_copy.sh` (in CI), whatever mockup it came
+  from: approval of a look is not approval of the claims inside it.
+- A screen is not done when its tests pass. Routing tests assert which screen the state calls for,
+  not that the screen renders, updates or works; only a device walk shows that.
 - Before using an Apple framework property or call, read its doc comment in the framework's
   `Headers/` as well as the `.swiftinterface` signature: `newConnectionLimit` is a lifetime budget,
   which the signature alone does not say.
@@ -117,4 +126,6 @@ to share. The Limitations text is council-approved; change it only with the owne
 - `xcodebuild test -project Cravage.xcodeproj -scheme Cravage -destination 'platform=iOS Simulator,name=iPhone 17 Pro'
   CODE_SIGNING_ALLOWED=NO` on a simulator, plus a Release build; release has no test hooks.
 - Device: Network framework cannot run on CI and the simulator ignores local-network privacy; test
-  on three physical phones, eight before advertising eight.
+  on three physical phones, eight before advertising eight. `Tools/install_to_phones.sh` builds,
+  installs and launches on every paired iPhone; unlock them all first, since a locked phone refuses
+  the install.
