@@ -161,6 +161,24 @@ final class CoordinatorTests: XCTestCase {
         XCTAssertEqual(host.engine.phase, .lobby)
     }
 
+    /// The mutation gate caught this test's predecessor testing the wrong path: `createRoom` clears
+    /// the refusal in its own body, so breaking the shared user-action path broke nothing. This
+    /// drives a refusal and then an action that goes through that shared path.
+    func testAnActionRoutedThroughTheEngineAlsoForgetsTheLastRefusal() async {
+        let star = FakeStar(phones: 2, entitlement: FakeEntitlement(unlocked: false))
+        let host = star.coordinators[0]
+        await host.createRoom(label: "Annual bonus", size: 3, nickname: "Sam")
+        host.start(generation: host.engine.generation)
+        XCTAssertEqual(host.lastRejection, .notEnoughPeople)
+
+        star.coordinators[1].join(roomID: "room", nickname: "Alex")
+        star.flush()
+        let pending = host.engine.pendingJoiners[0]
+        host.admit(pending.verifyingKey, generation: host.engine.generation)
+        XCTAssertNil(host.lastRejection, "an old refusal survived a new action")
+        XCTAssertEqual(host.engine.admittedNicknames, ["Alex"], "and the action itself went through")
+    }
+
     func testAnActionThatIsRefusedAgainReportsTheNewRefusal() async {
         let star = FakeStar(phones: 1, entitlement: FakeEntitlement(unlocked: false))
         let host = star.coordinators[0]

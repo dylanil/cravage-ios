@@ -17,6 +17,10 @@ three physical iPhones for the first time.
   Second session running in which the fresh review outperformed the author's own tests.
 - The mutation gate twice reported drift instead of falsely reporting a guard as caught
   (`3b17e75`, `de19daa`); in both cases a later edit had moved the line the mutation anchors to.
+  It then caught a real survivor: a test written this session to prove that a user action forgets
+  the previous refusal drove `createRoom`, which clears the refusal in its own body, so breaking
+  the shared path broke nothing. Another test that did not test its name, found by the gate rather
+  than by a person.
 
 ## Went badly
 
