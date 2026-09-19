@@ -39,9 +39,9 @@ struct RootView: View {
             LobbyJoinerView(coordinator: coordinator, hostNickname: joined?.hostNickname,
                             nickname: nicknames.nickname, onLeave: leave)
         case .confirmCode:
-            Unbuilt(name: "Check the code", back: leave)
+            ConfirmCodeView(coordinator: coordinator, onStop: leave)
         case .enterFigure:
-            Unbuilt(name: "Enter figure", back: leave)
+            EnterFigureView(coordinator: coordinator, onLeave: leave)
         case .waiting:
             Unbuilt(name: "Waiting for shares", back: leave)
         case .result:

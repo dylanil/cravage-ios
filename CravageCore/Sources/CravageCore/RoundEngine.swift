@@ -237,6 +237,15 @@ public final class RoundEngine {
     public var nextTickDue: UInt64? {
         ([nextDeadline].compactMap { $0 } + connectionDeadlines.values).min()
     }
+    /// The letter the host holds, once the roster is locked: on a joiner the one carried by the
+    /// welcome it verified, on the host its own. There are no letters before the lock.
+    public var hostLetter: PartyLabel? {
+        guard let roster else { return nil }
+        if role == .host { return myLetter }
+        guard let hostKey else { return nil }
+        return roster.label(for: hostKey)
+    }
+
     public var confirmedLetters: Set<PartyLabel> { Set(roomcodeConfirms.keys) }
     public var sharesReceived: Set<PartyLabel> { Set(shares.keys) }
 

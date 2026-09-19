@@ -189,6 +189,13 @@
       "file": "Cravage/UI/Screen.swift",
       "find": "        case .confirming: return .confirmCode",
       "replace": "        case .confirming: return .enterFigure"
+    },
+    {
+      "name": "the collusion line counts the other parties, not the room",
+      "suite": "app",
+      "file": "Cravage/UI/FigureCopy.swift",
+      "find": "        let others = size - 1",
+      "replace": "        let others = size"
     }
   ]
 }
