@@ -61,6 +61,7 @@ final class FakeStar {
             browsing = true
             if let advert = star?.advert { onEvent?(.roomsChanged([advert])) }
         }
+        func stopBrowsing() { browsing = false }
         func connect(to roomID: String) {
             connectionAttempts += 1
             star?.connect(joiner: index)
@@ -146,6 +147,49 @@ final class CoordinatorTests: XCTestCase {
         XCTAssertEqual(entitlement.asked, 1, "three people never needs the store")
         XCTAssertEqual(host.engine.phase, .lobby)
         XCTAssertEqual(star.transports[0].hosting?.size, 3)
+    }
+
+    /// The review found a refusal from one action still on screen as the answer to the next.
+    func testAUserActionForgetsTheLastRefusal() async {
+        let star = FakeStar(phones: 1, entitlement: FakeEntitlement(unlocked: false))
+        let host = star.coordinators[0]
+        await host.createRoom(label: "Team", size: 4, nickname: "Sam")
+        XCTAssertEqual(host.lastRejection, .notEntitled)
+
+        await host.createRoom(label: "Team", size: 3, nickname: "Sam")
+        XCTAssertNil(host.lastRejection, "an old refusal was still showing after a new action")
+        XCTAssertEqual(host.engine.phase, .lobby)
+    }
+
+    func testAnActionThatIsRefusedAgainReportsTheNewRefusal() async {
+        let star = FakeStar(phones: 1, entitlement: FakeEntitlement(unlocked: false))
+        let host = star.coordinators[0]
+        await host.createRoom(label: "Team", size: 3, nickname: "Sam")
+        host.start(generation: host.engine.generation)
+        XCTAssertEqual(host.lastRejection, .notEnoughPeople, "a real refusal must still reach the screen")
+    }
+
+    /// A phone in a started round has no use for the room list, and every extra multicast is noise
+    /// on the Wi-Fi the round runs over.
+    func testBrowsingStopsOnceTheRoundStarts() async {
+        let star = FakeStar(phones: 3, entitlement: FakeEntitlement(unlocked: false))
+        let host = star.coordinators[0]
+        await host.createRoom(label: "Annual bonus", size: 3, nickname: "Sam")
+        for (index, name) in [(1, "Alex"), (2, "Dee")] {
+            star.coordinators[index].browse()
+            star.coordinators[index].join(roomID: "room", nickname: name)
+            star.flush()
+        }
+        XCTAssertTrue(star.transports[1].browsing, "a joiner waiting in the lobby still looks for rooms")
+
+        for pending in host.engine.pendingJoiners {
+            host.admit(pending.verifyingKey, generation: host.engine.generation)
+        }
+        host.start(generation: host.engine.generation)
+        star.flush()
+        XCTAssertEqual(star.coordinators[1].engine.phase, .confirming)
+        XCTAssertFalse(star.transports[1].browsing, "the joiner kept browsing inside the round")
+        XCTAssertFalse(star.transports[2].browsing)
     }
 
     func testUnlockedHostOpensAnEightPersonRoom() async {

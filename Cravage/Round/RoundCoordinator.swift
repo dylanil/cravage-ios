@@ -18,6 +18,11 @@ final class RoundCoordinator {
     private(set) var problem: TransportProblem?
     private(set) var lastRejection: Rejection?
     private(set) var isCreatingRoom = false
+    /// The round generation whose restart warning this person acknowledged. Kept here rather than
+    /// in a view so the rule can be tested: an acknowledgement belongs to the round it was made in,
+    /// so the next restart warns again (SPEC 13). Cleared by Leave, because `generation` is not
+    /// strictly increasing across a leave and rejoin (the joiner's welcome decrements it once).
+    private(set) var restartWarningAcknowledged: Int?
 
     @ObservationIgnored private let transport: RoundTransport
     @ObservationIgnored private let clock: RoundClock
@@ -25,6 +30,7 @@ final class RoundCoordinator {
     @ObservationIgnored private var tickTask: Task<Void, Never>?
     /// Bumped by Leave, so an answer from the store that arrives afterwards opens nothing.
     @ObservationIgnored private var leaveCount = 0
+    @ObservationIgnored private var browsing = false
 
     init(transport: RoundTransport, clock: RoundClock, entitlement: EntitlementProvider, deadlines: Deadlines = Deadlines()) {
         self.engine = RoundEngine(deadlines: deadlines)
@@ -50,6 +56,7 @@ final class RoundCoordinator {
     /// New Room. A second tap while the entitlement check is running is one operation.
     func createRoom(label: String, size: Int, nickname: String) async {
         guard !isCreatingRoom, engine.phase == .idle else { return }
+        lastRejection = nil
         isCreatingRoom = true
         defer { isCreatingRoom = false }
         let leavesBefore = leaveCount
@@ -63,26 +70,41 @@ final class RoundCoordinator {
 
     func browse() {
         problem = nil
+        browsing = true
         transport.startBrowsing()
+    }
+
+    /// The person has read the restarted-round warning for the round they are in.
+    func acknowledgeRestartWarning() {
+        restartWarningAcknowledged = engine.generation
     }
 
     func join(roomID: String, nickname: String) {
         guard engine.phase == .idle else { return }
+        lastRejection = nil
         apply(.joinRoom(nickname: nickname))
         guard engine.phase == .lobby, engine.role == .joiner else { return }
         transport.connect(to: roomID)
     }
 
-    func admit(_ key: VerifyingKey, generation: Int) { apply(.admit(key, generation: generation)) }
-    func decline(_ key: VerifyingKey, generation: Int) { apply(.decline(key, generation: generation)) }
-    func start(generation: Int) { apply(.start(generation: generation)) }
-    func confirmRoomCode(generation: Int) { apply(.confirmRoomCode(generation: generation)) }
-    func restart(generation: Int) { apply(.restart(generation: generation)) }
-    func acceptRestart(generation: Int) { apply(.acceptRestart(generation: generation)) }
+    func admit(_ key: VerifyingKey, generation: Int) { act(.admit(key, generation: generation)) }
+    func decline(_ key: VerifyingKey, generation: Int) { act(.decline(key, generation: generation)) }
+    func start(generation: Int) { act(.start(generation: generation)) }
+    func confirmRoomCode(generation: Int) { act(.confirmRoomCode(generation: generation)) }
+    func restart(generation: Int) { act(.restart(generation: generation)) }
+    func acceptRestart(generation: Int) { act(.acceptRestart(generation: generation)) }
+
+    /// A user action forgets the last refusal first, so a screen never reports an old rejection as
+    /// the answer to what the person just did.
+    private func act(_ event: Event) {
+        lastRejection = nil
+        apply(event)
+    }
 
     /// Parses exactly as the web app does; a parse error is shown inline and nothing is sent.
     @discardableResult
     func submitFigure(_ text: String, generation: Int) -> FixedPointError? {
+        lastRejection = nil
         do {
             let figure = try FixedPoint.parseDecimalToFixed(text)
             apply(.submitFigure(figure, generation: generation))
@@ -94,8 +116,11 @@ final class RoundCoordinator {
 
     func leave() {
         leaveCount += 1
+        lastRejection = nil
+        restartWarningAcknowledged = nil
         apply(.leave)
         transport.stopAll()
+        browsing = false
         rooms = []
     }
 
@@ -147,7 +172,16 @@ final class RoundCoordinator {
             }
         }
         revision += 1
+        stopBrowsingOnceTheRoundStarts()
         scheduleTick()
+    }
+
+    /// A phone in a started round has no use for the room list, and every extra multicast is noise
+    /// on the same Wi-Fi the round is running over. The connection it already holds is untouched.
+    private func stopBrowsingOnceTheRoundStarts() {
+        guard browsing, engine.phase != .idle, engine.phase != .lobby else { return }
+        browsing = false
+        transport.stopBrowsing()
     }
 
     private func scheduleTick() {

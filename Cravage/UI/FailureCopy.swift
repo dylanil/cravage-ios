@@ -67,3 +67,28 @@ enum FailureCopy {
         return "Leave room"
     }
 }
+
+/// What a transport problem says. `TransportProblem.unavailable`'s own documentation promises an
+/// honest generic error with retry; the review found no screen implementing it, so this is it.
+enum ProblemCopy {
+    static func title(_ problem: TransportProblem) -> String {
+        switch problem {
+        case .localNetworkDenied: return "Cravage can't see phones nearby"
+        case .unavailable: return "Cravage can't reach the other phones"
+        }
+    }
+
+    static func detail(_ problem: TransportProblem) -> String {
+        switch problem {
+        case .localNetworkDenied:
+            return "Local Network access is turned off for Cravage. Settings > Privacy & Security > Local Network > Cravage."
+        case .unavailable:
+            return "Check Wi-Fi is on for every phone and that you are all on the same network, then try again."
+        }
+    }
+
+    /// Only the permission case has a Settings page worth opening.
+    static func offersSettings(_ problem: TransportProblem) -> Bool {
+        problem == .localNetworkDenied
+    }
+}

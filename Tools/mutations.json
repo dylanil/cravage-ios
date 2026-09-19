@@ -224,6 +224,27 @@
       "file": "Cravage/UI/Screen.swift",
       "find": "            if restartWarningRequired, !restartWarningAcknowledged { return .restartWarning }",
       "replace": ""
+    },
+    {
+      "name": "a user action forgets the last refusal",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "    private func act(_ event: Event) {\n        lastRejection = nil",
+      "replace": "    private func act(_ event: Event) {"
+    },
+    {
+      "name": "leaving forgets a restart acknowledgement",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "        restartWarningAcknowledged = nil\n",
+      "replace": ""
+    },
+    {
+      "name": "browsing stops once the round starts",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "        guard browsing, engine.phase != .idle, engine.phase != .lobby else { return }",
+      "replace": "        guard browsing, engine.phase == .idle else { return }"
     }
   ]
 }

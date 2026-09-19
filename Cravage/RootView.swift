@@ -11,9 +11,6 @@ struct RootView: View {
     /// The room this phone tapped in the list, kept for the joiner lobby's host name. Untrusted
     /// until the room code is compared.
     @State private var joined: RoomAdvert?
-    /// The round generation whose restart warning this person has acknowledged, so each restart
-    /// warns again (SPEC 13).
-    @State private var warningAcknowledgedFor: Int?
 
     var body: some View {
         screen
@@ -25,7 +22,7 @@ struct RootView: View {
 
     @ViewBuilder
     private var screen: some View {
-        switch Screen(coordinator, idle: idle, warningAcknowledgedFor: warningAcknowledgedFor) {
+        switch Screen(coordinator, idle: idle) {
         case .home:
             HomeView(nicknames: nicknames,
                      onNewRoom: { idle = .newRoom },
@@ -43,7 +40,7 @@ struct RootView: View {
                             nickname: nicknames.nickname, onLeave: leave)
         case .restartWarning:
             RestartWarningView(coordinator: coordinator,
-                               onUnderstood: { warningAcknowledgedFor = coordinator.live.generation },
+                               onUnderstood: coordinator.acknowledgeRestartWarning,
                                onLeave: leave)
         case .confirmCode:
             ConfirmCodeView(coordinator: coordinator, onStop: leave)
@@ -60,8 +57,7 @@ struct RootView: View {
                        onRestart: { coordinator.restart(generation: coordinator.live.generation) },
                        onLeave: leave)
         case .restartOffer:
-            RestartOfferView(coordinator: coordinator, hostNickname: joined?.hostNickname,
-                             onLeave: leave)
+            RestartOfferView(coordinator: coordinator, onLeave: leave)
         }
     }
 

@@ -37,6 +37,9 @@ struct NewRoomView: View {
                         .font(Paper.sans(14))
                         .foregroundStyle(Paper.muted)
                         .padding(.top, 10)
+                    if let problem = coordinator.problem {
+                        ProblemNotice(problem: problem)
+                    }
                     if let note = refusal {
                         Text(note)
                             .font(Paper.sans(14))

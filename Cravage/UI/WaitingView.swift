@@ -56,6 +56,7 @@ struct WaitingView: View {
 
     private func note(for party: Party, sent: Bool) -> String? {
         if party.label == engine.myLetter { return "You" }
-        return sent ? nil : "Still entering a figure"
+        // Why a share has not arrived is not knowable here: it may be delayed or dropped.
+        return sent ? nil : "No share yet"
     }
 }

@@ -8,8 +8,6 @@ import CravageCore
 /// and declining leaves the room.
 struct RestartOfferView: View {
     let coordinator: RoundCoordinator
-    /// The name the room advertised. Untrusted, as in the lobby.
-    let hostNickname: String?
     let onLeave: () -> Void
 
     private var engine: RoundEngine { coordinator.live }
@@ -19,7 +17,7 @@ struct RestartOfferView: View {
             Spacer().frame(height: 44)
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    PaperHeader(eyebrow: "Round restarted", title: title)
+                    PaperHeader(eyebrow: "Round restarted", title: "The host restarted the round")
                         .padding(.top, 6)
                     if let offer = engine.restartOffer {
                         Text("\(offer.label) \u{00B7} \(offer.size) people")
@@ -48,10 +46,6 @@ struct RestartOfferView: View {
         .paperBackground()
     }
 
-    private var title: String {
-        if let hostNickname { return "\(hostNickname) restarted the round" }
-        return "The host restarted the round"
-    }
 }
 
 /// A round that stopped. Mockups: the connection-lost, timeout, declined and room-full sketches.

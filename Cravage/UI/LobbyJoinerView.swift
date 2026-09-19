@@ -25,26 +25,20 @@ struct LobbyJoinerView: View {
                         .frame(height: 96)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 8)
-                    PaperHeader(eyebrow: engine.label ?? "Room", title: waitingTitle)
-                    Text("You are in. Keep the app open; the round begins when the room is full.")
+                    PaperHeader(eyebrow: engine.label ?? "Room", title: "Waiting for the host to start")
+                    Text("You've asked to join. The host admits everyone, then starts the round. Keep the app open.")
                         .font(Paper.sans(15))
                         .foregroundStyle(Paper.muted)
                         .fixedSize(horizontal: false, vertical: true)
                         .padding(.top, 10)
-                    SectionHeading(text: "In the room")
-                        .padding(.top, 24)
-                    if let hostNickname {
-                        PersonRow(letter: initial(hostNickname), name: hostNickname,
-                                  note: "Host", filled: false) { EmptyView() }
+                    NoteCard {
+                        Image(systemName: "person.crop.circle.badge.questionmark")
+                            .font(.system(size: 18))
+                            .foregroundStyle(Paper.accent)
+                    } content: {
+                        advertisedLine
                     }
-                    PersonRow(letter: initial(nickname), name: nickname, note: "You", filled: true) {
-                        EmptyView()
-                    }
-                    Text("Everyone else appears when the host starts and every phone shows the room code.")
-                        .font(Paper.sans(14))
-                        .foregroundStyle(Paper.muted)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .padding(.top, 14)
+                    .padding(.top, 18)
                 }
                 .padding(.horizontal, Paper.gutter)
             }
@@ -57,12 +51,15 @@ struct LobbyJoinerView: View {
         .paperBackground()
     }
 
-    private var waitingTitle: String {
-        if let hostNickname { return "Waiting for \(hostNickname) to start" }
-        return "Waiting for the host to start"
-    }
-
-    private func initial(_ name: String) -> String {
-        name.first.map { String($0).uppercased() } ?? "?"
+    /// Everything a joiner has before the roster locks came from the Bonjour advert, which any
+    /// nearby phone can write. The screen says so instead of listing people as though they were
+    /// known (SPEC section 3, and the fresh review of 2026-09-19).
+    private var advertisedLine: Text {
+        guard let hostNickname else {
+            return Text("Names appear, checked, when the room code does.")
+        }
+        return Text("This room advertises ")
+            + Text(hostNickname).foregroundStyle(Paper.ink).bold()
+            + Text(" as the host. Nothing here has been checked yet: every name appears, checked against a signed list, when the room code does.")
     }
 }

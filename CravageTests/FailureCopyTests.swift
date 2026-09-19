@@ -29,6 +29,18 @@ final class FailureCopyTests: XCTestCase {
         }
     }
 
+    /// `TransportProblem.unavailable` documents an honest generic error with retry; the review
+    /// found no screen implementing it, so both cases now have wording and only one has Settings.
+    func testEveryTransportProblemHasWordingAndOnlyPermissionOffersSettings() {
+        for problem in [TransportProblem.localNetworkDenied, .unavailable] {
+            XCTAssertFalse(ProblemCopy.title(problem).isEmpty)
+            XCTAssertFalse(ProblemCopy.detail(problem).isEmpty)
+        }
+        XCTAssertTrue(ProblemCopy.offersSettings(.localNetworkDenied))
+        XCTAssertFalse(ProblemCopy.offersSettings(.unavailable),
+                       "there is no Settings page that fixes a network that is simply unreachable")
+    }
+
     func testADeclinedJoinerGoesBackToTheRoomList() {
         XCTAssertEqual(FailureCopy.leaveTitle(.declined), "Back to rooms")
         XCTAssertEqual(FailureCopy.leaveTitle(.connectionLost), "Leave room")

@@ -1,4 +1,6 @@
 import SwiftUI
+import CoreTransferable
+import UniformTypeIdentifiers
 import CravageCore
 
 /// The result. Mockup: `design/mockups/Result.dc.html`, with the not-agreed, disagreement and
@@ -35,8 +37,9 @@ struct ResultView: View {
                     SectionHeading(text: "This round")
                         .padding(.top, 24)
                     sharesRow
-                    if OutcomeCopy.canExport(outcome), let file = transcriptFile {
-                        ShareLink(item: file) {
+                    if OutcomeCopy.canExport(outcome), let record {
+                        ShareLink(item: TranscriptExport(record: record),
+                                  preview: SharePreview("Cravage transcript")) {
                             rowLabel(title: "Share transcript", note: "A file anyone can check")
                         }
                         .buttonStyle(.plain)
@@ -120,19 +123,26 @@ struct ResultView: View {
         .overlay(alignment: .bottom) { Rectangle().fill(Paper.hairline).frame(height: 1) }
     }
 
-    /// Written only for a round this phone saw agreed. The file is the transcript the pinned
-    /// verifier accepts; nothing else about the round is kept.
-    private var transcriptFile: URL? {
-        guard OutcomeCopy.canExport(outcome), let record,
-              let transcript = Transcript.make(from: record) else { return nil }
-        let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("cravage-transcript.json")
-        do {
-            try transcript.encoded().write(to: url, options: .atomic)
-            return url
-        } catch {
-            return nil
+}
+
+/// The transcript, produced only when the person actually shares it.
+///
+/// The review of 2026-09-19 found the previous version writing the file to the temporary directory
+/// on every re-render, whether or not anyone tapped Share, on a screen that says round history is
+/// not saved. Nothing is written now until the share sheet asks for it, and nothing is left behind.
+private struct TranscriptExport: Transferable {
+    enum Failure: Error { case notExportable }
+
+    let record: RoundRecord
+
+    static var transferRepresentation: some TransferRepresentation {
+        DataRepresentation(exportedContentType: .json) { export in
+            guard let transcript = Transcript.make(from: export.record) else {
+                throw Failure.notExportable
+            }
+            return transcript.encoded()
         }
+        .suggestedFileName("cravage-transcript.json")
     }
 }
 

@@ -36,6 +36,9 @@ protocol RoundTransport: AnyObject {
     var onEvent: ((TransportEvent) -> Void)? { get set }
     func startHosting(label: String, size: Int, hostNickname: String)
     func startBrowsing()
+    /// Stop looking for rooms while keeping any open connection. Called once a round has started,
+    /// so a phone in a round is not still multicasting for `_cravage._tcp`.
+    func stopBrowsing()
     /// Joiner: open the single connection to a room's host.
     func connect(to roomID: String)
     func send(_ data: Data, to peer: PeerID)

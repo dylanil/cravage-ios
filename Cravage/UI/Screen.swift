@@ -55,13 +55,14 @@ enum Screen: Equatable {
     }
 
     @MainActor
-    init(_ coordinator: RoundCoordinator, idle: IdleScreen = .home, warningAcknowledgedFor: Int? = nil) {
+    init(_ coordinator: RoundCoordinator, idle: IdleScreen = .home) {
         let engine = coordinator.live
         self = Screen.current(phase: engine.phase,
                               role: engine.role,
                               hasRestartOffer: engine.restartOffer != nil,
                               restartWarningRequired: engine.restartWarningRequired,
-                              restartWarningAcknowledged: warningAcknowledgedFor == engine.generation,
+                              // An acknowledgement belongs to the round it was made in.
+                              restartWarningAcknowledged: coordinator.restartWarningAcknowledged == engine.generation,
                               idle: idle)
     }
 }

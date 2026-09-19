@@ -20,7 +20,7 @@ struct HomeView: View {
         Step(id: 2, title: "Match the code",
              detail: "Each screen shows the same room code. Check it together."),
         Step(id: 3, title: "Only the average appears",
-             detail: "Each phone sends a masked share. Nobody sees a number."),
+             detail: "Each phone sends a masked share, not your figure."),
     ]
 
     var body: some View {
@@ -28,7 +28,7 @@ struct HomeView: View {
             ScrollView {
                 VStack(spacing: 0) {
                     PaperHeader(eyebrow: "Cravage",
-                                title: "An average everyone trusts, a number nobody sees.",
+                                title: "An average the whole room can check, without passing your figure around.",
                                 size: 38)
                         .padding(.top, 10)
                     VStack(spacing: 0) {

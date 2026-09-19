@@ -57,6 +57,34 @@ final class LobbyTests: XCTestCase {
         XCTAssertEqual(host.engine.admittedNicknames, ["Alex", "Dee"])
     }
 
+    /// The confirm screen marks a row "Host" from this, and the review found it untested. A joiner
+    /// derives it from the welcome it verified; the host from its own letter. They must agree.
+    func testEveryPhoneAgreesWhichLetterIsTheHost() async {
+        let star = FakeStar(phones: 3, entitlement: FakeEntitlement(unlocked: false))
+        let host = star.coordinators[0]
+        await host.createRoom(label: "Annual bonus", size: 3, nickname: "Sam")
+        for (index, name) in [(1, "Alex"), (2, "Dee")] {
+            star.coordinators[index].join(roomID: "room", nickname: name)
+            star.flush()
+        }
+        XCTAssertNil(host.engine.hostLetter, "there are no letters before the roster locks")
+
+        for pending in host.engine.pendingJoiners {
+            host.admit(pending.verifyingKey, generation: host.engine.generation)
+        }
+        host.start(generation: host.engine.generation)
+        star.flush()
+
+        let letter = host.engine.hostLetter
+        XCTAssertNotNil(letter)
+        XCTAssertEqual(letter, host.engine.myLetter, "the host is itself")
+        for joiner in star.coordinators.dropFirst() {
+            XCTAssertEqual(joiner.engine.hostLetter, letter, "a joiner named a different host")
+            XCTAssertNotEqual(joiner.engine.myLetter, letter)
+        }
+        XCTAssertEqual(host.engine.roster?.party(letter!).nickname, "Sam")
+    }
+
     func testTheCountdownFollowsTheEngineDeadline() async {
         let star = FakeStar(phones: 1, entitlement: FakeEntitlement(unlocked: false))
         let host = star.coordinators[0]

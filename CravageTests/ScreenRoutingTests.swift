@@ -112,10 +112,54 @@ final class ScreenRoutingTests: XCTestCase {
         for coordinator in star.coordinators {
             XCTAssertEqual(Screen(coordinator), .restartWarning,
                            "a restarted round went on without warning")
-            XCTAssertEqual(Screen(coordinator, warningAcknowledgedFor: coordinator.engine.generation),
-                           .confirmCode,
+            coordinator.acknowledgeRestartWarning()
+            XCTAssertEqual(Screen(coordinator), .confirmCode,
                            "the restarted round did not reach the code check once acknowledged")
         }
+    }
+
+    /// The review found the keying untested: reading it once is not the guarantee. Acknowledging
+    /// one restart must not silence the next, so this drives two restarts in a row.
+    func testAcknowledgingOneRestartDoesNotSilenceTheNext() async {
+        let star = await startedRoom()
+        let host = star.coordinators[0]
+
+        for round in 1...2 {
+            for coordinator in star.coordinators {
+                coordinator.confirmRoomCode(generation: coordinator.engine.generation)
+            }
+            star.flush()
+            for (coordinator, text) in zip(star.coordinators, ["10", "20.5", "30"]) {
+                XCTAssertNil(coordinator.submitFigure(text, generation: coordinator.engine.generation))
+            }
+            star.flush()
+
+            host.restart(generation: host.engine.generation)
+            star.flush()
+            for joiner in star.coordinators.dropFirst() {
+                joiner.acceptRestart(generation: joiner.engine.generation)
+            }
+            star.flush()
+
+            for coordinator in star.coordinators {
+                XCTAssertEqual(Screen(coordinator), .restartWarning,
+                               "restart \(round) went on without warning")
+                coordinator.acknowledgeRestartWarning()
+                XCTAssertEqual(Screen(coordinator), .confirmCode)
+            }
+        }
+    }
+
+    /// The acknowledgement is keyed to a round generation, and `generation` is not strictly
+    /// increasing across a leave and rejoin, so leaving forgets it.
+    func testLeavingForgetsARestartAcknowledgement() async {
+        let star = await startedRoom()
+        let joiner = star.coordinators[1]
+        joiner.acknowledgeRestartWarning()
+        XCTAssertNotNil(joiner.restartWarningAcknowledged)
+
+        joiner.leave()
+        XCTAssertNil(joiner.restartWarningAcknowledged)
     }
 
     /// The warning belongs to restarts only; a first round goes straight to the code check.
@@ -127,8 +171,8 @@ final class ScreenRoutingTests: XCTestCase {
         }
     }
 
-    /// Acknowledging one restart does not silence the next: the flag is per round generation.
-    func testEachRestartWarnsAgain() {
+    /// The routing branch itself, separately from the keying the two tests above drive.
+    func testTheWarningBranchFollowsTheAcknowledgement() {
         let warned = Screen.current(phase: .confirming, role: .joiner, hasRestartOffer: false,
                                     restartWarningRequired: true, restartWarningAcknowledged: false,
                                     idle: .home)

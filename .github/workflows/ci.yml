@@ -33,6 +33,8 @@ jobs:
         run: Tools/check_verifier_sync.sh
       - name: Public-safety lint (no owner-personal material in tracked files)
         run: Tools/check_public_safe.sh
+      - name: Honesty-copy lint (no claim CLAUDE.md forbids in the app's strings)
+        run: Tools/check_honesty_copy.sh
 
   mutations:
     name: Mutation gate (every listed guard is caught by a test)

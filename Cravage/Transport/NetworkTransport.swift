@@ -154,6 +154,13 @@ final class NetworkTransport: RoundTransport {
         }
     }
 
+    /// Ends discovery only. The endpoints already found are kept, so a connection opened from the
+    /// list still has the endpoint it was made from, and `stopAll` remains the full teardown.
+    func stopBrowsing() {
+        browserTask?.cancel()
+        browserTask = nil
+    }
+
     private func roomsFound(_ found: [Bonjour.Endpoint]) {
         endpoints = Dictionary(found.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         let adverts = found.compactMap { endpoint -> RoomAdvert? in

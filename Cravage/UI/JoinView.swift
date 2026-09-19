@@ -1,5 +1,4 @@
 import SwiftUI
-import UIKit
 import CravageCore
 
 /// Join a room, in the Paper look. Mockup: `design/mockups/Join.dc.html`, with the empty and
@@ -24,8 +23,8 @@ struct JoinView: View {
                     PaperHeader(eyebrow: "Join a room", title: "Rooms nearby", size: 34)
                         .padding(.top, 6)
                     Rectangle().fill(Paper.ink).frame(height: 1.5).padding(.top, 18)
-                    if coordinator.problem == .localNetworkDenied {
-                        permissionDenied
+                    if let problem = coordinator.problem {
+                        ProblemNotice(problem: problem) { coordinator.browse() }
                     } else {
                         ForEach(coordinator.rooms) { room in
                             roomRow(room)
@@ -92,31 +91,6 @@ struct JoinView: View {
                 .fixedSize(horizontal: false, vertical: true)
             searchingLine(text: "Still looking...")
                 .padding(.top, 4)
-        }
-        .padding(.top, 20)
-    }
-
-    private var permissionDenied: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Cravage can't see phones nearby")
-                .font(Paper.serif(22))
-                .foregroundStyle(Paper.ink)
-                .fixedSize(horizontal: false, vertical: true)
-            Text("Local Network access is turned off for Cravage. Settings > Privacy & Security > Local Network > Cravage.")
-                .font(Paper.sans(15))
-                .foregroundStyle(Paper.muted)
-                .fixedSize(horizontal: false, vertical: true)
-            HStack(spacing: 10) {
-                Button("Open Settings") {
-                    if let url = URL(string: UIApplication.openSettingsURLString) {
-                        UIApplication.shared.open(url)
-                    }
-                }
-                Button("Try again") { coordinator.browse() }
-            }
-            .font(Paper.sans(17, weight: .semibold))
-            .foregroundStyle(Paper.accent)
-            .padding(.top, 4)
         }
         .padding(.top, 20)
     }

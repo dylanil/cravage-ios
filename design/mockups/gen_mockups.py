@@ -252,7 +252,7 @@ def step(number, title, body, illustration):
 STEPS = [
     ("1", "Gather in one room", "Everyone opens Cravage on their own phone.", ill_room()),
     ("2", "Match the code", "Each screen shows the same room code. Check it together.", ill_code()),
-    ("3", "Only the average appears", "Each phone sends a masked share. Nobody sees a number.", ill_average()),
+    ("3", "Only the average appears", "Each phone sends a masked share, not your figure.", ill_average()),
 ]
 
 screens = {}
@@ -345,7 +345,7 @@ screens["Main"] = ppage(f"""
 {nav(right=i_gear())}
 <div style="padding: 10px 26px 0; display: flex; flex-direction: column; gap: 8px;">
   {kicker("CRAVAGE")}
-  <div class="serif" style="font-size: 38px; line-height: 42px; font-weight: 600; letter-spacing: -0.3px;">An average everyone trusts, a number nobody sees.</div>
+  <div class="serif" style="font-size: 38px; line-height: 42px; font-weight: 600; letter-spacing: -0.3px;">An average the whole room can check, without passing your figure around.</div>
 </div>
 <div style="padding: 18px 26px 0; display: flex; flex-direction: column;">{paper_steps}</div>
 {p_bottom(p_primary("New room"), p_secondary("Join a room"), note(f'You appear as <strong style="color: {INK};">Dee</strong>. <a>Change</a>', size=15))}

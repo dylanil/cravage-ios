@@ -18,6 +18,7 @@ Three pages:
 Visual rules come from `docs/PLAN.md` (standard iOS controls, orange accent, monospace only for
 figures and the room code). The owner chose look C, "Paper" (2026-09-14): editorial serif
 headings, hairline rules, numbered steps and drawn illustrations. The first draft was judged too
-plain; Warm glow and Night were the other two directions. Copy follows CLAUDE.md's honesty rules and the
-SPEC 7 copy rule. Strings marked "Copy not yet approved" or "Draft copy" need the owner's sign-off;
+plain; Warm glow and Night were the other two directions. Copy is checked against CLAUDE.md's honesty rules by
+`Tools/check_honesty_copy.sh` in CI, after the fresh review of 2026-09-19 found the Home headline
+claiming against collusion and input honesty; the SPEC 7 copy rule applies too. Strings marked "Copy not yet approved" or "Draft copy" need the owner's sign-off;
 the unlock price is a placeholder. Status: look chosen; the nine first-round screens are built in the app (delivery step 5), together with the restart offer, the restart warning and the round-ended screen. Where a screen and the protocol disagreed, the protocol won and the mockup was corrected: the joiner's lobby no longer lists people it cannot know about (see SPEC section 3).
