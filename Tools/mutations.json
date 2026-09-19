@@ -1,66 +1,194 @@
 {
   "_about": "Guards that a test claims to protect. Each entry breaks one guard; its suite must compile and fail a named test. Tools/check_mutations.py runs core entries by default, and app entries with --suite app --destination. CI runs both suites. Add an entry whenever a test is named for a guarantee.",
   "mutations": [
-    {"name": "share barrier needs the local confirm and every other confirm", "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
-     "find": "guard phase == .confirming, localConfirmed, let roster, roomcodeConfirms.count == roster.size",
-     "replace": "guard phase == .confirming, let roster, roomcodeConfirms.count >= roster.size - 1"},
-    {"name": "conflicting share fails the round (first write wins)", "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
-     "find": "                if existing.content == message.content { return false }\n                fail(.conflictingMessage(letter), now: now, into: &effects); return false\n            }\n            shares[letter]",
-     "replace": "                if existing.content == message.content { return false }\n            }\n            shares[letter]"},
-    {"name": "host rejects another session", "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
-     "find": "        guard message.session == session else { effects.append(.rejected(.wrongSession)); return }\n        switch message.action {\n        case .control:\n            effects.append(.rejected(.notFromHost))",
-     "replace": "        switch message.action {\n        case .control:\n            effects.append(.rejected(.notFromHost))"},
-    {"name": "host checks the sender's connection", "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
-     "find": "roster.party(letter).verifyingKey == message.sender, rosterPeers[letter] == peer else {",
-     "replace": "roster.party(letter).verifyingKey == message.sender else {"},
-    {"name": "differing agreement shows as mismatch", "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
-     "find": "if !mismatched.isEmpty { outcome = .mismatch(mismatched) }",
-     "replace": "if false { outcome = .mismatch(mismatched) }"},
-    {"name": "fresh signing key every session", "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
-     "find": "        signingKey = SigningKey()\n        maskKey = MaskPrivateKey()",
-     "replace": "        if signingKey == nil { signingKey = SigningKey() }\n        maskKey = MaskPrivateKey()"},
-    {"name": "silent connections are closed", "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
-     "find": "            connectionDeadlines[peer] = nil\n            effects.append(.disconnect(peer))",
-     "replace": "            connectionDeadlines[peer] = nil"},
-    {"name": "no manual admission while a restart gathers", "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
-     "find": "phase == .lobby, !restartPending else",
-     "replace": "phase == .lobby else"},
-    {"name": "failure clears the sum", "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
-     "find": "        phase = .failed(reason)\n        sum = nil",
-     "replace": "        phase = .failed(reason)"},
-    {"name": "restart is an offer until accepted", "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
-     "find": "            restartOffer = RestartOffer(label: newLabel, size: size, session: newSession, nonce: newNonce, host: newHost)\n            nextDeadline = after(now, deadlines.confirmingMs)",
-     "replace": "            restartOffer = RestartOffer(label: newLabel, size: size, session: newSession, nonce: newNonce, host: newHost)\n            nextDeadline = after(now, deadlines.confirmingMs)\n            acceptRestart(now: now, into: &effects)"},
-    {"name": "every restart warns", "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
-     "find": "public var restartWarningRequired: Bool { previousRound != nil && role != nil }",
-     "replace": "public var restartWarningRequired: Bool { restartRosterChanged }"},
-    {"name": "envelope signature is verified", "file": "CravageCore/Sources/CravageCore/Envelope.swift",
-     "find": "guard sender.verify(signature, message: canonical.string) else { throw MessageError.badSignature }",
-     "replace": "_ = signature"},
-    {"name": "transcript checks room code signatures (label authenticated)", "file": "CravageCore/Sources/CravageCore/Transcript.swift",
-     "find": "            if !key.verify(signature, message: canonical.string) {\n                failures.append(\"\\(letter): room code signature",
-     "replace": "            if false, !key.verify(signature, message: canonical.string) {\n                failures.append(\"\\(letter): room code signature"},
-    {"name": "display rounding is half away from zero", "file": "CravageCore/Sources/CravageCore/FixedPoint.swift",
-     "find": "if rest * 2 >= divisor",
-     "replace": "if rest * 2 > divisor"},
-    {"name": "frame length is capped before the body is read", "file": "CravageCore/Sources/CravageCore/Framing.swift",
-     "find": "        guard length <= MessageDomain.maxEnvelopeBytes else { throw FrameError.oversized }\n        return try await receiveExactly(length)",
-     "replace": "        return try await receiveExactly(length)"},
-    {"name": "lower letter adds its mask", "file": "CravageCore/Sources/CravageCore/Wraparound.swift",
-     "find": "return me < other ? 1 : -1",
-     "replace": "return me < other ? -1 : 1"},
-    {"name": "late dispute updates the exportable record", "file": "CravageCore/Sources/CravageCore/RoundEngine.swift", "find": "            record?.outcome = .disputed(letter)", "replace": "            // mutation: retain the old record outcome"},
-    {"name": "disputed records cannot export clean agreement", "file": "CravageCore/Sources/CravageCore/Transcript.swift", "find": "        guard record.outcome == .agreed else { return nil }", "replace": "        // mutation: ignore disputed agreement"},
-    {"name": "late dispute records the actual conflicting party", "file": "CravageCore/Sources/CravageCore/RoundEngine.swift", "find": "            record?.outcome = .disputed(letter)", "replace": "            record?.outcome = .disputed(myLetter!)"},
-    {"name": "joiners bound host messages before verification", "file": "CravageCore/Sources/CravageCore/RoundEngine.swift", "find": "guard count < RoundEngine.maxMessagesPerPeer else {", "replace": "guard role == .joiner || count < RoundEngine.maxMessagesPerPeer else {"},
-    {"name": "accepted restarts reset the incoming message budget", "file": "CravageCore/Sources/CravageCore/RoundEngine.swift", "find": "        messageCounts = [:]\n        ownHelloSignature = nil", "replace": "        // mutation: retain prior message counts\n        ownHelloSignature = nil"},
-    {"name": "repeated Join keeps one connection", "suite": "app", "file": "Cravage/Round/RoundCoordinator.swift", "find": "        guard engine.phase == .idle else { return }\n        apply(.joinRoom(nickname: nickname))", "replace": "        apply(.joinRoom(nickname: nickname))"},
-    {"name": "old receive close cannot escape its session", "suite": "app", "file": "Cravage/Transport/NetworkTransport.swift", "find": "            guard self.startToken == token, self.links[peer] == nil else { return }", "replace": "            guard self.links[peer] == nil else { return }"},
-    {"name": "old receive close cannot report over a replacement", "suite": "app", "file": "Cravage/Transport/NetworkTransport.swift", "find": "            guard self.startToken == token, self.links[peer] == nil else { return }", "replace": "            guard self.startToken == token else { return }"},
-    {"name": "old explicit close cannot escape its session", "suite": "app", "file": "Cravage/Transport/NetworkTransport.swift", "find": "            guard let self, self.startToken == token, self.links[peer] == nil else { return }", "replace": "            guard let self, self.links[peer] == nil else { return }"},
-    {"name": "old explicit close cannot report over a replacement", "suite": "app", "file": "Cravage/Transport/NetworkTransport.swift", "find": "            guard let self, self.startToken == token, self.links[peer] == nil else { return }", "replace": "            guard let self, self.startToken == token else { return }"},
-    {"name": "missing endpoint callback is invalidated by Leave", "suite": "app", "file": "Cravage/Transport/NetworkTransport.swift", "find": "                guard let self, self.startToken == token, self.links[.host] == nil else { return }", "replace": "                guard let self, self.links[.host] == nil else { return }"},
-    {"name": "current receive failure is still reported", "suite": "app", "file": "Cravage/Transport/NetworkTransport.swift", "find": "            self.onEvent?(.peerDisconnected(peer))\n        }\n        return link", "replace": "            // mutation: silence a current failure\n        }\n        return link"},
-    {"name": "missing endpoint callback cannot report over a replacement", "suite": "app", "file": "Cravage/Transport/NetworkTransport.swift", "find": "                guard let self, self.startToken == token, self.links[.host] == nil else { return }", "replace": "                guard let self, self.startToken == token else { return }"}
+    {
+      "name": "share barrier needs the local confirm and every other confirm",
+      "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
+      "find": "guard phase == .confirming, localConfirmed, let roster, roomcodeConfirms.count == roster.size",
+      "replace": "guard phase == .confirming, let roster, roomcodeConfirms.count >= roster.size - 1"
+    },
+    {
+      "name": "conflicting share fails the round (first write wins)",
+      "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
+      "find": "                if existing.content == message.content { return false }\n                fail(.conflictingMessage(letter), now: now, into: &effects); return false\n            }\n            shares[letter]",
+      "replace": "                if existing.content == message.content { return false }\n            }\n            shares[letter]"
+    },
+    {
+      "name": "host rejects another session",
+      "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
+      "find": "        guard message.session == session else { effects.append(.rejected(.wrongSession)); return }\n        switch message.action {\n        case .control:\n            effects.append(.rejected(.notFromHost))",
+      "replace": "        switch message.action {\n        case .control:\n            effects.append(.rejected(.notFromHost))"
+    },
+    {
+      "name": "host checks the sender's connection",
+      "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
+      "find": "roster.party(letter).verifyingKey == message.sender, rosterPeers[letter] == peer else {",
+      "replace": "roster.party(letter).verifyingKey == message.sender else {"
+    },
+    {
+      "name": "differing agreement shows as mismatch",
+      "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
+      "find": "if !mismatched.isEmpty { outcome = .mismatch(mismatched) }",
+      "replace": "if false { outcome = .mismatch(mismatched) }"
+    },
+    {
+      "name": "fresh signing key every session",
+      "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
+      "find": "        signingKey = SigningKey()\n        maskKey = MaskPrivateKey()",
+      "replace": "        if signingKey == nil { signingKey = SigningKey() }\n        maskKey = MaskPrivateKey()"
+    },
+    {
+      "name": "silent connections are closed",
+      "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
+      "find": "            connectionDeadlines[peer] = nil\n            effects.append(.disconnect(peer))",
+      "replace": "            connectionDeadlines[peer] = nil"
+    },
+    {
+      "name": "no manual admission while a restart gathers",
+      "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
+      "find": "phase == .lobby, !restartPending else",
+      "replace": "phase == .lobby else"
+    },
+    {
+      "name": "failure clears the sum",
+      "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
+      "find": "        phase = .failed(reason)\n        sum = nil",
+      "replace": "        phase = .failed(reason)"
+    },
+    {
+      "name": "restart is an offer until accepted",
+      "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
+      "find": "            restartOffer = RestartOffer(label: newLabel, size: size, session: newSession, nonce: newNonce, host: newHost)\n            nextDeadline = after(now, deadlines.confirmingMs)",
+      "replace": "            restartOffer = RestartOffer(label: newLabel, size: size, session: newSession, nonce: newNonce, host: newHost)\n            nextDeadline = after(now, deadlines.confirmingMs)\n            acceptRestart(now: now, into: &effects)"
+    },
+    {
+      "name": "every restart warns",
+      "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
+      "find": "public var restartWarningRequired: Bool { previousRound != nil && role != nil }",
+      "replace": "public var restartWarningRequired: Bool { restartRosterChanged }"
+    },
+    {
+      "name": "envelope signature is verified",
+      "file": "CravageCore/Sources/CravageCore/Envelope.swift",
+      "find": "guard sender.verify(signature, message: canonical.string) else { throw MessageError.badSignature }",
+      "replace": "_ = signature"
+    },
+    {
+      "name": "transcript checks room code signatures (label authenticated)",
+      "file": "CravageCore/Sources/CravageCore/Transcript.swift",
+      "find": "            if !key.verify(signature, message: canonical.string) {\n                failures.append(\"\\(letter): room code signature",
+      "replace": "            if false, !key.verify(signature, message: canonical.string) {\n                failures.append(\"\\(letter): room code signature"
+    },
+    {
+      "name": "display rounding is half away from zero",
+      "file": "CravageCore/Sources/CravageCore/FixedPoint.swift",
+      "find": "if rest * 2 >= divisor",
+      "replace": "if rest * 2 > divisor"
+    },
+    {
+      "name": "frame length is capped before the body is read",
+      "file": "CravageCore/Sources/CravageCore/Framing.swift",
+      "find": "        guard length <= MessageDomain.maxEnvelopeBytes else { throw FrameError.oversized }\n        return try await receiveExactly(length)",
+      "replace": "        return try await receiveExactly(length)"
+    },
+    {
+      "name": "lower letter adds its mask",
+      "file": "CravageCore/Sources/CravageCore/Wraparound.swift",
+      "find": "return me < other ? 1 : -1",
+      "replace": "return me < other ? -1 : 1"
+    },
+    {
+      "name": "late dispute updates the exportable record",
+      "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
+      "find": "            record?.outcome = .disputed(letter)",
+      "replace": "            // mutation: retain the old record outcome"
+    },
+    {
+      "name": "disputed records cannot export clean agreement",
+      "file": "CravageCore/Sources/CravageCore/Transcript.swift",
+      "find": "        guard record.outcome == .agreed else { return nil }",
+      "replace": "        // mutation: ignore disputed agreement"
+    },
+    {
+      "name": "late dispute records the actual conflicting party",
+      "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
+      "find": "            record?.outcome = .disputed(letter)",
+      "replace": "            record?.outcome = .disputed(myLetter!)"
+    },
+    {
+      "name": "joiners bound host messages before verification",
+      "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
+      "find": "guard count < RoundEngine.maxMessagesPerPeer else {",
+      "replace": "guard role == .joiner || count < RoundEngine.maxMessagesPerPeer else {"
+    },
+    {
+      "name": "accepted restarts reset the incoming message budget",
+      "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
+      "find": "        messageCounts = [:]\n        ownHelloSignature = nil",
+      "replace": "        // mutation: retain prior message counts\n        ownHelloSignature = nil"
+    },
+    {
+      "name": "repeated Join keeps one connection",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "        guard engine.phase == .idle else { return }\n        apply(.joinRoom(nickname: nickname))",
+      "replace": "        apply(.joinRoom(nickname: nickname))"
+    },
+    {
+      "name": "old receive close cannot escape its session",
+      "suite": "app",
+      "file": "Cravage/Transport/NetworkTransport.swift",
+      "find": "            guard self.startToken == token, self.links[peer] == nil else { return }",
+      "replace": "            guard self.links[peer] == nil else { return }"
+    },
+    {
+      "name": "old receive close cannot report over a replacement",
+      "suite": "app",
+      "file": "Cravage/Transport/NetworkTransport.swift",
+      "find": "            guard self.startToken == token, self.links[peer] == nil else { return }",
+      "replace": "            guard self.startToken == token else { return }"
+    },
+    {
+      "name": "old explicit close cannot escape its session",
+      "suite": "app",
+      "file": "Cravage/Transport/NetworkTransport.swift",
+      "find": "            guard let self, self.startToken == token, self.links[peer] == nil else { return }",
+      "replace": "            guard let self, self.links[peer] == nil else { return }"
+    },
+    {
+      "name": "old explicit close cannot report over a replacement",
+      "suite": "app",
+      "file": "Cravage/Transport/NetworkTransport.swift",
+      "find": "            guard let self, self.startToken == token, self.links[peer] == nil else { return }",
+      "replace": "            guard let self, self.startToken == token else { return }"
+    },
+    {
+      "name": "missing endpoint callback is invalidated by Leave",
+      "suite": "app",
+      "file": "Cravage/Transport/NetworkTransport.swift",
+      "find": "                guard let self, self.startToken == token, self.links[.host] == nil else { return }",
+      "replace": "                guard let self, self.links[.host] == nil else { return }"
+    },
+    {
+      "name": "current receive failure is still reported",
+      "suite": "app",
+      "file": "Cravage/Transport/NetworkTransport.swift",
+      "find": "            self.onEvent?(.peerDisconnected(peer))\n        }\n        return link",
+      "replace": "            // mutation: silence a current failure\n        }\n        return link"
+    },
+    {
+      "name": "missing endpoint callback cannot report over a replacement",
+      "suite": "app",
+      "file": "Cravage/Transport/NetworkTransport.swift",
+      "find": "                guard let self, self.startToken == token, self.links[.host] == nil else { return }",
+      "replace": "                guard let self, self.startToken == token else { return }"
+    },
+    {
+      "name": "the figure screen is not reachable from the confirming barrier",
+      "suite": "app",
+      "file": "Cravage/UI/Screen.swift",
+      "find": "        case .confirming: return .confirmCode",
+      "replace": "        case .confirming: return .enterFigure"
+    }
   ]
 }
