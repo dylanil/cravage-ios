@@ -8,6 +8,9 @@ struct RootView: View {
     let entitlement: EntitlementProvider
     @State private var idle: IdleScreen = .home
     @State private var nicknames = NicknameStore()
+    /// The room this phone tapped in the list, kept for the joiner lobby's host name. Untrusted
+    /// until the room code is compared.
+    @State private var joined: RoomAdvert?
 
     var body: some View {
         screen
@@ -28,11 +31,13 @@ struct RootView: View {
             NewRoomView(coordinator: coordinator, nicknames: nicknames, entitlement: entitlement,
                         onCancel: { idle = .home })
         case .join:
-            JoinView(coordinator: coordinator, nicknames: nicknames, onBack: stopBrowsing)
+            JoinView(coordinator: coordinator, nicknames: nicknames,
+                     onPick: { joined = $0 }, onBack: stopBrowsing)
         case .lobbyHost:
-            Unbuilt(name: "Lobby (host)", back: leave)
+            LobbyHostView(coordinator: coordinator, nickname: nicknames.nickname, onClose: leave)
         case .lobbyJoiner:
-            Unbuilt(name: "Lobby (joiner)", back: leave)
+            LobbyJoinerView(coordinator: coordinator, hostNickname: joined?.hostNickname,
+                            nickname: nicknames.nickname, onLeave: leave)
         case .confirmCode:
             Unbuilt(name: "Check the code", back: leave)
         case .enterFigure:
@@ -56,6 +61,7 @@ struct RootView: View {
 
     private func leave() {
         coordinator.leave()
+        joined = nil
         idle = .home
     }
 }

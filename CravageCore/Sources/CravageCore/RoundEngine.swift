@@ -227,6 +227,11 @@ public final class RoundEngine {
 
     public var admittedCount: Int { admitted.count }
 
+    /// Host: the nicknames of everyone let into the room, in admission order. Party letters are not
+    /// assigned until the roster locks, so the lobby has names and nothing else to show.
+    /// Read-only; admission itself stays an engine decision.
+    public var admittedNicknames: [String] { admitted.map(\.hello.nickname) }
+
     /// The earliest clock reading at which a `.tick` has work to do (a phase deadline or a
     /// connection to close). The app schedules its next tick no later than this.
     public var nextTickDue: UInt64? {

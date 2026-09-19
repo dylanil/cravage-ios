@@ -88,6 +88,15 @@ final class RoundCoordinator {
         rooms = []
     }
 
+    /// Seconds left on the phase deadline, for the countdown lines. Nil when nothing is waiting.
+    /// Rounded up, so a countdown reads 1 until the moment it expires rather than resting on 0.
+    func secondsRemaining(now: UInt64? = nil) -> Int? {
+        guard let deadline = engine.nextDeadline else { return nil }
+        let current = now ?? clock.nowMs()
+        guard deadline > current else { return 0 }
+        return Int((deadline - current + 999) / 1000)
+    }
+
     // MARK: - Engine plumbing
 
     private func transportEvent(_ event: TransportEvent) {

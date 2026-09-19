@@ -10,6 +10,8 @@ import CravageCore
 struct JoinView: View {
     let coordinator: RoundCoordinator
     let nicknames: NicknameStore
+    /// Remembers which room was tapped, so the lobby can name the host it advertised.
+    let onPick: (RoomAdvert) -> Void
     let onBack: () -> Void
 
     @State private var editingName = false
@@ -54,6 +56,7 @@ struct JoinView: View {
                 editingName = true
                 return
             }
+            onPick(room)
             coordinator.join(roomID: room.id, nickname: nicknames.nickname)
         } label: {
             HStack(spacing: 14) {
