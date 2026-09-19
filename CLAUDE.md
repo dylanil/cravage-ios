@@ -39,9 +39,6 @@ files; when unsure which side a document falls on, ask before committing it.
   built from these files.
 - `Tools/verify_round.py` - vendored from SMPC and **pinned to a commit and SHA-256** by
   `Tools/check_verifier_sync.sh`. Upstream changes are adopted deliberately, never silently.
-- `Spike/` - the throwaway three-phone Network framework spike (delivery step 2, closed; findings
-  in `docs/review/2026-09-13-connectivity-spike-findings.md`). Not the app. Delete it once
-  `Cravage/`'s NetworkTransport has run a real round on three phones.
 - `docs/` - GitHub Pages: privacy policy, support, plan, spec, App Store paperwork, review record.
   Council archive: `docs/review/council/`. Retros: `docs/retros/` (public-safe: findings, gates and
   handoff only; private material stays in memory).

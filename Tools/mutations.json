@@ -131,8 +131,8 @@
       "name": "repeated Join keeps one connection",
       "suite": "app",
       "file": "Cravage/Round/RoundCoordinator.swift",
-      "find": "        guard engine.phase == .idle else { return }\n        apply(.joinRoom(nickname: nickname))",
-      "replace": "        apply(.joinRoom(nickname: nickname))"
+      "find": "        guard engine.phase == .idle else { return }\n        lastRejection = nil\n        apply(.joinRoom(nickname: nickname))",
+      "replace": "        lastRejection = nil\n        apply(.joinRoom(nickname: nickname))"
     },
     {
       "name": "old receive close cannot escape its session",

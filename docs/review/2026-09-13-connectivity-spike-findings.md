@@ -6,7 +6,9 @@ get admitted, and pass messages, using the iOS 26 `NetworkListener`/`NetworkBrow
 and lock behaviour, and disconnect signals. Code: `Spike/` (throwaway).
 
 **Status: closed 2026-09-13** after two rounds, first with two physical iPhones, then three, all on
-iOS 26. `Spike/` stays in the tree for now in case another round is wanted; it is deleted once
+iOS 26. `Spike/` was deleted on 2026-09-19, once `Cravage/`'s own NetworkTransport had run a full
+round and a restart on three physical phones; the findings below are the record of what it taught.
+The superseded note read: `Spike/` stays in the tree for now in case another round is wanted; it is deleted once
 CravageCore's real transport replaces it. Raw logs were captured via the app's own on-screen log
 (timestamped, copy-pasted from each device) - not reproduced verbatim here, only the events they
 show.
