@@ -24,6 +24,7 @@ enum Screen: Equatable {
     case join
     case lobbyHost
     case lobbyJoiner
+    case restartWarning
     case confirmCode
     case enterFigure
     case waiting
@@ -31,14 +32,21 @@ enum Screen: Equatable {
     case failed(FailureReason)
     case restartOffer
 
-    static func current(phase: Phase, role: Role?, hasRestartOffer: Bool, idle: IdleScreen) -> Screen {
+    static func current(phase: Phase, role: Role?, hasRestartOffer: Bool,
+                        restartWarningRequired: Bool = false,
+                        restartWarningAcknowledged: Bool = false,
+                        idle: IdleScreen) -> Screen {
         // A restart offer arrives as the failure that ended the old round; the person is asked
         // about the new one rather than shown the wreckage of the old (owner decision 2026-09-13).
         if hasRestartOffer { return .restartOffer }
         switch phase {
         case .idle: return idle.screen
         case .lobby: return role == .host ? .lobbyHost : .lobbyJoiner
-        case .confirming: return .confirmCode
+        case .confirming:
+            // SPEC 13: every restarted round warns before the next figure entry, whoever is in it.
+            // Placing it here, ahead of the code check, puts it before anything can be sent.
+            if restartWarningRequired, !restartWarningAcknowledged { return .restartWarning }
+            return .confirmCode
         case .keyExchange: return .enterFigure
         case .sharing, .collectingConfirmations: return .waiting
         case let .complete(outcome): return .result(outcome)
@@ -47,10 +55,13 @@ enum Screen: Equatable {
     }
 
     @MainActor
-    init(_ coordinator: RoundCoordinator, idle: IdleScreen = .home) {
-        self = Screen.current(phase: coordinator.live.phase,
-                              role: coordinator.live.role,
-                              hasRestartOffer: coordinator.live.restartOffer != nil,
+    init(_ coordinator: RoundCoordinator, idle: IdleScreen = .home, warningAcknowledgedFor: Int? = nil) {
+        let engine = coordinator.live
+        self = Screen.current(phase: engine.phase,
+                              role: engine.role,
+                              hasRestartOffer: engine.restartOffer != nil,
+                              restartWarningRequired: engine.restartWarningRequired,
+                              restartWarningAcknowledged: warningAcknowledgedFor == engine.generation,
                               idle: idle)
     }
 }

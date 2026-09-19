@@ -11,6 +11,9 @@ struct RootView: View {
     /// The room this phone tapped in the list, kept for the joiner lobby's host name. Untrusted
     /// until the room code is compared.
     @State private var joined: RoomAdvert?
+    /// The round generation whose restart warning this person has acknowledged, so each restart
+    /// warns again (SPEC 13).
+    @State private var warningAcknowledgedFor: Int?
 
     var body: some View {
         screen
@@ -22,7 +25,7 @@ struct RootView: View {
 
     @ViewBuilder
     private var screen: some View {
-        switch Screen(coordinator, idle: idle) {
+        switch Screen(coordinator, idle: idle, warningAcknowledgedFor: warningAcknowledgedFor) {
         case .home:
             HomeView(nicknames: nicknames,
                      onNewRoom: { idle = .newRoom },
@@ -38,6 +41,10 @@ struct RootView: View {
         case .lobbyJoiner:
             LobbyJoinerView(coordinator: coordinator, hostNickname: joined?.hostNickname,
                             nickname: nicknames.nickname, onLeave: leave)
+        case .restartWarning:
+            RestartWarningView(coordinator: coordinator,
+                               onUnderstood: { warningAcknowledgedFor = coordinator.live.generation },
+                               onLeave: leave)
         case .confirmCode:
             ConfirmCodeView(coordinator: coordinator, onStop: leave)
         case .enterFigure:
@@ -48,10 +55,13 @@ struct RootView: View {
             ResultView(coordinator: coordinator, outcome: outcome,
                        onRunAgain: { coordinator.restart(generation: coordinator.live.generation) },
                        onLeave: leave)
-        case .failed:
-            Unbuilt(name: "Round ended", back: leave)
+        case let .failed(reason):
+            FailedView(coordinator: coordinator, reason: reason,
+                       onRestart: { coordinator.restart(generation: coordinator.live.generation) },
+                       onLeave: leave)
         case .restartOffer:
-            Unbuilt(name: "Restart offered", back: leave)
+            RestartOfferView(coordinator: coordinator, hostNickname: joined?.hostNickname,
+                             onLeave: leave)
         }
     }
 
@@ -65,30 +75,5 @@ struct RootView: View {
         coordinator.leave()
         joined = nil
         idle = .home
-    }
-}
-
-/// A screen that is routed but not yet built. Replaced screen by screen; it says plainly that it is
-/// unfinished rather than pretending to be the real thing.
-private struct Unbuilt: View {
-    let name: String
-    let back: () -> Void
-
-    var body: some View {
-        VStack(spacing: 0) {
-            Spacer()
-            PaperHeader(eyebrow: "Not built yet", title: name)
-                .padding(.horizontal, Paper.gutter)
-            Text("This screen is designed but not written yet.")
-                .font(Paper.sans(15))
-                .foregroundStyle(Paper.muted)
-                .padding(.horizontal, Paper.gutter)
-                .padding(.top, 8)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            Spacer()
-            BottomStack {
-                SecondaryButton(title: "Back", action: back)
-            }
-        }
     }
 }

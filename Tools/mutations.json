@@ -210,6 +210,20 @@
       "file": "Cravage/Round/RoundCoordinator.swift",
       "find": "        _ = revision\n        return engine",
       "replace": "        return engine"
+    },
+    {
+      "name": "a restart offer outranks the failure that carries it",
+      "suite": "app",
+      "file": "Cravage/UI/Screen.swift",
+      "find": "        if hasRestartOffer { return .restartOffer }",
+      "replace": ""
+    },
+    {
+      "name": "every restarted round warns before the code check",
+      "suite": "app",
+      "file": "Cravage/UI/Screen.swift",
+      "find": "            if restartWarningRequired, !restartWarningAcknowledged { return .restartWarning }",
+      "replace": ""
     }
   ]
 }
