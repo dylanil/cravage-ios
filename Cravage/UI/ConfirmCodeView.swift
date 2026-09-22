@@ -9,6 +9,7 @@ import CravageCore
 /// so the note gives the number to count rather than the size of the room.
 struct ConfirmCodeView: View {
     let coordinator: RoundCoordinator
+    let actions: RoundActions
     let onStop: () -> Void
 
     private var engine: RoundEngine { coordinator.live }
@@ -54,7 +55,7 @@ struct ConfirmCodeView: View {
             BottomStack {
                 PrimaryButton(title: engine.localConfirmed ? "Waiting for the others" : "I checked, the codes match",
                               enabled: !engine.localConfirmed) {
-                    coordinator.confirmRoomCode(generation: engine.generation)
+                    actions.confirmRoomCode()
                 }
                 QuietButton(title: "The codes don't match", tint: Paper.danger, action: onStop)
                 CountdownLabel(coordinator: coordinator) { time in "Stops waiting in \(time)" }

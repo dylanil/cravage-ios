@@ -2,8 +2,8 @@ import SwiftUI
 import CravageCore
 
 /// Shown on every restarted round before anything can be sent. Mockup:
-/// `design/mockups/SketchRestartWarning.dc.html`; wording drafted in SPEC 13 and **not yet
-/// approved by the owner**.
+/// `design/mockups/SketchRestartWarning.dc.html`; wording in SPEC 13, with the misleading
+/// reassurance removed by owner decision on 2026-09-22.
 ///
 /// SPEC 13, as the owner revised it on 2026-09-13: subtracting two sums to isolate a dropped
 /// party's figure is inherent to restarting with the same figures and cannot be fixed with
@@ -39,11 +39,6 @@ struct RestartWarningView: View {
                         .foregroundStyle(Paper.ink)
                         .fixedSize(horizontal: false, vertical: true)
                         .padding(.top, 18)
-                    Text("Entering a different figure than last time, or leaving the round, both avoid this.")
-                        .font(Paper.sans(14))
-                        .foregroundStyle(Paper.muted)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .padding(.top, 12)
                 }
                 .padding(.horizontal, Paper.gutter)
             }

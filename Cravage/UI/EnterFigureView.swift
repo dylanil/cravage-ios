@@ -8,6 +8,7 @@ import CravageCore
 /// round identity, so the button says so before it is pressed.
 struct EnterFigureView: View {
     let coordinator: RoundCoordinator
+    let actions: RoundActions
     let onLeave: () -> Void
 
     @State private var text = ""
@@ -77,17 +78,26 @@ struct EnterFigureView: View {
                 .foregroundStyle(Paper.ink)
                 .tint(Paper.accentFill)
                 .keyboardType(.decimalPad)
+                .autocorrectionDisabled()
                 .focused($focused)
                 .minimumScaleFactor(0.5)
                 .lineLimit(1)
                 .padding(.bottom, 8)
                 .onChange(of: text) { _, _ in error = nil }
             Rectangle().fill(Paper.accentFill).frame(height: 2)
+            HStack {
+                Button("Change sign (+/-)") { text = FigureEditing.changingSign(text) }
+                Spacer()
+                Button("Decimal point (.)") { text = FigureEditing.appendingDecimalPoint(text) }
+            }
+            .font(Paper.sans(14, weight: .semibold))
+            .foregroundStyle(Paper.accent)
+            .frame(minHeight: 44)
         }
         .padding(.top, 18)
     }
 
     private func send() {
-        error = coordinator.submitFigure(text, generation: engine.generation)
+        error = actions.submitFigure(text)
     }
 }

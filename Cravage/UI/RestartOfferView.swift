@@ -8,6 +8,7 @@ import CravageCore
 /// and declining leaves the room.
 struct RestartOfferView: View {
     let coordinator: RoundCoordinator
+    let actions: RoundActions
     let onLeave: () -> Void
 
     private var engine: RoundEngine { coordinator.live }
@@ -37,7 +38,7 @@ struct RestartOfferView: View {
 
             BottomStack {
                 PrimaryButton(title: "Rejoin") {
-                    coordinator.acceptRestart(generation: engine.generation)
+                    actions.acceptRestart()
                 }
                 SecondaryButton(title: "Leave room", action: onLeave)
                 CountdownLabel(coordinator: coordinator) { time in "Offer ends in \(time)" }
@@ -69,13 +70,8 @@ struct FailedView: View {
                         .foregroundStyle(Paper.ink)
                         .fixedSize(horizontal: false, vertical: true)
                         .padding(.top, 14)
-                    if let rejection = restartRefusal {
-                        Text(rejection)
-                            .font(Paper.sans(14))
-                            .foregroundStyle(Paper.danger)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .padding(.top, 12)
-                    }
+                    RestartRefusal(rejection: coordinator.lastRejection)
+                        .padding(.top, 12)
                 }
                 .padding(.horizontal, Paper.gutter)
             }
@@ -91,17 +87,6 @@ struct FailedView: View {
             }
         }
         .paperBackground()
-    }
-
-    private var restartRefusal: String? {
-        switch coordinator.lastRejection {
-        case .notEnoughPeople:
-            return "A restart needs \(Roster.minimumSize) people still connected. Ask everyone to rejoin, or leave the room and start again."
-        case .wrongPhase:
-            return "This round can't be restarted."
-        default:
-            return nil
-        }
     }
 
     private func nickname(_ label: PartyLabel) -> String {

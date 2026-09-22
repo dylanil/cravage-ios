@@ -18,6 +18,7 @@ final class RoundCoordinator {
     private(set) var problem: TransportProblem?
     private(set) var lastRejection: Rejection?
     private(set) var isCreatingRoom = false
+    private(set) var wasInterrupted = false
     /// The round generation whose restart warning this person acknowledged. Kept here rather than
     /// in a view so the rule can be tested: an acknowledgement belongs to the round it was made in,
     /// so the next restart warns again (SPEC 13). Cleared by Leave, because `generation` is not
@@ -116,12 +117,20 @@ final class RoundCoordinator {
 
     func leave() {
         leaveCount += 1
+        wasInterrupted = false
         lastRejection = nil
         restartWarningAcknowledged = nil
         apply(.leave)
         transport.stopAll()
         browsing = false
         rooms = []
+    }
+
+    /// Called synchronously when the scene enters the background, including phone lock.
+    func appEnteredBackground() {
+        guard isCreatingRoom || !engine.phase.isTerminalOrIdle || engine.restartOffer != nil else { return }
+        leave()
+        wasInterrupted = true
     }
 
     /// Seconds left on the phase deadline, for the countdown lines. Nil when nothing is waiting.

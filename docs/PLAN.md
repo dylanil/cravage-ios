@@ -58,7 +58,7 @@ Product
 - Name Cravage. Subtitle "Group average, kept private". Keywords: average, salary, anonymous,
   private, group, poll, benchmark, secret, bonus, compare.
 - v1 features: create room, join, admit, room code + confirmation step, nickname, enter figure
-  (exact decimals, locale-aware separator, negatives, 2dp display, trillion cap), run round,
+  (exact decimals, explicit full-stop separator, negatives, 2dp display, trillion cap), run round,
   per-phone verification, agreement display, share transcript, unlock + restore, settings, about,
   limitations, user-initiated diagnostics copy (allowlisted: app version, OS, protocol stage, error
   code), "run again". Not in v1: history, remote, dropout recovery, practice/solo mode (prepared
@@ -170,8 +170,10 @@ verification bypasses or seeded states (compile-time exclusion, tested).
 - FixedPoint: exact ports of parseDecimalToFixed / formatFixed / formatAverageFixed from
   `public/static/smpc-core.js` lines 13-98, on Int64, plus the domain check: magnitude must be
   below 10^18 fixed units, otherwise a typed out-of-domain error with a plain message ("figures up
-  to 999,999,999,999.99"). Never `Double` as an intermediate. UI maps the locale decimal separator
-  to "." before parsing; grouping separators are rejected with an inline explanation.
+  to 999,999,999,999.99"). Never `Double` as an intermediate. Owner decision 2026-09-19, reaffirmed
+  2026-09-22: accept an ASCII full stop only; reject commas and grouping separators with an inline
+  explanation, since a comma can mean a decimal point or thousands separator. The figure screen
+  supplies explicit Change sign and Decimal point controls alongside the regional decimal keypad.
 - ShareString: ASCII `^-?[0-9]+$`, at most 20 digits (Int64 range), checked before parsing.
 - Wraparound arithmetic: share = x &+ Σ maskSign(me, o) &* r(me, o) on Int64 (wrapping operators);
   result sum = wrapping sum of all N shares, then exact because |Σx| < 8 × 10^18 < 2^63.
@@ -336,7 +338,8 @@ out of release).
    read-only review done and its fixes committed. Wire bytes in docs/WIRE.md. Python v2
    acceptance runs in CI against the pinned verify_round.py (SMPC bf72734). Review findings M2 and L5 and the
    transcript label resolved by the owner and committed in 650b845: warn on every restart, ask
-   before rejoining, room code signatures in the transcript. Warning copy still to approve.)
+   before rejoining, room code signatures in the transcript. Warning copy approved; the misleading
+   extra reassurance about leaving or changing a figure was removed by owner decision 2026-09-22.)
 4. Mockups on a design canvas: the whole journey sketched cheaply; the screens for the first
    end-to-end round polished and approved; remaining screens approved feature by feature as device
    behaviour becomes known.
@@ -344,15 +347,22 @@ out of release).
    chose look C "Paper" from three Home directions: editorial serif headings, hairline rules,
    numbered steps and drawn illustrations over standard iOS controls; monospace still only for
    figures and the room code. Nine first-round screens restyled in it; sixteen states sketched;
-   draft copy and the unlock price still marked.)
+   remaining unbuilt screens retain draft status. The unlock price is already agreed at $0.99/99p;
+   the actual purchase screen must obtain localized pricing from StoreKit.)
 5. Vertical slice on three phones: NetworkTransport + Home/New Room/Join/Lobby/Confirm/Enter
    Figure/Waiting/Result, real round end to end. Fresh read-only review of the protocol, parser and
    binding code.
    (Groundwork committed 2026-09-13, 9b6f3f2: XcodeGen project with the team ID in an ignored
    xcconfig, NetworkTransport, RoundCoordinator with entitlement at creation, coordinator tests on
-   the simulator. Screens wait for mockup approval; the device run needs the owner and three phones.)
+   the simulator. Screens and restart/rejoin are now built. The owner verified a first round, a new
+   round and a restarted round on three phones on 2026-09-19. See that session's retro.)
 6. Restart, timeouts, failure and disagreement states; interruption acceptance tests (app switch,
    lock, call, host leaves, cancel, rapid restart, permission denied then granted, silent peer).
+   Owner decision 2026-09-22: keep automatic locking enabled. Inactive screens receive an opaque
+   window cover; backgrounding or locking leaves an unfinished round (including a pending restart
+   offer) and clears its local state. Returning never resumes it. A completed result is retained
+   so sharing can leave the app. The lifecycle regressions are automated; physical-device lock,
+   switcher, call and permission-prompt acceptance remains outstanding.
 7. Transcript v2 export; Python acceptance; temp-file cleanup.
 8. Unlock: StoreManager state machine, Paywall, coordinator enforcement, local StoreKit tests,
    sandbox once enrolment clears.

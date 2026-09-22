@@ -4,7 +4,7 @@ import CravageCore
 /// by tests: the collusion sentence has to follow the actual room size, and the limit has to follow
 /// the actual domain.
 enum FigureCopy {
-    /// The mockup says "use your decimal mark". The parser is an exact port of the web app's and
+    /// The parser is an exact port of the web app's and
     /// takes an ASCII full stop only. Owner decision 2026-09-19: say why a comma is refused, since
     /// a comma means the decimal point in some countries and a thousands separator in others, and
     /// silently converting one into the other would change the figure by a factor of a thousand.

@@ -31,6 +31,7 @@ enum Screen: Equatable {
     case result(Outcome)
     case failed(FailureReason)
     case restartOffer
+    case interrupted
 
     static func current(phase: Phase, role: Role?, hasRestartOffer: Bool,
                         restartWarningRequired: Bool = false,
@@ -56,6 +57,7 @@ enum Screen: Equatable {
 
     @MainActor
     init(_ coordinator: RoundCoordinator, idle: IdleScreen = .home) {
+        if coordinator.wasInterrupted { self = .interrupted; return }
         let engine = coordinator.live
         self = Screen.current(phase: engine.phase,
                               role: engine.role,

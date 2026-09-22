@@ -174,12 +174,29 @@ distinct cases so a future change to one cannot accidentally widen the other's v
     **Revised by the owner, 2026-09-13, after the code review.** A dishonest host can make a changed
     roster look unchanged (for example a key of its own under the departed person's nickname), so
     the warning is shown on **every** restart, whoever is in the new roster. When the roster visibly
-    has fewer people or different names, the stronger copy is used. Suggested copy (not yet
-    approved): "This is a restarted round. If the group has changed and people enter the same
+    has fewer people or different names, the stronger copy is used. Owner-approved copy, reaffirmed
+    2026-09-22: "This is a restarted round. If the group has changed and people enter the same
     figures as last time, comparing the two results can reveal someone's figure." Also revised:
     a restart is an **offer**. Each joiner's phone asks the person before rejoining and sends
     nothing until they accept; an unanswered offer lapses with the host's restart lobby, and
     declining leaves the room.
+
+### App lifecycle and input policy (owner decision 2026-09-22)
+
+- On becoming inactive, conceal the whole window before the app-switcher snapshot. Temporary
+  inactivity alone, including a permission prompt or Control Center, does not end a round.
+- On entering the background, including phone lock, leave any unfinished round using the existing
+  leave/disconnect path, clear local round state and show an interruption explanation on return.
+  Cancel pending room creation and restart offers too. Do not resume automatically. A completed
+  result remains available for sharing; this is not a background networking guarantee.
+- This is an app/coordinator policy, not a wire change. A lobby can lose a joiner and keep waiting;
+  once the roster is locked, the existing disconnect rule fails the round on the remaining phones.
+- Decimal entry uses an ASCII full stop, never locale guessing. Commas and grouping separators are
+  rejected with an explanation. Sign and decimal-point controls allow negative input even where
+  the regional decimal keypad lacks a minus or full stop. Exact fixed-point rules are unchanged.
+- Leaving or changing a figure is not promised to prevent restart differencing. A dropped person's
+  figure can be recovered by comparing totals even though that person has left. Never add that
+  reassurance to the warning.
 
 ## 4. Transcript honesty
 

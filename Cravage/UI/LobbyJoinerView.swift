@@ -3,7 +3,7 @@ import CravageCore
 
 /// The joiner's lobby. Mockup: `design/mockups/LobbyJoiner.dc.html`.
 ///
-/// The mockup lists everyone already in the room. A joiner cannot truthfully do that: the host
+/// A joiner cannot list everyone already in the room: the host
 /// sends `welcome` (label and size) and then, only at lock, the roster. Until then this phone knows
 /// the room it tapped, its own name, and nothing about the others, so the list says so rather than
 /// inventing names. Raised with the owner; a protocol change would be needed to do more.

@@ -9,6 +9,7 @@ import CravageCore
 /// never read as anything else.
 struct LobbyHostView: View {
     let coordinator: RoundCoordinator
+    let actions: RoundActions
     let nickname: String
     let onClose: () -> Void
 
@@ -59,7 +60,7 @@ struct LobbyHostView: View {
             BottomStack {
                 PrimaryButton(title: "Start round",
                               enabled: Lobby.canStart(inRoom: inRoom, maxSize: engine.maxSize)) {
-                    coordinator.start(generation: engine.generation)
+                    actions.start()
                 }
                 if let hint = Lobby.startHint(inRoom: inRoom, maxSize: engine.maxSize,
                                               pending: engine.pendingJoiners.map(\.nickname)) {
@@ -84,13 +85,13 @@ struct LobbyHostView: View {
             }
             HStack(spacing: 10) {
                 Button("Decline") {
-                    coordinator.decline(joiner.verifyingKey, generation: engine.generation)
+                    actions.decline(joiner.verifyingKey)
                 }
                 .font(Paper.sans(17))
                 .foregroundStyle(Paper.danger)
                 Spacer()
                 Button("Admit") {
-                    coordinator.admit(joiner.verifyingKey, generation: engine.generation)
+                    actions.admit(joiner.verifyingKey)
                 }
                 .font(Paper.sans(17, weight: .semibold))
                 .foregroundStyle(.white)

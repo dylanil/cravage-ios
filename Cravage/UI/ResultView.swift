@@ -56,6 +56,7 @@ struct ResultView: View {
 
             BottomStack {
                 if engine.role == .host {
+                    RestartRefusal(rejection: coordinator.lastRejection)
                     PrimaryButton(title: "Run again", action: onRunAgain)
                 }
                 SecondaryButton(title: "Leave room", action: onLeave)

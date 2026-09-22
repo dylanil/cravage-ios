@@ -240,6 +240,24 @@
       "page": "page-2"
     },
     {
+      "file": "SketchInterrupted.dc.html",
+      "title": "Locked or backgrounded",
+      "x": 1880,
+      "y": 2000,
+      "w": 390,
+      "h": 844,
+      "page": "page-2"
+    },
+    {
+      "file": "SketchRestartRefusal.dc.html",
+      "title": "Run again: too few connected",
+      "x": 2350,
+      "y": 2000,
+      "w": 390,
+      "h": 844,
+      "page": "page-2"
+    },
+    {
       "file": "HomeWarm.dc.html",
       "title": "Home look A: Warm glow",
       "x": 0,

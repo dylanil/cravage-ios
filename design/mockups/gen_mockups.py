@@ -408,13 +408,10 @@ screens["LobbyJoiner"] = ppage(f"""
 <div style="padding: 10px 26px 0; display: flex; flex-direction: column; gap: 10px;">
   <div style="display: flex; justify-content: flex-start;">{ill_room(150, 115)}</div>
   {kicker("ANNUAL BONUS")}
-  <div class="serif" style="font-size: 32px; line-height: 36px; font-weight: 600;">Waiting for Sam to start</div>
-  <div style="font-size: 16px; line-height: 22px; color: {MUTED}; text-wrap: pretty;">You are in. Keep the app open; the round begins when the room is full.</div>
+  <div class="serif" style="font-size: 32px; line-height: 36px; font-weight: 600;">Waiting for the host to start</div>
+  <div style="font-size: 16px; line-height: 22px; color: {MUTED}; text-wrap: pretty;">You've asked to join. The host admits everyone, then starts the round. Keep the app open.</div>
 </div>
-{p_section("IN THE ROOM")}
-{p_row("Sam", "Host", leading=p_initial("Sam"))}
-{p_row("Dee", "You", leading=p_initial("Dee"), last=True)}
-{p_foot("Everyone else appears when the host starts and every phone shows the room code.")}
+{p_box('<div style="font-size: 15px; line-height: 21px;">This room advertises <strong>Sam</strong> as the host. Nothing here has been checked yet: every name appears, checked against a signed list, when the room code does.</div>')}
 {p_bottom(deadline("Stops waiting in 14:05"))}
 """)
 
@@ -442,7 +439,8 @@ screens["EnterFigure"] = ppage(f"""
   <div class="mono" style="font-size: 42px; font-weight: 600;">42500.50</div>
   <div style="width: 2px; height: 40px; background: {ORANGE_DEEP};"></div>
 </div>
-{p_foot("Up to 999,999,999,999.99. Use your decimal mark; leave out thousands separators.")}
+{p_foot("Change sign (+/-) &nbsp;&nbsp; Decimal point (.)")}
+{p_foot("Up to 999,999,999,999.99. Use a full stop for the decimal point. A comma is not accepted: it marks the decimal point in some countries and separates thousands in others, so it is never guessed at here.")}
 {p_box(f'<div style="padding-top: 1px;">{i_shield()}</div><div style="font-size: 15px; line-height: 21px; text-wrap: pretty;">Your figure is processed on your phone; the app sends a masked share to the other participants.</div>')}
 {p_box(f'<div style="padding-top: 1px;">{i_people()}</div><div style="font-size: 15px; line-height: 21px; color: #4A3B32; text-wrap: pretty;">With 3 people, the other 2 could work out your figure if they shared theirs with each other.</div>')}
 {p_bottom(p_primary("Send masked share"), note("Once sent, your figure can't be changed for this round."))}
@@ -457,7 +455,7 @@ screens["Waiting"] = ppage(f"""
 <div style="margin: 18px 26px 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px;">{segments}</div>
 {p_section("PHONES")}
 {p_row("Sam", "", p_status("Sent"), leading=p_letter("A"))}
-{p_row("Alex", "Still entering a figure", p_status("Waiting", ok=False), leading=p_letter("B", False))}
+{p_row("Alex", "No share yet", p_status("Waiting", ok=False), leading=p_letter("B", False))}
 {p_row("Dee", "You", p_status("Sent"), leading=p_letter("C"), last=True)}
 {p_bottom(deadline("Stops waiting in 4:21; the round then fails and the host can restart"))}
 """)
@@ -555,13 +553,13 @@ sketches = [
      ["The round has stopped. Nothing you entered was sent unmasked.", "Error code R-12 (copy for support)"], ["OK"], "Draft copy"),
     ("SketchTimeout", "Round failed: timeout", "The round stopped",
      ["Alex didn't send a share in time.", "Sam can restart with the same room and name."], ["Restart round (host)", "Leave"], ""),
-    ("SketchRestartOffer", "Restart offer (joiner)", "Sam restarted the round",
+    ("SketchRestartOffer", "Restart offer (joiner)", "The host restarted the round",
      ["Annual bonus &#183; 3 people", "Rejoin to take part again. You will enter your figure again.", "Offer ends in 2:40."],
      ["Rejoin", "Leave room"], "New: owner decision"),
     ("SketchRestartWarning", "Before entering a figure after a restart", "This is a restarted round",
      ["If the group has changed and people enter the same figures as last time, comparing the two results can reveal someone's figure.",
-      "Stronger version when fewer people rejoined: &#8220;1 person from the last round is not here.&#8221;"],
-     ["I understand", "Leave room"], "Copy not yet approved"),
+      "When names or count changed: This round has fewer people, or different names, than the last one."],
+     ["I understand", "Leave room"], "Approved wording; no reassurance about leaving"),
     ("SketchPartial", "Result: partial", "Average: 37,166.83 (not agreed)",
      ["Alex's phone didn't sign agreement in time.", "Treat this result with care. It can't be exported."], ["Leave room"], ""),
     ("SketchMismatch", "Result: disagreement", "Phones did not agree",
@@ -572,12 +570,18 @@ sketches = [
       "A transcript you already shared is unchanged; this phone now marks the result disputed.",
       "This round can't be exported again: the file has no way to say a result is disputed."], ["OK"], ""),
     ("SketchPaywall", "Paywall", "Rooms for 4 to 8 people",
-     ["One-off unlock for this Apple ID. The host pays; people joining don't.", "[PRICE]"], ["Unlock", "Restore purchase", "Not now"], ""),
+     ["One-off unlock for this Apple ID. The host pays; people joining don't.", "$0.99 / 99p target; show the localized StoreKit price."], ["Unlock", "Restore purchase", "Not now"], "Not built yet"),
     ("SketchSettings", "Settings", "Settings",
      ["Nickname: Dee", "Restore purchase", "Limitations", "Privacy policy", "Copy diagnostics (no figures or names)", "About"], ["Done"], ""),
     ("SketchLimitations", "Limitations", "What Cravage can't do",
      ["Same room only; up to 8 people.", "The maths can't check honesty.", "A room letter proves a key, not a person: count the phones.",
       "Colluding people can recover a figure.", "The average itself can be revealing.", "(Approved text, shortened here)"], ["Done"], ""),
+    ("SketchInterrupted", "Locked or backgrounded", "Keep Cravage open",
+     ["This phone was locked or Cravage moved to the background, so it left the round. Return home to create or join a new room."],
+     ["Back to home"], "Owner decision 2026-09-22"),
+    ("SketchRestartRefusal", "Run again: too few connected", "The result stays visible",
+     ["A restart needs at least 3 people still connected. Leave this room, then create a new room for everyone to join."],
+     ["Run again", "Leave room"], "Inline on Result and Round ended"),
 ]
 for name, _title, heading, lines, actions, tag in sketches:
     screens[name] = sketch(heading, lines, actions, tag)

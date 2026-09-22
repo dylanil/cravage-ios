@@ -68,6 +68,11 @@ three physical iPhones for the first time.
 
 ## Handoff
 
+Correction recorded 2026-09-22: the handoff below captured the session's assumptions, but the unlock
+price was already agreed in PLAN at $0.99/99p. The owner accepted the warning wording and approved
+removal of its misleading extra reassurance during review. The current follow-up status is in
+`docs/review/2026-09-22-screen-review-fixes.md`; use that record for remaining work.
+
 - **Owner, awaiting decision:** the restart-warning wording is still SPEC 13's draft, marked not
   approved. The paywall copy and its price are still placeholders.
 - **Agent, next:** settings and the in-app Limitations screen; then the StoreKit paywall (delivery

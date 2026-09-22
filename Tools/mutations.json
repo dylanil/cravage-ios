@@ -2,6 +2,97 @@
   "_about": "Guards that a test claims to protect. Each entry breaks one guard; its suite must compile and fail a named test. Tools/check_mutations.py runs core entries by default, and app entries with --suite app --destination. CI runs both suites. Add an entry whenever a test is named for a guarantee.",
   "mutations": [
     {
+      "name": "screen actions capture the displayed generation",
+      "suite": "app",
+      "file": "Cravage/UI/RoundActions.swift",
+      "find": "    private let generation: Int\n\n    init(_ coordinator: RoundCoordinator) {\n        self.coordinator = coordinator\n        generation = coordinator.live.generation\n    }",
+      "replace": "    private var generation: Int { coordinator.engine.generation }\n\n    init(_ coordinator: RoundCoordinator) { self.coordinator = coordinator }"
+    },
+    {
+      "name": "old warning acknowledgement cannot reach the new round",
+      "suite": "app",
+      "file": "Cravage/UI/RoundActions.swift",
+      "find": "    func acknowledgeRestartWarning() {\n        guard coordinator.engine.generation == generation else { return }",
+      "replace": "    func acknowledgeRestartWarning() {"
+    },
+    {
+      "name": "old leave cannot close the new round",
+      "suite": "app",
+      "file": "Cravage/UI/RoundActions.swift",
+      "find": "        guard coordinator.engine.generation == generation else { return false }",
+      "replace": ""
+    },
+    {
+      "name": "result renders a refused restart",
+      "suite": "app",
+      "file": "Cravage/UI/ResultView.swift",
+      "find": "                    RestartRefusal(rejection: coordinator.lastRejection)",
+      "replace": ""
+    },
+    {
+      "name": "figure controls can enter a negative value",
+      "suite": "app",
+      "file": "Cravage/UI/FigureEditing.swift",
+      "find": "        return \"-\" + (text.hasPrefix(\"+\") ? String(text.dropFirst()) : text)",
+      "replace": "        return text"
+    },
+    {
+      "name": "figure controls provide an exact ASCII decimal point",
+      "suite": "app",
+      "file": "Cravage/UI/FigureEditing.swift",
+      "find": "        return text + \".\"",
+      "replace": "        return text + \",\""
+    },
+    {
+      "name": "background exits unfinished rounds",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "isCreatingRoom || !engine.phase.isTerminalOrIdle || engine.restartOffer != nil",
+      "replace": "isCreatingRoom || engine.restartOffer != nil"
+    },
+    {
+      "name": "background cancels pending restart offers",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "isCreatingRoom || !engine.phase.isTerminalOrIdle || engine.restartOffer != nil",
+      "replace": "isCreatingRoom || !engine.phase.isTerminalOrIdle"
+    },
+    {
+      "name": "background cancels a pending store-backed room creation",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "isCreatingRoom || !engine.phase.isTerminalOrIdle || engine.restartOffer != nil",
+      "replace": "!engine.phase.isTerminalOrIdle || engine.restartOffer != nil"
+    },
+    {
+      "name": "background preserves already finished results for sharing",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "isCreatingRoom || !engine.phase.isTerminalOrIdle || engine.restartOffer != nil",
+      "replace": "true"
+    },
+    {
+      "name": "inactive snapshot is covered synchronously",
+      "suite": "app",
+      "file": "Cravage/UI/PrivacyShield.swift",
+      "find": "        window.addSubview(cover)",
+      "replace": ""
+    },
+    {
+      "name": "inactive is not a background round exit",
+      "suite": "app",
+      "file": "Cravage/UI/PrivacyShield.swift",
+      "find": "    @objc private func deactivate(_ notification: Notification) {\n        guard belongsToWindow(notification) else { return }\n        conceal()",
+      "replace": "    @objc private func deactivate(_ notification: Notification) {\n        guard belongsToWindow(notification) else { return }\n        conceal()\n        onBackground()"
+    },
+    {
+      "name": "root installs the lifecycle privacy adapter",
+      "suite": "app",
+      "file": "Cravage/RootView.swift",
+      "find": "            .background(PrivacyShield(onBackground: coordinator.appEnteredBackground))",
+      "replace": ""
+    },
+    {
       "name": "share barrier needs the local confirm and every other confirm",
       "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
       "find": "guard phase == .confirming, localConfirmed, let roster, roomcodeConfirms.count == roster.size",

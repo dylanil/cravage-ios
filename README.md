@@ -6,9 +6,9 @@ Cravage lets a group of people in the same room find their average - salary, bon
 anything - without anyone revealing their own figure. Phones talk directly to each other over
 Wi-Fi. Cravage has no server, no accounts, and saves no round data.
 
-*Status: design reviewed and specified, phone-to-phone transport proven on three iPhones, core
-library written and tested (numeric domain, crypto, roster, round state machine, transcript v2);
-the app itself is next. Not yet on the App Store.*
+*Status: the first-round and restart screens are built, and both paths have worked on three
+physical iPhones. Settings, the in-app Limitations screen, purchase unlock and release polish are
+still outstanding. Not yet on the App Store.*
 
 The web demo, which shares the same maths: [dylanil/SMPC](https://github.com/dylanil/SMPC).
 
@@ -30,17 +30,26 @@ Only the host pays; joining is always free. No adverts, ever.
 ## Known limitations
 
 These are known and, in most cases, intentional. They are listed here so they are explicit rather
-than discovered. The in-app Limitations screen carries the same list in shorter form.
+than discovered. The planned in-app Limitations screen will carry the same list in shorter form.
 
 - **Same room only.** Phones must be within Wi-Fi range of each other. Remote participants are
   planned for a later version.
-- **Up to 8 people.** A product decision for this version; tested on real phones before release.
+- **Currently 3 people.** Rooms for 4-8 are planned behind the purchase unlock, which is not built
+  yet. Eight-phone hardware acceptance is still required before advertising that capacity.
 - **Everyone needs an iPhone running iOS 26 or later with the app.** iPhone 11 and newer. There is
   no Android or web participant in this version.
 - **Figures up to 999,999,999,999.99.** The masking maths hides figures perfectly only within a
   bounded range, so the app enforces one. Anything under a trillion in any unit is fine.
-- **If someone drops out mid-round, the round fails.** The host restarts it with one tap; the room
-  and label are kept. Every waiting step has a time limit. If the group is smaller after a restart
+- **Decimal input is explicit.** Positive and negative figures are supported. Use a full stop for
+  the decimal point; commas and grouping separators are refused, never guessed or converted.
+- **Keep Cravage open and the phones unlocked during a round.** Locking a phone or moving the app
+  to the background leaves its unfinished round and clears its local round data. It does not
+  resume on return; create or join a new room. Temporary inactivity (such as Control Center or a
+  permission prompt) covers the screen but does not itself end the round. Finished results remain
+  available for sharing. The app-switcher cover still needs a physical-device acceptance check.
+- **If someone drops out mid-round, the round fails.** A host can restart with the same room and
+  label if at least 3 phones remain connected; otherwise leave and create a new room. Every waiting
+  step has a time limit. If the group is smaller after a restart
   and people re-enter the same figures as before, comparing the two results can reveal exactly what
   the person who left had entered. The app warns about this on every restart, because it cannot
   always tell whether the group really changed, and each person chooses whether to rejoin.
@@ -76,8 +85,8 @@ than discovered. The in-app Limitations screen carries the same list in shorter 
 
 - `CravageCore/` - the protocol maths, crypto, round state machine and transcript (pure Swift).
 - `Cravage/` - the iPhone app (SwiftUI, Network framework, StoreKit 2).
-- `Tools/` - the web app's transcript verifier, pinned to a specific commit, plus the screenshot
-  script.
+- `Tools/` - the pinned web transcript verifier, acceptance and mutation gates, and phone installer.
+  The planned screenshot automation is not built yet.
 - `docs/` - the plan, App Store paperwork, privacy policy, support page and the review record,
   published with GitHub Pages.
 

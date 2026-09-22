@@ -15,6 +15,7 @@ struct RootView: View {
     var body: some View {
         screen
             .paperBackground()
+            .background(PrivacyShield(onBackground: coordinator.appEnteredBackground))
             // The Paper look has no dark variant yet; pinning the appearance keeps the approved
             // colours rather than inventing an undesigned one.
             .preferredColorScheme(.light)
@@ -22,6 +23,8 @@ struct RootView: View {
 
     @ViewBuilder
     private var screen: some View {
+        let actions = RoundActions(coordinator)
+        let leave = { if actions.leave() { joined = nil; idle = .home } }
         switch Screen(coordinator, idle: idle) {
         case .home:
             HomeView(nicknames: nicknames,
@@ -29,47 +32,44 @@ struct RootView: View {
                      onJoin: { idle = .join })
         case .newRoom:
             NewRoomView(coordinator: coordinator, nicknames: nicknames, entitlement: entitlement,
-                        onCancel: { idle = .home })
+                        onCancel: leave)
         case .join:
             JoinView(coordinator: coordinator, nicknames: nicknames,
-                     onPick: { joined = $0 }, onBack: stopBrowsing)
+                     onPick: { joined = $0 }, onBack: leave)
         case .lobbyHost:
-            LobbyHostView(coordinator: coordinator, nickname: nicknames.nickname, onClose: leave)
+            LobbyHostView(coordinator: coordinator, actions: actions, nickname: nicknames.nickname, onClose: leave)
         case .lobbyJoiner:
             LobbyJoinerView(coordinator: coordinator, hostNickname: joined?.hostNickname,
                             nickname: nicknames.nickname, onLeave: leave)
         case .restartWarning:
             RestartWarningView(coordinator: coordinator,
-                               onUnderstood: coordinator.acknowledgeRestartWarning,
+                               onUnderstood: actions.acknowledgeRestartWarning,
                                onLeave: leave)
         case .confirmCode:
-            ConfirmCodeView(coordinator: coordinator, onStop: leave)
+            ConfirmCodeView(coordinator: coordinator, actions: actions, onStop: leave)
         case .enterFigure:
-            EnterFigureView(coordinator: coordinator, onLeave: leave)
+            EnterFigureView(coordinator: coordinator, actions: actions, onLeave: leave)
         case .waiting:
             WaitingView(coordinator: coordinator, onCancel: leave)
         case let .result(outcome):
             ResultView(coordinator: coordinator, outcome: outcome,
-                       onRunAgain: { coordinator.restart(generation: coordinator.live.generation) },
+                       onRunAgain: actions.restart,
                        onLeave: leave)
         case let .failed(reason):
             FailedView(coordinator: coordinator, reason: reason,
-                       onRestart: { coordinator.restart(generation: coordinator.live.generation) },
+                       onRestart: actions.restart,
                        onLeave: leave)
         case .restartOffer:
-            RestartOfferView(coordinator: coordinator, onLeave: leave)
+            RestartOfferView(coordinator: coordinator, actions: actions, onLeave: leave)
+        case .interrupted:
+            VStack(alignment: .leading, spacing: 20) {
+                PaperHeader(eyebrow: "Round ended", title: "Keep Cravage open")
+                Text("This phone was locked or Cravage moved to the background, so it left the round. Return home to create or join a new room.")
+                    .font(Paper.sans(17))
+                PrimaryButton(title: "Back to home", action: leave)
+            }
+            .padding(Paper.gutter)
         }
     }
 
-    /// Backing out of the room list stops the browse rather than leaving it running behind Home.
-    private func stopBrowsing() {
-        coordinator.leave()
-        idle = .home
-    }
-
-    private func leave() {
-        coordinator.leave()
-        joined = nil
-        idle = .home
-    }
 }
