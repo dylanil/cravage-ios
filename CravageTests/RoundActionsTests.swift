@@ -6,6 +6,52 @@ import UIKit
 
 @MainActor
 final class RoundActionsTests: XCTestCase {
+    func testCancelledCreationCleanupCannotClearANewerCreation() async throws {
+        let store = FakeEntitlement(unlocked: true)
+        store.holdAnswer = true
+        let star = FakeStar(phones: 1, entitlement: store)
+        let host = star.coordinators[0]
+        defer { host.leave() }
+        let oldScreen = RoundActions(host)
+        let oldCreation = Task { await oldScreen.createRoom(label: "Old", size: 4, nickname: "Host") }
+        for _ in 0..<100 where store.gate == nil { await Task.yield() }
+        let oldAnswer = try XCTUnwrap(store.gate)
+        oldScreen.leave()
+        store.gate = nil
+        let current = RoundActions(host)
+        let newCreation = Task { await current.createRoom(label: "New", size: 4, nickname: "Host") }
+        for _ in 0..<100 where store.gate == nil { await Task.yield() }
+        let newAnswer = store.gate
+        oldAnswer.resume()
+        await oldCreation.value
+        XCTAssertNotNil(newAnswer)
+        XCTAssertTrue(host.isCreatingRoom, "old cleanup must not clear the newer operation's busy flag")
+        XCTAssertEqual(host.engine.phase, .idle)
+        newAnswer?.resume()
+        await newCreation.value
+        XCTAssertFalse(host.isCreatingRoom)
+        XCTAssertEqual(host.engine.label, "New")
+    }
+
+    func testCancelledEntitlementCheckDoesNotBlockANewFreeRoom() async {
+        let store = FakeEntitlement(unlocked: true)
+        store.holdAnswer = true
+        let star = FakeStar(phones: 1, entitlement: store)
+        let host = star.coordinators[0]
+        defer { host.leave() }
+        let oldScreen = RoundActions(host)
+        let oldCreation = Task { await oldScreen.createRoom(label: "Old", size: 4, nickname: "Host") }
+        for _ in 0..<100 where store.gate == nil { await Task.yield() }
+        XCTAssertNotNil(store.gate)
+        oldScreen.leave()
+        await RoundActions(host).createRoom(label: "New", size: 3, nickname: "Host")
+        XCTAssertEqual(host.engine.phase, .lobby)
+        XCTAssertEqual(host.engine.label, "New")
+        store.gate?.resume()
+        await oldCreation.value
+        XCTAssertEqual(host.engine.label, "New", "a cancelled store answer cannot replace the new room")
+    }
+
     func testCancelledScreenCannotOpenOrJoinARoomLater() async {
         for joining in [false, true] {
             let star = FakeStar(phones: 1, entitlement: FakeEntitlement(unlocked: false))

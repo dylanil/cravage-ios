@@ -58,9 +58,9 @@ final class RoundCoordinator {
     func createRoom(label: String, size: Int, nickname: String) async {
         guard !isCreatingRoom, engine.phase == .idle else { return }
         lastRejection = nil
-        isCreatingRoom = true
-        defer { isCreatingRoom = false }
         let epochBefore = actionEpoch
+        isCreatingRoom = true
+        defer { if actionEpoch == epochBefore { isCreatingRoom = false } }
         let entitled = size > Roster.minimumSize ? await entitlement.hasVerifiedUnlock() : false
         guard engine.phase == .idle, actionEpoch == epochBefore else { return }
         apply(.createRoom(label: label, maxSize: size, nickname: nickname, entitled: entitled))
@@ -117,6 +117,7 @@ final class RoundCoordinator {
 
     func leave() {
         actionEpoch += 1
+        isCreatingRoom = false
         wasInterrupted = false
         lastRejection = nil
         restartWarningAcknowledged = nil

@@ -2,6 +2,20 @@
   "_about": "Guards that a test claims to protect. Each entry breaks one guard; its suite must compile and fail a named test. Tools/check_mutations.py runs core entries by default, and app entries with --suite app --destination. CI runs both suites. Add an entry whenever a test is named for a guarantee.",
   "mutations": [
     {
+      "name": "cancelled room creation releases its busy flag immediately",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "    func leave() {\n        actionEpoch += 1\n        isCreatingRoom = false",
+      "replace": "    func leave() {\n        actionEpoch += 1"
+    },
+    {
+      "name": "cancelled creation cleanup cannot clear a newer operation",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "        defer { if actionEpoch == epochBefore { isCreatingRoom = false } }",
+      "replace": "        defer { isCreatingRoom = false }"
+    },
+    {
       "name": "screen actions capture the displayed generation",
       "suite": "app",
       "file": "Cravage/UI/RoundActions.swift",

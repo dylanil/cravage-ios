@@ -57,9 +57,16 @@ issues in `d983b9d`:
 4. **Low, fixed:** removed PLAN's old idle-timer suppression requirement and joiner-lobby roster.
    Both now agree with the approved lifecycle policy and signed-roster-at-lock behavior.
 
-Follow-up evidence: 79 app tests pass, including three navigation-race tests first observed failing.
-The updated 33-entry app mutation gate and final CI must complete before this follow-up is reported
-finished. Source review and simulator snapshots are not a physical-phone acceptance result.
+Follow-up `ddfde1c` passed 79 app tests and a Release build. Re-review found no blocking code defect.
+It identified one low-priority recovery issue: cancelling an entitlement await retained the busy
+flag until its answer arrived, temporarily blocking a new free room. A failing regression confirmed
+it. Cancellation now releases the flag immediately, and epoch-owned cleanup prevents the obsolete
+task from clearing a newer operation's flag. A second regression covers overlapping store answers.
+
+The final suite has 81 app tests and 35 app mutation entries. The focused-field and mounted-result
+mutations have both been observed failing their corresponding new tests. Final full mutation and
+CI outcomes must be checked before reporting completion. Source review and simulator snapshots
+are not a physical-phone acceptance result.
 
 ## Next-session handoff
 
