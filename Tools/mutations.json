@@ -5,21 +5,42 @@
       "name": "screen actions capture the displayed generation",
       "suite": "app",
       "file": "Cravage/UI/RoundActions.swift",
-      "find": "    private let generation: Int\n\n    init(_ coordinator: RoundCoordinator) {\n        self.coordinator = coordinator\n        generation = coordinator.live.generation\n    }",
-      "replace": "    private var generation: Int { coordinator.engine.generation }\n\n    init(_ coordinator: RoundCoordinator) { self.coordinator = coordinator }"
+      "find": "    private let generation: Int\n    private let epoch: Int\n\n    init(_ coordinator: RoundCoordinator) {\n        self.coordinator = coordinator\n        generation = coordinator.live.generation\n        epoch = coordinator.actionEpoch\n    }",
+      "replace": "    private var generation: Int { coordinator.engine.generation }\n    private let epoch: Int\n\n    init(_ coordinator: RoundCoordinator) { self.coordinator = coordinator; epoch = coordinator.actionEpoch }"
     },
     {
       "name": "old warning acknowledgement cannot reach the new round",
       "suite": "app",
       "file": "Cravage/UI/RoundActions.swift",
-      "find": "    func acknowledgeRestartWarning() {\n        guard coordinator.engine.generation == generation else { return }",
+      "find": "    func acknowledgeRestartWarning() {\n        guard isCurrent else { return }",
       "replace": "    func acknowledgeRestartWarning() {"
     },
     {
       "name": "old leave cannot close the new round",
       "suite": "app",
       "file": "Cravage/UI/RoundActions.swift",
-      "find": "        guard coordinator.engine.generation == generation else { return false }",
+      "find": "    func leave() -> Bool {\n        guard isCurrent else { return false }",
+      "replace": "    func leave() -> Bool {"
+    },
+    {
+      "name": "navigation identity outlives generation-only cancellation",
+      "suite": "app",
+      "file": "Cravage/UI/RoundActions.swift",
+      "find": "coordinator.engine.generation == generation && coordinator.actionEpoch == epoch",
+      "replace": "coordinator.engine.generation == generation"
+    },
+    {
+      "name": "background invalidates idle-screen work before it starts",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "        // Invalidate even idle-screen work queued before it could enter createRoom.\n        actionEpoch += 1",
+      "replace": ""
+    },
+    {
+      "name": "inactive cover dismisses the editing keyboard",
+      "suite": "app",
+      "file": "Cravage/UI/PrivacyShield.swift",
+      "find": "        window.endEditing(true)",
       "replace": ""
     },
     {

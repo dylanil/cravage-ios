@@ -19,6 +19,8 @@ final class RoundCoordinator {
     private(set) var lastRejection: Rejection?
     private(set) var isCreatingRoom = false
     private(set) var wasInterrupted = false
+    /// Navigation/background cancellation also invalidates actions when no round generation changes.
+    private(set) var actionEpoch = 0
     /// The round generation whose restart warning this person acknowledged. Kept here rather than
     /// in a view so the rule can be tested: an acknowledgement belongs to the round it was made in,
     /// so the next restart warns again (SPEC 13). Cleared by Leave, because `generation` is not
@@ -29,8 +31,6 @@ final class RoundCoordinator {
     @ObservationIgnored private let clock: RoundClock
     @ObservationIgnored private let entitlement: EntitlementProvider
     @ObservationIgnored private var tickTask: Task<Void, Never>?
-    /// Bumped by Leave, so an answer from the store that arrives afterwards opens nothing.
-    @ObservationIgnored private var leaveCount = 0
     @ObservationIgnored private var browsing = false
 
     init(transport: RoundTransport, clock: RoundClock, entitlement: EntitlementProvider, deadlines: Deadlines = Deadlines()) {
@@ -60,9 +60,9 @@ final class RoundCoordinator {
         lastRejection = nil
         isCreatingRoom = true
         defer { isCreatingRoom = false }
-        let leavesBefore = leaveCount
+        let epochBefore = actionEpoch
         let entitled = size > Roster.minimumSize ? await entitlement.hasVerifiedUnlock() : false
-        guard engine.phase == .idle, leaveCount == leavesBefore else { return }
+        guard engine.phase == .idle, actionEpoch == epochBefore else { return }
         apply(.createRoom(label: label, maxSize: size, nickname: nickname, entitled: entitled))
         if engine.phase == .lobby, engine.role == .host {
             transport.startHosting(label: label, size: size, hostNickname: nickname)
@@ -116,7 +116,7 @@ final class RoundCoordinator {
     }
 
     func leave() {
-        leaveCount += 1
+        actionEpoch += 1
         wasInterrupted = false
         lastRejection = nil
         restartWarningAcknowledged = nil
@@ -128,6 +128,8 @@ final class RoundCoordinator {
 
     /// Called synchronously when the scene enters the background, including phone lock.
     func appEnteredBackground() {
+        // Invalidate even idle-screen work queued before it could enter createRoom.
+        actionEpoch += 1
         guard isCreatingRoom || !engine.phase.isTerminalOrIdle || engine.restartOffer != nil else { return }
         leave()
         wasInterrupted = true

@@ -234,9 +234,10 @@ metadata). Info.plist: NSLocalNetworkUsageDescription ("Cravage finds other phon
 round. It has no server and sends nothing over the internet.") and NSBonjourServices. Permission
 denial is distinguished from other failures via the documented signals (Bonjour policy-denied
 error; connection waiting with localNetworkDenied) and otherwise reported as an honest generic
-connection error with retry. Backgrounding: the app keeps the screen awake during an active round
-(idle timer disabled, restored after) and treats a lost connection as a dropout; foreground-use
-guidance shown in the lobby. Product cap 8 enforced by the host.
+connection error with retry. Owner decision 2026-09-22: leave the idle timer enabled. Conceal the
+window on inactivity and leave an unfinished round on backgrounding or lock; a lost connection
+is a dropout. Completed results remain available for sharing. Show foreground-use guidance in
+the lobby. Product cap 8 enforced by the host.
 
 ### Threat model (for the council; Limitations screen derives from it)
 
@@ -297,9 +298,11 @@ no private files. TestFlight builds record commit and configuration.
 ### Screens
 
 Home; New Room (label, size 3-8 with lock glyphs); Join (empty, browsing, requesting, declined,
-full, unsupported version, permission problem); Lobby (host: admit/decline, roster, Start; joiner:
-roster, waiting; timeout countdown); Confirm (code, "I checked, the codes match", waiting for
-others); Enter Figure (cap and collusion note inline, locale-aware keypad, inline errors);
+full, unsupported version, permission problem); Lobby (host: admit/decline, admitted names, Start;
+joiner: request pending, advertised host explicitly unverified, no roster until lock; timeout
+countdown); Confirm (code, signed roster, "I checked, the codes match", waiting for
+others); Enter Figure (cap and collusion note inline, regional keypad plus explicit sign and
+full-stop controls, inline errors);
 Waiting (k of N, who is outstanding, cancel, deadline); Failed sheet (reason, restart/leave);
 Result (average, N, label, "all N signatures verified", agreement state, show shares, export, run
 again, leave, disputed banner if a late conflict arrives); Paywall; Settings (nickname, restore,

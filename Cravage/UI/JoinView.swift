@@ -8,6 +8,7 @@ import CravageCore
 /// list says who is hosting and how many people, and promises nothing else.
 struct JoinView: View {
     let coordinator: RoundCoordinator
+    let actions: RoundActions
     let nicknames: NicknameStore
     /// Remembers which room was tapped, so the lobby can name the host it advertised.
     let onPick: (RoomAdvert) -> Void
@@ -24,7 +25,7 @@ struct JoinView: View {
                         .padding(.top, 6)
                     Rectangle().fill(Paper.ink).frame(height: 1.5).padding(.top, 18)
                     if let problem = coordinator.problem {
-                        ProblemNotice(problem: problem) { coordinator.browse() }
+                        ProblemNotice(problem: problem) { actions.browse() }
                     } else {
                         ForEach(coordinator.rooms) { room in
                             roomRow(room)
@@ -44,7 +45,7 @@ struct JoinView: View {
         .paperBackground()
         .task {
             if !nicknames.hasNickname { editingName = true }
-            coordinator.browse()
+            actions.browse()
         }
         .sheet(isPresented: $editingName) { NicknameSheet(nicknames: nicknames) }
     }
@@ -55,8 +56,7 @@ struct JoinView: View {
                 editingName = true
                 return
             }
-            onPick(room)
-            coordinator.join(roomID: room.id, nickname: nicknames.nickname)
+            if actions.join(roomID: room.id, nickname: nicknames.nickname) { onPick(room) }
         } label: {
             HStack(spacing: 14) {
                 VStack(alignment: .leading, spacing: 2) {

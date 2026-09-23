@@ -28,13 +28,13 @@ struct RootView: View {
         switch Screen(coordinator, idle: idle) {
         case .home:
             HomeView(nicknames: nicknames,
-                     onNewRoom: { idle = .newRoom },
-                     onJoin: { idle = .join })
+                     onNewRoom: { if actions.leave() { idle = .newRoom } },
+                     onJoin: { if actions.leave() { idle = .join } })
         case .newRoom:
-            NewRoomView(coordinator: coordinator, nicknames: nicknames, entitlement: entitlement,
+            NewRoomView(coordinator: coordinator, actions: actions, nicknames: nicknames, entitlement: entitlement,
                         onCancel: leave)
         case .join:
-            JoinView(coordinator: coordinator, nicknames: nicknames,
+            JoinView(coordinator: coordinator, actions: actions, nicknames: nicknames,
                      onPick: { joined = $0 }, onBack: leave)
         case .lobbyHost:
             LobbyHostView(coordinator: coordinator, actions: actions, nickname: nicknames.nickname, onClose: leave)

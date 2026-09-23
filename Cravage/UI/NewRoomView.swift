@@ -8,6 +8,7 @@ import CravageCore
 /// than hidden.
 struct NewRoomView: View {
     let coordinator: RoundCoordinator
+    let actions: RoundActions
     let nicknames: NicknameStore
     let entitlement: EntitlementProvider
     let onCancel: () -> Void
@@ -128,7 +129,7 @@ struct NewRoomView: View {
         }
         opening = true
         Task {
-            await coordinator.createRoom(label: form.trimmedLabel, size: form.size,
+            await actions.createRoom(label: form.trimmedLabel, size: form.size,
                                          nickname: nicknames.nickname)
             opening = false
         }

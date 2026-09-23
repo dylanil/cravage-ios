@@ -30,10 +30,36 @@ round on phone lock/backgrounding instead of suppressing automatic locking.
 - Each new behavior was exercised red before green: retained callbacks, rendered restart refusal,
   negative decimal entry, background exit and pixel-level snapshot concealment.
 - 74 simulator app tests and 143 core tests passed. The Release simulator build passed.
-- Core mutation gate: all 21 caught. The expanded app mutation gate and independent post-commit
-  review are running; the completion addendum must record their outcomes, not infer them.
+- Core mutation gate: all 21 caught. Initial app mutation gate: all 30 caught. CI for `d983b9d`
+  passed, including transcript acceptance, both mutation suites and Release build.
 - Honesty-copy, placeholder-screen and public-safety checks passed before staging. Recheck the
   staged public-safety lint before committing. No hardware test is claimed for these changes.
+
+## Independent review and follow-up, 2026-09-23
+
+The fresh read-only reviewer found no arithmetic or wire regression, but found these remaining
+issues in `d983b9d`:
+
+1. **Medium, fixed:** generation alone does not invalidate idle-screen actions. Reproduced stale
+   Open, Join, Browse and Cancel callbacks, including a task that starts only after navigation or
+   backgrounding. Actions now capture a navigation epoch before scheduling work. Navigation and
+   backgrounding invalidate it; the coordinator still checks it across its entitlement await.
+2. **Medium, coverage strengthened:** the original snapshot test covered a plain window, not
+   editing or a presented sheet. A real focused UITextField inside a presented sheet now verifies
+   that deactivation dismisses editing and conceals that content. A new mutation removes keyboard
+   dismissal. This still does not prove system keyboard-animation timing or real app-switcher
+   snapshots; the physical-device gate below remains mandatory.
+3. **Low, partly addressed:** the refusal is now also tested in one continuously mounted result
+   view, proving the observed update rather than constructing a fresh view. Helper tests and the
+   gate still do not prove actual taps on every leaf's sign/decimal and round-action buttons.
+   Full UI-tap automation needs a UI-test fixture/runner; it is deferred rather than claimed done.
+   The immediate acceptance route is the explicit three-phone walkthrough below.
+4. **Low, fixed:** removed PLAN's old idle-timer suppression requirement and joiner-lobby roster.
+   Both now agree with the approved lifecycle policy and signed-roster-at-lock behavior.
+
+Follow-up evidence: 79 app tests pass, including three navigation-race tests first observed failing.
+The updated 33-entry app mutation gate and final CI must complete before this follow-up is reported
+finished. Source review and simulator snapshots are not a physical-phone acceptance result.
 
 ## Next-session handoff
 

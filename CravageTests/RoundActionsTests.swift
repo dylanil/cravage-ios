@@ -1,10 +1,62 @@
 import XCTest
 import SwiftUI
+import UIKit
 @testable import CravageCore
 @testable import Cravage
 
 @MainActor
 final class RoundActionsTests: XCTestCase {
+    func testCancelledScreenCannotOpenOrJoinARoomLater() async {
+        for joining in [false, true] {
+            let star = FakeStar(phones: 1, entitlement: FakeEntitlement(unlocked: false))
+            let phone = star.coordinators[0]
+            defer { phone.leave() }
+            let oldScreen = RoundActions(phone)
+            XCTAssertTrue(oldScreen.leave())
+            if joining {
+                oldScreen.join(roomID: "room", nickname: "Person")
+            } else {
+                await oldScreen.createRoom(label: "Room", size: 3, nickname: "Host")
+            }
+            XCTAssertEqual(phone.engine.phase, .idle)
+            XCTAssertNil(star.transports[0].hosting)
+            XCTAssertEqual(star.transports[0].connectionAttempts, 0)
+            oldScreen.browse()
+            XCTAssertFalse(star.transports[0].browsing)
+        }
+    }
+
+    func testOldCancelCannotCancelANewerPendingRoomCreation() async {
+        let store = FakeEntitlement(unlocked: true)
+        store.holdAnswer = true
+        let star = FakeStar(phones: 1, entitlement: store)
+        let host = star.coordinators[0]
+        defer { host.leave() }
+        let oldScreen = RoundActions(host)
+        XCTAssertTrue(oldScreen.leave())
+        let current = RoundActions(host)
+        let creation = Task { await current.createRoom(label: "Room", size: 4, nickname: "Host") }
+        for _ in 0..<100 where store.gate == nil { await Task.yield() }
+        XCTAssertNotNil(store.gate)
+        XCTAssertFalse(oldScreen.leave())
+        store.gate?.resume()
+        await creation.value
+        XCTAssertEqual(host.engine.phase, .lobby)
+        XCTAssertNotNil(star.transports[0].hosting)
+    }
+
+    func testBackgroundInvalidatesOpenQueuedBeforeItReachesTheCoordinator() async {
+        let star = FakeStar(phones: 1, entitlement: FakeEntitlement(unlocked: false))
+        let host = star.coordinators[0]
+        defer { host.leave() }
+        let screen = RoundActions(host)
+        let creation = Task { await screen.createRoom(label: "Room", size: 3, nickname: "Host") }
+        host.appEnteredBackground()
+        await creation.value
+        XCTAssertEqual(host.engine.phase, .idle)
+        XCTAssertNil(star.transports[0].hosting)
+    }
+
     private func startedRoom() async -> FakeStar {
         let star = FakeStar(phones: 3, entitlement: FakeEntitlement(unlocked: false))
         let host = star.coordinators[0]
@@ -74,6 +126,42 @@ final class RoundActionsTests: XCTestCase {
         XCTAssertEqual(host.lastRejection, .notEnoughPeople)
         XCTAssertEqual(host.engine.phase, .complete(.agreed))
         XCTAssertNotEqual(try renderedResult(), before, "a refused Run again must visibly explain the next step")
+    }
+
+    func testMountedResultUpdatesAfterARefusedRestart() async throws {
+        let star = await startedRoom()
+        defer { star.coordinators.forEach { $0.leave() } }
+        for phone in star.coordinators { RoundActions(phone).confirmRoomCode() }
+        star.flush()
+        for phone in star.coordinators { RoundActions(phone).submitFigure("10") }
+        star.flush()
+        let host = star.coordinators[0]
+        star.coordinators[2].leave()
+        star.flush()
+        let actions = RoundActions(host)
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let window = UIWindow(windowScene: scene)
+        window.rootViewController = UIHostingController(rootView:
+            ResultView(coordinator: host, outcome: .agreed, onRunAgain: actions.restart, onLeave: {}))
+        window.isHidden = false
+        defer { window.isHidden = true }
+        func pixels() throws -> Data {
+            window.layoutIfNeeded()
+            return try XCTUnwrap(UIGraphicsImageRenderer(bounds: window.bounds).image { context in
+                window.layer.render(in: context.cgContext)
+            }.pngData())
+        }
+        try await Task.sleep(for: .milliseconds(50))
+        let before = try pixels()
+        actions.restart()
+        XCTAssertEqual(host.lastRejection, .notEnoughPeople)
+        // Keep the same hosted view. Allow SwiftUI to deliver its observed update; do not
+        // manufacture a new ResultView after the rejection as the static rendering test does.
+        for _ in 0..<20 {
+            try await Task.sleep(for: .milliseconds(50))
+            if try pixels() != before { return }
+        }
+        XCTFail("the mounted result never displayed its restart refusal")
     }
 
     func testFigureControlsEnterAnExactNegativeDecimal() async {

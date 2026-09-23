@@ -5,6 +5,49 @@ import SwiftUI
 
 @MainActor
 final class PrivacyShieldTests: XCTestCase {
+    func testInactiveCoverDismissesEditingAndConcealsPresentedContent() async throws {
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let previousKeyWindow = scene.keyWindow
+        let window = UIWindow(windowScene: scene)
+        let controller = UIViewController()
+        window.rootViewController = controller
+        window.makeKeyAndVisible()
+        let anchor = PrivacyShieldAnchor(onBackground: {})
+        controller.view.addSubview(anchor)
+        window.layoutIfNeeded()
+        NotificationCenter.default.post(name: UIScene.didActivateNotification, object: scene)
+        let sheet = UIViewController()
+        sheet.modalPresentationStyle = .pageSheet
+        await withCheckedContinuation { continuation in
+            controller.present(sheet, animated: false) { continuation.resume() }
+        }
+        defer {
+            controller.dismiss(animated: false)
+            window.isHidden = true
+            previousKeyWindow?.makeKey()
+        }
+        XCTAssertTrue(sheet.presentingViewController === controller)
+        let field = UITextField(frame: CGRect(x: 24, y: 120, width: 200, height: 50))
+        field.text = "123.45"
+        sheet.view.addSubview(field)
+        XCTAssertTrue(field.becomeFirstResponder())
+        XCTAssertTrue(field.isFirstResponder)
+
+        func pixels(_ color: UIColor) throws -> Data {
+            sheet.view.backgroundColor = color
+            window.layoutIfNeeded()
+            return try XCTUnwrap(UIGraphicsImageRenderer(bounds: window.bounds).image { context in
+                window.layer.render(in: context.cgContext)
+            }.pngData())
+        }
+        XCTAssertNotEqual(try pixels(.red), try pixels(.blue))
+        NotificationCenter.default.post(name: UIScene.willDeactivateNotification, object: scene)
+        XCTAssertFalse(field.isFirstResponder, "editing must end before the inactive snapshot")
+        XCTAssertEqual(try pixels(.red), try pixels(.blue), "presented content must be under the window cover")
+        NotificationCenter.default.post(name: UIScene.didActivateNotification, object: scene)
+        XCTAssertNotEqual(try pixels(.red), try pixels(.blue))
+    }
+
     func testRootViewInstallsBackgroundHandlingWithoutFailingOnTemporaryInactivity() async throws {
         let star = FakeStar(phones: 1, entitlement: FakeEntitlement(unlocked: false))
         let host = star.coordinators[0]
