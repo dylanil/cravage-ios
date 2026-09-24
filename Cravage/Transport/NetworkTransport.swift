@@ -101,9 +101,11 @@ final class NetworkTransport: RoundTransport {
         }
     }
 
-    /// Removes the Bonjour registration only. listener.h, nw_listener_set_advertise_descriptor:
-    /// "NULL to prevent or remove registration of a service"; the listener and the connections it
-    /// accepted are untouched. Untested on hardware as of 2026-09-24.
+    /// Removes the Bonjour registration. listener.h, nw_listener_set_advertise_descriptor, says only
+    /// "NULL to prevent or remove registration of a service"; `NetworkListener.service` has no doc
+    /// comment. That the listener and its accepted connections carry on is an inference, not
+    /// documented: the device walk must run a round to its result and a restart on peer-to-peer
+    /// Wi-Fi alone before this is trusted (fresh review 2026-09-24).
     func stopAdvertising() {
         listener?.service = nil
     }

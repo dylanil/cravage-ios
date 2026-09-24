@@ -39,6 +39,15 @@ final class NicknameStoreTests: XCTestCase {
         XCTAssertTrue(reopened.hasNickname)
     }
 
+    /// Foundation's trimming counts a zero-width space as whitespace, so one at either end is
+    /// removed rather than refused. What is saved is still a name the roster accepts.
+    func testAnInvisibleCharacterAtEitherEndIsTrimmedNotSaved() {
+        let store = NicknameStore(defaults: defaults)
+        XCTAssertTrue(store.save("\u{200B}Dee\u{200B}"))
+        XCTAssertEqual(store.nickname, "Dee")
+        XCTAssertTrue(RoomText.isValidNickname(store.nickname))
+    }
+
     func testAStoredNameThatIsNoLongerValidIsIgnoredOnOpening() {
         defaults.set("Dee\u{2028}Alex", forKey: "nickname")
         XCTAssertEqual(NicknameStore(defaults: defaults).nickname, "")

@@ -71,7 +71,8 @@ final class RoundCoordinator {
         apply(.createRoom(label: label, maxSize: size, nickname: nickname, entitled: entitled))
         if engine.phase == .lobby, engine.role == .host {
             transport.startHosting(label: label, size: size, hostNickname: nickname)
-            advertising = true
+            // A listener that failed at once has already closed the room through `leave`.
+            advertising = engine.phase == .lobby
         }
     }
 
@@ -126,6 +127,7 @@ final class RoundCoordinator {
         isCreatingRoom = false
         wasInterrupted = false
         lastRejection = nil
+        lastPeerRejection = nil
         restartWarningAcknowledged = nil
         apply(.leave)
         transport.stopAll()
@@ -179,7 +181,11 @@ final class RoundCoordinator {
     }
 
     private func apply(_ event: Event) {
+        let phaseBefore = engine.phase
         let effects = engine.handle(event, now: clock.nowMs())
+        // A refusal answers a tap on the screen it was made on. When the network or the clock
+        // moves the round to another screen, the refusal stays behind (fresh review 2026-09-24).
+        if !event.isPersonAction, engine.phase != phaseBefore { lastRejection = nil }
         for effect in effects {
             switch effect {
             case let .send(data, to):

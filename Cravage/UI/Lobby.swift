@@ -35,7 +35,7 @@ enum Lobby {
         case .notEnoughPeople:
             return "Start needs \(Roster.minimumSize) people."
         case .invalidInput:
-            return "That person is no longer asking to join."
+            return "That request has already been answered, or the person has left."
         case .wrongPhase:
             return "This room can't take anyone new now. A restarted round only takes back the people from the last one."
         case .notEntitled:

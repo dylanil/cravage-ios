@@ -35,9 +35,11 @@ public struct SessionID: Hashable, Sendable, CustomStringConvertible {
 ///
 /// Invisible means a character that draws nothing: Unicode format characters and default-ignorable
 /// code points (zero-width spaces and joiners, variation selectors, tag characters, Hangul fillers),
-/// plus the blank Braille pattern. Without this rule two names can look identical and differ
-/// underneath (owner decision 2026-09-24). Emoji built with an invisible joiner or style marker
-/// are refused as a result, by choice.
+/// plus the blank Braille pattern (owner decision 2026-09-24). This removes the characters that draw
+/// nothing at all; it does not make look-alike names impossible (other spaces, composed and
+/// decomposed accents, letters from other scripts still differ underneath), which is why names
+/// are never identity. Emoji built with an invisible joiner or style marker are refused as a
+/// result, by choice, and so are names in scripts that need a joiner (under review).
 public enum RoomText {
     public static let maxLabelBytes = 120
     public static let maxNicknameBytes = 48

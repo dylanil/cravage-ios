@@ -198,6 +198,33 @@ final class CoordinatorTests: XCTestCase {
         XCTAssertEqual(host.lastPeerRejection, .wrongPhase, "diagnostics still record it")
     }
 
+    /// Fresh review 2026-09-24, finding 1: a refusal belongs to the screen it answered. Start was
+    /// refused in the lobby; nobody tapped again; the lobby timed out. The failed screen must not
+    /// then report "A restart needs at least 3 people" for a restart nobody tried.
+    func testARefusalDoesNotFollowTheRoundOntoTheNextScreen() async {
+        let star = FakeStar(phones: 1, entitlement: FakeEntitlement(unlocked: false))
+        let host = star.coordinators[0]
+        await host.createRoom(label: "Team", size: 3, nickname: "Sam")
+        host.start(generation: host.engine.generation)
+        XCTAssertEqual(host.lastRejection, .notEnoughPeople)
+        await star.clock.advance(ms: 600_000)
+        XCTAssertEqual(host.engine.phase, .failed(.timeout(.lobby)))
+        XCTAssertNil(host.lastRejection, "a lobby refusal was carried onto the failed screen")
+    }
+
+    /// The diagnostics line about another phone's refused message belongs to the room it came from.
+    func testLeavingForgetsTheLastRefusedMessage() async {
+        let star = FakeStar(phones: 2, entitlement: FakeEntitlement(unlocked: false))
+        let host = star.coordinators[0]
+        await host.createRoom(label: "Team", size: 3, nickname: "Sam")
+        star.coordinators[1].join(roomID: "room", nickname: "Alex")
+        star.flush()
+        star.transports[0].onEvent?(.received(Data("junk".utf8), from: PeerID(1)))
+        XCTAssertNotNil(host.lastPeerRejection)
+        host.leave()
+        XCTAssertNil(host.lastPeerRejection)
+    }
+
     func testAnActionThatIsRefusedAgainReportsTheNewRefusal() async {
         let star = FakeStar(phones: 1, entitlement: FakeEntitlement(unlocked: false))
         let host = star.coordinators[0]

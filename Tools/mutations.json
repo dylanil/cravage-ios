@@ -405,6 +405,20 @@
       "file": "Cravage/Round/RoundCoordinator.swift",
       "find": "        advertising = false\n        transport.stopAdvertising()",
       "replace": "        advertising = false"
+    },
+    {
+      "name": "a refusal does not follow the round onto the next screen",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "        if !event.isPersonAction, engine.phase != phaseBefore { lastRejection = nil }\n",
+      "replace": ""
+    },
+    {
+      "name": "leaving forgets the last refused message",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "        lastRejection = nil\n        lastPeerRejection = nil\n        restartWarningAcknowledged = nil",
+      "replace": "        lastRejection = nil\n        restartWarningAcknowledged = nil"
     }
   ]
 }

@@ -175,6 +175,9 @@ final class RosterTests: XCTestCase {
         XCTAssertFalse(RoomText.isValidNickname("\u{2764}\u{FE0F}"), "the red heart carries an invisible style marker")
         XCTAssertNil(Wire.Hello.parse(MaskPrivateKey().publicKey.base64 + "|" + Wire.randomNonce() + "|Pat\u{200B}"),
                      "a hello from another phone is held to the same rule")
+        let hidden = Wire.encode(.welcome(nonce: Wire.randomNonce(), label: "Bonus", size: 3))
+            .replacingOccurrences(of: "Bonus", with: "Bon\u{200B}us")
+        XCTAssertNil(Wire.decodeControl(hidden), "a host's welcome is held to the same rule")
         for visible in ["Zoë", "Zoe\u{0308}", "Dee-Ann", "李雷", "Sam 😀", "Sam 👍🏽", "O'Neil", "\u{2764}"] {
             XCTAssertTrue(RoomText.isValidNickname(visible), "refused \(visible)")
         }
