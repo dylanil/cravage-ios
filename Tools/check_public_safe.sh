@@ -15,6 +15,17 @@ if git ls-files -z -- '*.md' '*.swift' '*.yml' '*.sh' '*.py' \
   echo "Owner-personal marker found in a tracked or staged file. Move it to .git/agents/private/ or memory." >&2
   fail=1
 fi
+# 1b. The same scan over files that are not in the index yet. Scanning only the index let a new
+# file pass this check and then fail it in CI once staged (2026-09-24): the lint had been run
+# before `git add`, so the file it was meant to judge was invisible to it.
+NEW_FILES="$(git ls-files -o --exclude-standard -- '*.md' '*.swift' '*.yml' '*.sh' '*.py' \
+             | grep -v -E "$EXCLUDE" || true)"
+if [ -n "$NEW_FILES" ]; then
+  if printf '%s\n' "$NEW_FILES" | tr '\n' '\0' | xargs -0 grep -n -i -E "$PATTERN" -- ; then
+    echo "Owner-personal marker found in a new, not-yet-staged file. Fix it before adding it." >&2
+    fail=1
+  fi
+fi
 # 2. Apple team identifiers written by Xcode into project files (ten alphanumerics).
 if git grep --cached -n -E 'DEVELOPMENT_TEAM *= *"?[A-Z0-9]{10}"?' -- '*.pbxproj' '*.xcconfig' '*.plist' '*.yml' ; then
   echo "Apple team ID found in a tracked or staged project file. Keep it in an ignored xcconfig." >&2

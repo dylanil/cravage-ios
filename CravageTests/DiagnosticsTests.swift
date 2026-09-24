@@ -11,7 +11,7 @@ final class DiagnosticsTests: XCTestCase {
     private func roundInProgress() async -> FakeStar {
         let star = FakeStar(phones: 3, entitlement: FakeEntitlement(unlocked: false))
         let host = star.coordinators[0]
-        await host.createRoom(label: "Partner salary review", size: 3, nickname: "Zebediah")
+        await host.createRoom(label: "Quarterly bonus review", size: 3, nickname: "Zebediah")
         for (index, name) in [(1, "Wilhelmina"), (2, "Bartholomew")] {
             star.coordinators[index].join(roomID: "room", nickname: name)
             star.flush()
@@ -35,7 +35,7 @@ final class DiagnosticsTests: XCTestCase {
         let report = Diagnostics.report(for: star.coordinators[0], appVersion: "0.1",
                                        build: "1", systemVersion: "26.6", model: "iPhone17,1")
 
-        for secret in ["Zebediah", "Wilhelmina", "Bartholomew", "Partner salary review",
+        for secret in ["Zebediah", "Wilhelmina", "Bartholomew", "Quarterly bonus review",
                        "98765", "98765.43"] {
             XCTAssertFalse(report.contains(secret),
                            "the report leaked \(secret.debugDescription):\n\(report)")
