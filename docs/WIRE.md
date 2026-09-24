@@ -43,8 +43,9 @@ Nicknames (at most 48 UTF-8 bytes) and room labels (at most 120) are rejected on
 are empty, start or end with whitespace, or contain a control character, a line or paragraph
 separator, a bidirectional control, or an invisible character: Unicode general category Cf, any
 Default_Ignorable_Code_Point, or U+2800. The one exception is U+200C and U+200D, which some
-scripts and emoji need: each is accepted only with a visible, non-whitespace, non-joiner character
-on both sides. The invisible-character rule dates from 2026-09-24.
+scripts and emoji need: each is accepted only with a non-whitespace character on both sides that is
+not itself refused as invisible and is not a joiner. "Visible" means only that: unassigned and
+private-use code points pass, and the rule does not guarantee that a joiner changes what is drawn. The invisible-character rule dates from 2026-09-24.
 
 Control objects (sorted keys):
 
