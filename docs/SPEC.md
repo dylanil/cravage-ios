@@ -174,8 +174,9 @@ distinct cases so a future change to one cannot accidentally widen the other's v
     **Revised by the owner, 2026-09-13, after the code review.** A dishonest host can make a changed
     roster look unchanged (for example a key of its own under the departed person's nickname), so
     the warning is shown on **every** restart, whoever is in the new roster. When the roster visibly
-    has fewer people or different names, the stronger copy is used. Owner-approved copy, reaffirmed
-    2026-09-22: "This is a restarted round. If the group has changed and people enter the same
+    has fewer people or different names, the stronger copy is used. Copy approved by the owner
+    2026-09-24, on being shown the screen as built; it had been recorded as approved on 2026-09-22,
+    before that approval was actually given. "This is a restarted round. If the group has changed and people enter the same
     figures as last time, comparing the two results can reveal someone's figure." Also revised:
     a restart is an **offer**. Each joiner's phone asks the person before rejoining and sends
     nothing until they accept; an unanswered offer lapses with the host's restart lobby, and
