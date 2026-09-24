@@ -5,7 +5,7 @@ import SwiftUI
 /// The text is the owner-approved in-app list from SPEC's "Limitations text" section, which is the
 /// short form of README's Known limitations. It is council-approved: change it only with the owner.
 /// The last item is the one addition, carrying the 2026-09-22 lifecycle decision so the screen and
-/// README agree; it is flagged to the owner for approval.
+/// README agree. Approved by the owner on 2026-09-24.
 struct LimitationsView: View {
     private let items = [
         "Same room only, up to 8 people. Everyone needs an iPhone on iOS 26 or later with the app.",

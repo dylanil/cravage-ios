@@ -240,6 +240,12 @@ drawn from.
 
 ## Limitations text (owner-approved 2026-09-13, shipped in README.md)
 
+**Addition, owner-approved 2026-09-24.** The in-app list carries one item beyond the 2026-09-13
+text, so the screen and README agree after the lifecycle decision of 2026-09-22: "Locking this
+phone or moving Cravage to the background leaves an unfinished round. It does not resume; create
+or join a new room."
+
+
 Short, in-app form (existing items from README's Known limitations are not repeated here except
 where their wording changes; new items are marked **NEW**):
 
