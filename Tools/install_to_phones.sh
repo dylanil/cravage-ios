@@ -39,6 +39,9 @@ for device in devices:
     hardware = device["hardwareProperties"]
     if hardware.get("deviceType") != "iPhone":
         continue
+    # Simulators report deviceType "iPhone" too; only real, paired phones can take this build.
+    if device.get("visibilityClass") == "simulators":
+        continue
     print(hardware["udid"], device["deviceProperties"].get("name", "iPhone"), sep="\t")
 ' "$LIST")"
 
