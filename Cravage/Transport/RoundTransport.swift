@@ -35,6 +35,10 @@ enum TransportEvent: Sendable {
 protocol RoundTransport: AnyObject {
     var onEvent: ((TransportEvent) -> Void)? { get set }
     func startHosting(label: String, size: Int, hostNickname: String)
+    /// Host: take the room off the nearby list while keeping the listener and every open
+    /// connection. Called once the round starts, so a latecomer is not shown a room that can only
+    /// turn them away.
+    func stopAdvertising()
     func startBrowsing()
     /// Stop looking for rooms while keeping any open connection. Called once a round has started,
     /// so a phone in a round is not still multicasting for `_cravage._tcp`.

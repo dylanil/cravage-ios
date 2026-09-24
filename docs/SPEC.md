@@ -39,7 +39,10 @@ in PLAN.md's "Decisions (settled, do not reopen without the owner)" section.
 - Apple Network framework, iOS 26 `NetworkListener`/`NetworkBrowser`/`NetworkConnection` interface,
   peer-to-peer Wi-Fi. Star topology: every joiner opens exactly one `NetworkConnection` to the
   host; the host forwards to all connections. Bonjour service `_cravage._tcp` (peer-to-peer),
-  TXT record `{v, label, size, host}`.
+  TXT record `{v, label, size, host}`. **Owner decision 2026-09-24**: the host advertises only
+  while the room is taking people. Once the roster locks it removes the Bonjour registration and
+  keeps the listener and every open connection; a restart does not advertise again, because it
+  only takes back phones that are already connected.
 - **Decision (was open as PLAN.md R8, now closed): signatures-only, no link-layer TLS.** In a star
   topology, hop-level TLS (joiner<->host, separately host<->joiner) cannot give end-to-end
   confidentiality — the host must decrypt to forward regardless — so it can only ever protect

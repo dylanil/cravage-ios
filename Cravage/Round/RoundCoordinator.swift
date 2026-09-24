@@ -36,6 +36,7 @@ final class RoundCoordinator {
     @ObservationIgnored private let entitlement: EntitlementProvider
     @ObservationIgnored private var tickTask: Task<Void, Never>?
     @ObservationIgnored private var browsing = false
+    @ObservationIgnored private var advertising = false
 
     init(transport: RoundTransport, clock: RoundClock, entitlement: EntitlementProvider, deadlines: Deadlines = Deadlines()) {
         self.engine = RoundEngine(deadlines: deadlines)
@@ -70,6 +71,7 @@ final class RoundCoordinator {
         apply(.createRoom(label: label, maxSize: size, nickname: nickname, entitled: entitled))
         if engine.phase == .lobby, engine.role == .host {
             transport.startHosting(label: label, size: size, hostNickname: nickname)
+            advertising = true
         }
     }
 
@@ -128,6 +130,7 @@ final class RoundCoordinator {
         apply(.leave)
         transport.stopAll()
         browsing = false
+        advertising = false
         rooms = []
     }
 
@@ -189,6 +192,7 @@ final class RoundCoordinator {
         }
         revision += 1
         stopBrowsingOnceTheRoundStarts()
+        stopAdvertisingOnceTheRoundStarts()
         scheduleTick()
     }
 
@@ -198,6 +202,14 @@ final class RoundCoordinator {
         guard browsing, engine.phase != .idle, engine.phase != .lobby else { return }
         browsing = false
         transport.stopBrowsing()
+    }
+
+    /// Owner decision 2026-09-24: a started round leaves the nearby list and stays off it, restarts
+    /// included, because a restart only takes back phones that are already connected.
+    private func stopAdvertisingOnceTheRoundStarts() {
+        guard advertising, engine.phase != .idle, engine.phase != .lobby else { return }
+        advertising = false
+        transport.stopAdvertising()
     }
 
     private func scheduleTick() {

@@ -101,6 +101,13 @@ final class NetworkTransport: RoundTransport {
         }
     }
 
+    /// Removes the Bonjour registration only. listener.h, nw_listener_set_advertise_descriptor:
+    /// "NULL to prevent or remove registration of a service"; the listener and the connections it
+    /// accepted are untouched. Untested on hardware as of 2026-09-24.
+    func stopAdvertising() {
+        listener?.service = nil
+    }
+
     /// Runs for the life of one inbound connection; returning lets Network close it.
     private func hostAccepted(_ connection: NetworkConnection<TCP>, token: Int) async {
         defer { refreshConnectionBudget() }

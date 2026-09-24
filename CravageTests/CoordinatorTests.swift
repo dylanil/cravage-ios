@@ -52,11 +52,13 @@ final class FakeStar {
         weak var star: FakeStar?
         let index: Int
         var hosting: (label: String, size: Int)?
+        var advertising = false
         var browsing = false
         var sentCount = 0
         var connectionAttempts = 0
         init(index: Int) { self.index = index }
-        func startHosting(label: String, size: Int, hostNickname: String) { hosting = (label, size) }
+        func startHosting(label: String, size: Int, hostNickname: String) { hosting = (label, size); advertising = true }
+        func stopAdvertising() { advertising = false }
         func startBrowsing() {
             browsing = true
             if let advert = star?.advert { onEvent?(.roomsChanged([advert])) }
@@ -68,7 +70,7 @@ final class FakeStar {
         }
         func send(_ data: Data, to peer: PeerID) { sentCount += 1; star?.enqueue(from: index, to: peer, data) }
         func disconnect(_ peer: PeerID) { star?.drop(index == 0 ? peer.raw : index) }
-        func stopAll() { hosting = nil; browsing = false }
+        func stopAll() { hosting = nil; advertising = false; browsing = false }
     }
 
     let transports: [Transport]
@@ -78,7 +80,7 @@ final class FakeStar {
     private var queue: [(to: Int, event: TransportEvent)] = []
 
     var advert: RoomAdvert? {
-        guard let hosting = transports[0].hosting else { return nil }
+        guard let hosting = transports[0].hosting, transports[0].advertising else { return nil }
         return RoomAdvert(id: "room", label: hosting.label, size: hosting.size, hostNickname: "Host", protocolVersion: CravageCore.protocolVersion)
     }
 
@@ -225,6 +227,35 @@ final class CoordinatorTests: XCTestCase {
         XCTAssertEqual(star.coordinators[1].engine.phase, .confirming)
         XCTAssertFalse(star.transports[1].browsing, "the joiner kept browsing inside the round")
         XCTAssertFalse(star.transports[2].browsing)
+    }
+
+    /// Owner decision 2026-09-24: once the round starts the room leaves the nearby list, so a
+    /// latecomer is not shown a room that will only turn them away with "Lost the connection". It
+    /// stays hidden through a restart, which only takes back phones that are already connected.
+    func testTheRoomIsHiddenOnceTheRoundStarts() async {
+        let star = FakeStar(phones: 4, entitlement: FakeEntitlement(unlocked: false))
+        let host = star.coordinators[0]
+        await host.createRoom(label: "Annual bonus", size: 3, nickname: "Sam")
+        for (index, name) in [(1, "Alex"), (2, "Dee")] {
+            star.coordinators[index].join(roomID: "room", nickname: name)
+            star.flush()
+        }
+        XCTAssertTrue(star.transports[0].advertising, "a room waiting for people must be visible")
+        for pending in host.engine.pendingJoiners {
+            host.admit(pending.verifyingKey, generation: host.engine.generation)
+        }
+        XCTAssertTrue(star.transports[0].advertising)
+
+        host.start(generation: host.engine.generation)
+        star.flush()
+        XCTAssertEqual(host.engine.phase, .confirming)
+        XCTAssertFalse(star.transports[0].advertising, "a started round was still listed nearby")
+        star.coordinators[3].browse()
+        XCTAssertTrue(star.coordinators[3].rooms.isEmpty, "a latecomer was shown a started round")
+
+        host.restart(generation: host.engine.generation)
+        star.flush()
+        XCTAssertFalse(star.transports[0].advertising, "a restart listed the room again")
     }
 
     func testUnlockedHostOpensAnEightPersonRoom() async {

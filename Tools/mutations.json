@@ -398,6 +398,13 @@
       "file": "Cravage/UI/Lobby.swift",
       "find": "        default:\n            return \"That didn't work. Try again.\"",
       "replace": "        default:\n            return nil"
+    },
+    {
+      "name": "a started round leaves the nearby list",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "        advertising = false\n        transport.stopAdvertising()",
+      "replace": "        advertising = false"
     }
   ]
 }
