@@ -1,6 +1,6 @@
 # Cravage privacy policy
 
-*Last updated: 2026-09-13 (draft - finalised before submission)*
+*Last updated: 2026-09-24 (draft - finalised before submission)*
 
 Cravage is designed so that there is very little to collect, and this page says exactly what that
 little is.
@@ -18,7 +18,7 @@ in memory only while the round is running and is cleared when it ends.
 During a round your phone sends, to the other phones in the room: your nickname, your masked
 number, digital signatures that let the others check nothing was tampered with, and a confirmation
 that you saw the same room code. Phones connect to each other directly over Wi-Fi. Cravage does not
-operate a server that receives your round data, and the app sends nothing over the internet.
+operate a server that receives your round data.
 
 ## What nearby phones can see
 
