@@ -78,5 +78,12 @@ five from this one. No hardware session: the phones were away.
 - **Decided this session:** the unlock is a single 99p/$0.99 purchase, not tiered by group size;
   the app never prints that price itself and must show StoreKit's localized price. The restart
   warning wording and the twelfth Limitations item are both owner-approved.
+- **Agent, a problem now worth solving:** CI takes 89 to 137 minutes a push (measured 2026-09-24
+  on `b0e0d91`), and today's four pushes queued behind each other. The cause is the mutation gate:
+  57 entries, each an isolated build and test run, and it grows with every guard added - which is
+  the right thing to keep doing. "No step is done until CI is green" is becoming a multi-hour wait.
+  One direction, not yet decided: per push, break only the mutations whose `file` the diff touches,
+  since a guard can only be broken by a change to its own file; keep the full sweep on a schedule
+  and on demand. That preserves the guarantee where it bites and cuts the common case to minutes.
 - **Untested on hardware:** the interruption and privacy-cover behaviour; eight phones; local
   network denial; a host whose listener fails; transcript export through a real share sheet.
