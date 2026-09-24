@@ -384,6 +384,20 @@
       "file": "CravageCore/Sources/CravageCore/Roster.swift",
       "find": "            if isInvisible(scalar) { return false }\n",
       "replace": ""
+    },
+    {
+      "name": "a refusal of another phone's message is never shown as the answer to a tap",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "if event.isPersonAction { lastRejection = reason } else { lastPeerRejection = reason }",
+      "replace": "lastRejection = reason; lastPeerRejection = reason"
+    },
+    {
+      "name": "every lobby refusal says why",
+      "suite": "app",
+      "file": "Cravage/UI/Lobby.swift",
+      "find": "        default:\n            return \"That didn't work. Try again.\"",
+      "replace": "        default:\n            return nil"
     }
   ]
 }

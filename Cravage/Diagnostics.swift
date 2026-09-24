@@ -39,6 +39,9 @@ enum Diagnostics {
         if let rejection = coordinator.lastRejection {
             lines.append("last refusal: \(name(rejection))")
         }
+        if let rejection = coordinator.lastPeerRejection {
+            lines.append("last refused message: \(name(rejection))")
+        }
         return lines.joined(separator: "\n")
     }
 

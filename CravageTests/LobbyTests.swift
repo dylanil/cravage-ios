@@ -37,6 +37,33 @@ final class LobbyTests: XCTestCase {
                        "2 other phones connected. Keep the app open on every phone until the round ends.")
     }
 
+    /// A refused tap in the lobby says why; before 2026-09-24 the screen showed nothing at all.
+    func testEveryLobbyRefusalSaysWhy() {
+        XCTAssertNil(Lobby.refusal(nil, maxSize: 3))
+        XCTAssertEqual(Lobby.refusal(.roomFull, maxSize: 3), "This room is set for 3 people and is full.")
+        for rejection: Rejection in [.notEnoughPeople, .invalidInput, .wrongPhase, .notEntitled, .staleGeneration, .queueFull] {
+            XCTAssertNotNil(Lobby.refusal(rejection, maxSize: 3), "\(rejection) was silent")
+        }
+    }
+
+    /// Admitting one person too many is refused by the engine, and the refusal reaches the screen.
+    func testAdmittingIntoAFullRoomIsReported() async {
+        let star = FakeStar(phones: 4, entitlement: FakeEntitlement(unlocked: false))
+        let host = star.coordinators[0]
+        await host.createRoom(label: "Team", size: 3, nickname: "Sam")
+        for (index, name) in [(1, "Alex"), (2, "Dee"), (3, "Kim")] {
+            star.coordinators[index].join(roomID: "room", nickname: name)
+        }
+        star.flush()
+        for _ in 0..<2 {
+            host.admit(host.engine.pendingJoiners[0].verifyingKey, generation: host.engine.generation)
+        }
+        XCTAssertNil(host.lastRejection)
+        host.admit(host.engine.pendingJoiners[0].verifyingKey, generation: host.engine.generation)
+        XCTAssertEqual(host.lastRejection, .roomFull)
+        XCTAssertEqual(Lobby.refusal(host.lastRejection, maxSize: host.engine.maxSize), "This room is set for 3 people and is full.")
+    }
+
     /// The host's lobby lists who is in the room; the engine is the only place that knows.
     func testAdmittedNicknamesFollowAdmission() async {
         let star = FakeStar(phones: 3, entitlement: FakeEntitlement(unlocked: false))

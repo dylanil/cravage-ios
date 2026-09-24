@@ -58,6 +58,14 @@ struct LobbyHostView: View {
             .scrollBounceBehavior(.basedOnSize)
 
             BottomStack {
+                if let refusal = Lobby.refusal(coordinator.lastRejection, maxSize: engine.maxSize) {
+                    Text(refusal)
+                        .font(Paper.sans(14))
+                        .foregroundStyle(Paper.danger)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .accessibilityIdentifier("lobby-refusal")
+                }
                 PrimaryButton(title: "Start round",
                               enabled: Lobby.canStart(inRoom: inRoom, maxSize: engine.maxSize)) {
                     actions.start()

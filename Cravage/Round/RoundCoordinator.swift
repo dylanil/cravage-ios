@@ -16,7 +16,11 @@ final class RoundCoordinator {
     private(set) var revision = 0
     private(set) var rooms: [RoomAdvert] = []
     private(set) var problem: TransportProblem?
+    /// The engine's refusal of the person's own last action, for the screen to explain.
     private(set) var lastRejection: Rejection?
+    /// The engine's last refusal of another phone's message or a timer. Diagnostics only: it is
+    /// never the answer to a tap, so no screen shows it (codebase review, 2026-09-24).
+    private(set) var lastPeerRejection: Rejection?
     private(set) var isCreatingRoom = false
     private(set) var wasInterrupted = false
     /// Navigation/background cancellation also invalidates actions when no round generation changes.
@@ -180,7 +184,7 @@ final class RoundCoordinator {
             case let .disconnect(peer):
                 transport.disconnect(peer)
             case let .rejected(reason):
-                lastRejection = reason
+                if event.isPersonAction { lastRejection = reason } else { lastPeerRejection = reason }
             }
         }
         revision += 1
@@ -204,6 +208,17 @@ final class RoundCoordinator {
             do { try await clock.sleep(untilMs: due) } catch { return }
             guard !Task.isCancelled else { return }
             self?.apply(.tick)
+        }
+    }
+}
+
+private extension Event {
+    /// Something the person did, as opposed to the network or the clock.
+    var isPersonAction: Bool {
+        switch self {
+        case .peerConnected, .received, .peerDisconnected, .tick: return false
+        case .createRoom, .joinRoom, .admit, .decline, .start, .confirmRoomCode, .submitFigure, .restart,
+             .acceptRestart, .leave: return true
         }
     }
 }

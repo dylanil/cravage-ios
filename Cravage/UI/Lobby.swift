@@ -24,6 +24,29 @@ enum Lobby {
         return base + " Admit \(next) to begin."
     }
 
+    /// What the host's lobby says when the engine refuses a tap. Every refusal gets a line: a tap
+    /// that silently does nothing reads as a broken button.
+    static func refusal(_ rejection: Rejection?, maxSize: Int) -> String? {
+        switch rejection {
+        case nil:
+            return nil
+        case .roomFull:
+            return "This room is set for \(maxSize) people and is full."
+        case .notEnoughPeople:
+            return "Start needs \(Roster.minimumSize) people."
+        case .invalidInput:
+            return "That person is no longer asking to join."
+        case .wrongPhase:
+            return "This room can't take anyone new now. A restarted round only takes back the people from the last one."
+        case .notEntitled:
+            return "Rooms for 4 to 8 people need a one-off unlock."
+        case .staleGeneration:
+            return "The room changed just before that tap. Try again."
+        default:
+            return "That didn't work. Try again."
+        }
+    }
+
     /// "1 other phone connected." - the sentence the host reads to check the room against the
     /// phones actually in front of them.
     static func connectedLine(others: Int) -> String {

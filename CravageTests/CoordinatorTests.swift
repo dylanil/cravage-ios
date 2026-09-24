@@ -179,6 +179,23 @@ final class CoordinatorTests: XCTestCase {
         XCTAssertEqual(host.engine.admittedNicknames, ["Alex"], "and the action itself went through")
     }
 
+    /// Found in the review of 2026-09-24: every engine refusal landed in `lastRejection`, including
+    /// ones caused by another phone's message, so a screen could show "This round can't be
+    /// restarted" as though it answered a tap nobody made (a late agreement after a partial result
+    /// does exactly this). A refusal shown to the person must come from the person's own action.
+    func testAPeerMessageRefusalIsNotShownAsTheAnswerToATap() async {
+        let star = FakeStar(phones: 2, entitlement: FakeEntitlement(unlocked: false))
+        let host = star.coordinators[0]
+        await host.createRoom(label: "Team", size: 3, nickname: "Sam")
+        star.coordinators[1].join(roomID: "room", nickname: "Alex")
+        star.flush()
+        let stray = Envelope.signed(action: .roomcodeConfirm, session: host.engine.session!, party: "A",
+                                    content: "x", key: SigningKey()).encoded()
+        star.transports[0].onEvent?(.received(stray, from: PeerID(1)))
+        XCTAssertNil(host.lastRejection, "another phone's refused message was shown as the answer to a tap")
+        XCTAssertEqual(host.lastPeerRejection, .wrongPhase, "diagnostics still record it")
+    }
+
     func testAnActionThatIsRefusedAgainReportsTheNewRefusal() async {
         let star = FakeStar(phones: 1, entitlement: FakeEntitlement(unlocked: false))
         let host = star.coordinators[0]
