@@ -25,7 +25,8 @@ final class NewRoomFormTests: XCTestCase {
 
     func testALabelTheRosterWouldRejectCannotOpenARoom() {
         var form = NewRoomForm()
-        for bad in ["", "   ", "Bonus\nround", "\u{202E}Bonus", String(repeating: "x", count: 121)] {
+        for bad in ["", "   ", "Bonus\nround", "\u{202E}Bonus", String(repeating: "x", count: 121), "Bon\u{200B}us",
+                    "Bonus \u{2764}\u{FE0F}"] {
             form.label = bad
             XCTAssertFalse(form.canOpen, "opened on a label the roster rejects: \(bad.debugDescription)")
         }
@@ -33,5 +34,16 @@ final class NewRoomFormTests: XCTestCase {
         form.label = "  Annual bonus  "
         XCTAssertTrue(form.canOpen)
         XCTAssertEqual(form.trimmedLabel, "Annual bonus")
+    }
+
+    /// A refused label says why, instead of leaving a greyed-out button to guess at. An empty
+    /// field is not a problem to report: the person has not typed anything yet.
+    func testARefusedLabelSaysWhy() {
+        var form = NewRoomForm()
+        XCTAssertNil(form.labelProblem)
+        form.label = "Bonus \u{2764}\u{FE0F}"
+        XCTAssertNotNil(form.labelProblem)
+        form.label = "Bonus"
+        XCTAssertNil(form.labelProblem)
     }
 }

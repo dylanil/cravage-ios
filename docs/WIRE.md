@@ -39,6 +39,11 @@ This is how every post-lock message is bound to both the session and the roster 
 The nickname is the last hello field, so it may contain `|`. The hello signature binds the
 identity key, the mask key, the nickname, the session and the host nonce in one signature.
 
+Nicknames (at most 48 UTF-8 bytes) and room labels (at most 120) are rejected on receipt if they
+are empty, start or end with whitespace, or contain a control character, a line or paragraph
+separator, a bidirectional control, or an invisible character: Unicode general category Cf, any
+Default_Ignorable_Code_Point, or U+2800. The invisible-character rule dates from 2026-09-24.
+
 Control objects (sorted keys):
 
 - `{"type":"welcome","nonce":..,"label":..,"size":..}`: first message to a new connection.

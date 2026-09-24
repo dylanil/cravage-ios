@@ -378,6 +378,12 @@
       "file": "Cravage/Diagnostics.swift",
       "find": "            lines.append(\"parties: \\(roster.size)\")",
       "replace": "            lines.append(\"room: \\(roster.label)\")"
+    },
+    {
+      "name": "names and labels refuse invisible characters",
+      "file": "CravageCore/Sources/CravageCore/Roster.swift",
+      "find": "            if isInvisible(scalar) { return false }\n",
+      "replace": ""
     }
   ]
 }

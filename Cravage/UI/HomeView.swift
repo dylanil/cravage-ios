@@ -150,7 +150,8 @@ struct NicknameSheet: View {
                     .submitLabel(.done)
                     .onSubmit(save)
                 if rejected {
-                    Text("Pick a name with no line breaks, and not only spaces.")
+                    Text("Pick a name with no line breaks or invisible characters, and not only spaces. Some emoji, such as \u{2764}\u{FE0F}, contain an invisible character.")
+                        .fixedSize(horizontal: false, vertical: true)
                         .font(Paper.sans(14))
                         .foregroundStyle(Paper.danger)
                 }

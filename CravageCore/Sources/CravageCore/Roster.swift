@@ -30,8 +30,14 @@ public struct SessionID: Hashable, Sendable, CustomStringConvertible {
 }
 
 /// Bounds for the two human-entered strings that reach other phones. Both are untrusted on
-/// receipt: bounded in bytes, no control characters, no bidirectional overrides, no leading or
-/// trailing whitespace. Neither is identity.
+/// receipt: bounded in bytes, no control characters, no bidirectional overrides, no invisible
+/// characters, no leading or trailing whitespace. Neither is identity.
+///
+/// Invisible means a character that draws nothing: Unicode format characters and default-ignorable
+/// code points (zero-width spaces and joiners, variation selectors, tag characters, Hangul fillers),
+/// plus the blank Braille pattern. Without this rule two names can look identical and differ
+/// underneath (owner decision 2026-09-24). Emoji built with an invisible joiner or style marker
+/// are refused as a result, by choice.
 public enum RoomText {
     public static let maxLabelBytes = 120
     public static let maxNicknameBytes = 48
@@ -49,8 +55,14 @@ public enum RoomText {
             default: break
             }
             if bidiControls.contains(scalar) { return false }
+            if isInvisible(scalar) { return false }
         }
         return true
+    }
+
+    private static func isInvisible(_ scalar: Unicode.Scalar) -> Bool {
+        scalar.properties.generalCategory == .format || scalar.properties.isDefaultIgnorableCodePoint
+            || scalar == "\u{2800}"
     }
 
     private static let bidiControls: Set<Unicode.Scalar> = [

@@ -159,6 +159,27 @@ final class RosterTests: XCTestCase {
 
     // MARK: - Hash and fingerprint
 
+    /// Owner decision 2026-09-24: a name or label may not carry characters that draw nothing, so
+    /// two people cannot show identical-looking names that differ underneath. Emoji built with an
+    /// invisible joiner or style marker (such as the red heart) are refused too, by choice.
+    func testInvisibleCharactersAreRejectedInNamesAndLabels() {
+        let invisible: [String] = [
+            "\u{200B}", "\u{200C}", "\u{200D}", "\u{2060}", "\u{00AD}", "\u{034F}", "\u{180E}",
+            "\u{FE0F}", "\u{E0041}", "\u{3164}", "\u{FFA0}", "\u{2800}",
+        ]
+        for scalar in invisible {
+            let name = "Pat" + scalar + "x"
+            XCTAssertFalse(RoomText.isValidNickname(name), "accepted \(name.unicodeScalars.map { String($0.value, radix: 16) })")
+            XCTAssertFalse(RoomText.isValidLabel("Bonus" + scalar + "x"))
+        }
+        XCTAssertFalse(RoomText.isValidNickname("\u{2764}\u{FE0F}"), "the red heart carries an invisible style marker")
+        XCTAssertNil(Wire.Hello.parse(MaskPrivateKey().publicKey.base64 + "|" + Wire.randomNonce() + "|Pat\u{200B}"),
+                     "a hello from another phone is held to the same rule")
+        for visible in ["Zoë", "Zoe\u{0308}", "Dee-Ann", "李雷", "Sam 😀", "Sam 👍🏽", "O'Neil", "\u{2764}"] {
+            XCTAssertTrue(RoomText.isValidNickname(visible), "refused \(visible)")
+        }
+    }
+
     func testHashAndFingerprintAreInvariantUnderEntryOrder() throws {
         let entries = try threeEntries()
         let a = try Roster(session: session, label: "l", entries: entries)

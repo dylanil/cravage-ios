@@ -22,7 +22,7 @@ final class NicknameStoreTests: XCTestCase {
     /// joining a room.
     func testANameTheRosterWouldRejectIsNeverSaved() {
         let store = NicknameStore(defaults: defaults)
-        for bad in ["", "   ", "\u{202E}Dee", "Dee\nAlex", String(repeating: "D", count: 49)] {
+        for bad in ["", "   ", "\u{202E}Dee", "Dee\nAlex", String(repeating: "D", count: 49), "De\u{200B}e", "\u{2764}\u{FE0F}"] {
             XCTAssertFalse(store.save(bad), "saved a name the roster rejects: \(bad.debugDescription)")
         }
         XCTAssertEqual(store.nickname, "")
@@ -41,6 +41,9 @@ final class NicknameStoreTests: XCTestCase {
 
     func testAStoredNameThatIsNoLongerValidIsIgnoredOnOpening() {
         defaults.set("Dee\u{2028}Alex", forKey: "nickname")
+        XCTAssertEqual(NicknameStore(defaults: defaults).nickname, "")
+        // A name saved before invisible characters were refused (2026-09-24) is asked for again.
+        defaults.set("De\u{200B}e", forKey: "nickname")
         XCTAssertEqual(NicknameStore(defaults: defaults).nickname, "")
     }
 }

@@ -25,6 +25,13 @@ struct NewRoomView: View {
                     PaperHeader(eyebrow: "New room", title: "What are you averaging?", size: 34)
                         .padding(.top, 6)
                     labelField
+                    if let problem = form.labelProblem {
+                        Text(problem)
+                            .font(Paper.sans(14))
+                            .foregroundStyle(Paper.danger)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.top, 10)
+                    }
                     Text("Everyone in the room sees this. Nearby phones can see it too, with your nickname and the group size, but never anyone's number.")
                         .font(Paper.sans(14))
                         .foregroundStyle(Paper.muted)
@@ -114,7 +121,7 @@ struct NewRoomView: View {
         case .notEntitled:
             return "Rooms for 4 to 8 people need a one-off unlock. Buying it is not in the app yet, so only a room for 3 can be opened."
         case .invalidInput:
-            return "That name for the round cannot be used. Try one without line breaks."
+            return "That name for the round cannot be used. Try one without line breaks or invisible characters."
         case .some:
             return "The room could not be opened. Try again."
         case nil:

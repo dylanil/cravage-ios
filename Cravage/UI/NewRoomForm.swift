@@ -25,4 +25,11 @@ struct NewRoomForm: Equatable {
 
     /// The roster rejects a label it cannot carry, so the button waits for one it accepts.
     var canOpen: Bool { RoomText.isValidLabel(trimmedLabel) }
+
+    /// Why the button is waiting, once something has been typed.
+    var labelProblem: String? {
+        guard !trimmedLabel.isEmpty, !canOpen else { return nil }
+        return "That name can't be used. It may be too long, or have a line break or an invisible "
+            + "character. Some emoji, such as \u{2764}\u{FE0F}, contain an invisible character."
+    }
 }
