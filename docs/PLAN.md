@@ -231,7 +231,8 @@ NetworkBrowser and open one NetworkConnection to the host; the host forwards env
 connections (star). Link security is a council question: TLS with per-round identities bound to
 the vk, or application-layer signatures only (shares are uniform, but labels and names are
 metadata). Info.plist: NSLocalNetworkUsageDescription ("Cravage finds other phones nearby to run a
-round. It has no server and sends nothing over the internet.") and NSBonjourServices. Permission
+round. Cravage does not operate a server that receives your round data.", owner decision
+2026-09-24, replacing "sends nothing over the internet") and NSBonjourServices. Permission
 denial is distinguished from other failures via the documented signals (Bonjour policy-denied
 error; connection waiting with localNetworkDenied) and otherwise reported as an honest generic
 connection error with retry. Owner decision 2026-09-22: leave the idle timer enabled. Conceal the

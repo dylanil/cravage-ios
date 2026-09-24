@@ -26,13 +26,16 @@ PATTERNS=(
   'safe to share'
   'cannot be traced'
   'impossible to work out'
+  'sends nothing'
 )
 
 FOUND=0
 for pattern in "${PATTERNS[@]}"; do
   # Only user-visible strings: a line whose first non-space characters are // is a code comment,
   # where the same words describe behaviour rather than claiming it to a user.
-  if grep -rni --include='*.swift' "$pattern" "$ROOT/Cravage" \
+  # Info.plist and project.yml carry the permission prompt text iOS shows the user.
+  if { grep -rni --include='*.swift' "$pattern" "$ROOT/Cravage"
+       grep -ni "$pattern" "$ROOT/Cravage/Resources/Info.plist" "$ROOT/project.yml"; } \
        | grep -v ':[[:space:]]*//' > /tmp/honesty_hits 2>/dev/null; then
     echo "Forbidden claim '$pattern':" >&2
     cat /tmp/honesty_hits >&2

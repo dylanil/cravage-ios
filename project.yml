@@ -34,7 +34,7 @@ targets:
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
-        NSLocalNetworkUsageDescription: "Cravage finds other phones nearby to run a round. It has no server and sends nothing over the internet."
+        NSLocalNetworkUsageDescription: "Cravage finds other phones nearby to run a round. Cravage does not operate a server that receives your round data."
         NSBonjourServices:
           - _cravage._tcp
     settings:

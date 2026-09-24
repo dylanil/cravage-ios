@@ -25,7 +25,7 @@
 		<string>_cravage._tcp</string>
 	</array>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>Cravage finds other phones nearby to run a round. It has no server and sends nothing over the internet.</string>
+	<string>Cravage finds other phones nearby to run a round. Cravage does not operate a server that receives your round data.</string>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UISupportedInterfaceOrientations</key>
