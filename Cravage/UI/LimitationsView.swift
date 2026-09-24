@@ -4,8 +4,8 @@ import SwiftUI
 ///
 /// The text is the owner-approved in-app list from SPEC's "Limitations text" section, which is the
 /// short form of README's Known limitations. It is council-approved: change it only with the owner.
-/// The last item is the one addition, carrying the 2026-09-22 lifecycle decision so the screen and
-/// README agree. Approved by the owner on 2026-09-24.
+/// The last two items are additions so the screen and README agree: the 2026-09-22 lifecycle
+/// decision and the 2026-09-24 invisible-character rule, both approved by the owner on 2026-09-24.
 struct LimitationsView: View {
     private let items = [
         "Same room only, up to 8 people. Everyone needs an iPhone on iOS 26 or later with the app.",
@@ -20,6 +20,7 @@ struct LimitationsView: View {
         "Anyone on the same Wi-Fi can see that a round is happening, its room name, the host's nickname and the group size. Not anyone's number.",
         "If a result is later found inconsistent, an already-shown or exported result may be marked disputed afterwards. The exported file does not change, only this app's record of it, and the app will not export that round again.",
         "Locking this phone or moving Cravage to the background leaves an unfinished round. It does not resume; create or join a new room.",
+        "Names and room labels can't contain invisible characters, except the joining marks some languages need. Some emoji, such as the red heart, are refused as a result.",
     ]
 
     var body: some View {

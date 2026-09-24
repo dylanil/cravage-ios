@@ -31,4 +31,5 @@ specifies a full stop, with sign and decimal-point controls; Waiting says "No sh
 guessing what the person is doing. Interruption and restart-refusal sketches record the new policy.
 Settings and Limitations are now built (delivery step 9); the paywall remains a design sketch,
 not an implemented capability. The in-app Limitations screen carries SPEC's owner-approved short
-list, plus one addition for the 2026-09-22 lifecycle decision, approved by the owner 2026-09-24.
+list, plus two additions approved by the owner 2026-09-24: the 2026-09-22 lifecycle decision and
+the invisible-character rule on names.

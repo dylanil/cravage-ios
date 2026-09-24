@@ -248,6 +248,9 @@ text, so the screen and README agree after the lifecycle decision of 2026-09-22:
 phone or moving Cravage to the background leaves an unfinished round. It does not resume; create
 or join a new room."
 
+**Second addition, owner-approved 2026-09-24**, for the invisible-character rule on names and room
+labels (docs/WIRE.md): "Names and room labels can't contain invisible characters, except the joining marks some languages need. Some emoji, such as the red heart, are refused as a result."
+
 
 Short, in-app form (existing items from README's Known limitations are not repeated here except
 where their wording changes; new items are marked **NEW**):
