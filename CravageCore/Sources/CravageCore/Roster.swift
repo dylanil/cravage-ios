@@ -38,8 +38,8 @@ public struct SessionID: Hashable, Sendable, CustomStringConvertible {
 /// plus the blank Braille pattern (owner decision 2026-09-24). This removes the characters that draw
 /// nothing at all; it does not make look-alike names impossible (other spaces, composed and
 /// decomposed accents, letters from other scripts still differ underneath), which is why names
-/// are never identity. Emoji built with an invisible joiner or style marker are refused as a
-/// result, by choice, and so are names in scripts that need a joiner (under review).
+/// are never identity. The two joiners some scripts need are allowed between visible characters
+/// (option B); emoji carrying an invisible style marker, such as the red heart, are refused.
 public enum RoomText {
     public static let maxLabelBytes = 120
     public static let maxNicknameBytes = 48
@@ -51,15 +51,33 @@ public enum RoomText {
         guard !text.isEmpty, text.utf8.count <= maxBytes else { return false }
         guard let first = text.unicodeScalars.first, let last = text.unicodeScalars.last,
               !first.properties.isWhitespace, !last.properties.isWhitespace else { return false }
-        for scalar in text.unicodeScalars {
+        let scalars = Array(text.unicodeScalars)
+        for (index, scalar) in scalars.enumerated() {
             switch scalar.properties.generalCategory {
             case .control, .lineSeparator, .paragraphSeparator: return false
             default: break
             }
             if bidiControls.contains(scalar) { return false }
-            if isInvisible(scalar) { return false }
+            if joiners.contains(scalar) {
+                if !isJoinerBetweenVisibleCharacters(scalars, at: index) { return false }
+            } else if isInvisible(scalar) {
+                return false
+            }
         }
         return true
+    }
+
+    /// Zero-width non-joiner and joiner: Persian, Sinhala, Devanagari and other scripts need them to
+    /// spell some names, and some emoji are built with them (owner decision 2026-09-24, option B).
+    private static let joiners: Set<Unicode.Scalar> = ["\u{200C}", "\u{200D}"]
+
+    /// A joiner is allowed only with a visible character on each side, never at an edge, next to
+    /// another invisible character or next to whitespace.
+    private static func isJoinerBetweenVisibleCharacters(_ scalars: [Unicode.Scalar], at index: Int) -> Bool {
+        guard index > 0, index < scalars.count - 1 else { return false }
+        return [scalars[index - 1], scalars[index + 1]].allSatisfy { neighbour in
+            !joiners.contains(neighbour) && !isInvisible(neighbour) && !neighbour.properties.isWhitespace
+        }
     }
 
     private static func isInvisible(_ scalar: Unicode.Scalar) -> Bool {

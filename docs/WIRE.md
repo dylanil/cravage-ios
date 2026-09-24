@@ -42,7 +42,9 @@ identity key, the mask key, the nickname, the session and the host nonce in one 
 Nicknames (at most 48 UTF-8 bytes) and room labels (at most 120) are rejected on receipt if they
 are empty, start or end with whitespace, or contain a control character, a line or paragraph
 separator, a bidirectional control, or an invisible character: Unicode general category Cf, any
-Default_Ignorable_Code_Point, or U+2800. The invisible-character rule dates from 2026-09-24.
+Default_Ignorable_Code_Point, or U+2800. The one exception is U+200C and U+200D, which some
+scripts and emoji need: each is accepted only with a visible, non-whitespace, non-joiner character
+on both sides. The invisible-character rule dates from 2026-09-24.
 
 Control objects (sorted keys):
 

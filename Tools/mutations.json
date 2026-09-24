@@ -382,8 +382,8 @@
     {
       "name": "names and labels refuse invisible characters",
       "file": "CravageCore/Sources/CravageCore/Roster.swift",
-      "find": "            if isInvisible(scalar) { return false }\n",
-      "replace": ""
+      "find": "            } else if isInvisible(scalar) {\n                return false\n            }",
+      "replace": "            }"
     },
     {
       "name": "a refusal of another phone's message is never shown as the answer to a tap",
@@ -419,6 +419,12 @@
       "file": "Cravage/Round/RoundCoordinator.swift",
       "find": "        lastRejection = nil\n        lastPeerRejection = nil\n        restartWarningAcknowledged = nil",
       "replace": "        lastRejection = nil\n        restartWarningAcknowledged = nil"
+    },
+    {
+      "name": "a joiner is allowed only between two visible characters",
+      "file": "CravageCore/Sources/CravageCore/Roster.swift",
+      "find": "                if !isJoinerBetweenVisibleCharacters(scalars, at: index) { return false }\n",
+      "replace": ""
     }
   ]
 }

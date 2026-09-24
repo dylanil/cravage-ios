@@ -164,7 +164,7 @@ final class RosterTests: XCTestCase {
     /// invisible joiner or style marker (such as the red heart) are refused too, by choice.
     func testInvisibleCharactersAreRejectedInNamesAndLabels() {
         let invisible: [String] = [
-            "\u{200B}", "\u{200C}", "\u{200D}", "\u{2060}", "\u{00AD}", "\u{034F}", "\u{180E}",
+            "\u{200B}", "\u{2060}", "\u{00AD}", "\u{034F}", "\u{180E}",
             "\u{FE0F}", "\u{E0041}", "\u{3164}", "\u{FFA0}", "\u{2800}",
         ]
         for scalar in invisible {
@@ -178,6 +178,21 @@ final class RosterTests: XCTestCase {
         let hidden = Wire.encode(.welcome(nonce: Wire.randomNonce(), label: "Bonus", size: 3))
             .replacingOccurrences(of: "Bonus", with: "Bon\u{200B}us")
         XCTAssertNil(Wire.decodeControl(hidden), "a host's welcome is held to the same rule")
+        // Option B (owner, 2026-09-24): the two joiners some scripts need are allowed, but only
+        // between two visible characters, so one cannot sit at an edge, pair up, or touch a space.
+        for joiner in ["\u{200C}", "\u{200D}"] {
+            for bad in [joiner + "Pat", "Pat" + joiner, "Pa" + joiner + joiner + "t", "Pat " + joiner + "x",
+                        "Pa" + joiner + "\u{200B}t", joiner] {
+                XCTAssertFalse(RoomText.isValidNickname(bad), "accepted \(bad.unicodeScalars.map { String($0.value, radix: 16) })")
+            }
+        }
+        for scriptName in ["\u{0DC1}\u{0DCA}\u{200D}\u{0DBB}\u{0DD3}",            // Sinhala "Sri"
+                           "\u{0645}\u{06CC}\u{200C}\u{062E}\u{0648}\u{0627}\u{0647}\u{0645}",  // Persian, with ZWNJ
+                           "\u{0915}\u{094D}\u{200D}\u{0937}",                    // Devanagari half form
+                           "\u{1F469}\u{200D}\u{1F4BB}"] {                          // woman technologist emoji
+            XCTAssertTrue(RoomText.isValidNickname(scriptName), "refused \(scriptName)")
+            XCTAssertTrue(RoomText.isValidLabel(scriptName))
+        }
         for visible in ["Zoë", "Zoe\u{0308}", "Dee-Ann", "李雷", "Sam 😀", "Sam 👍🏽", "O'Neil", "\u{2764}"] {
             XCTAssertTrue(RoomText.isValidNickname(visible), "refused \(visible)")
         }

@@ -40,9 +40,9 @@ than discovered. The in-app Limitations screen carries the same list in shorter 
   no Android or web participant in this version.
 - **Figures up to 999,999,999,999.99.** The masking maths hides figures perfectly only within a
   bounded range, so the app enforces one. Anything under a trillion in any unit is fine.
-- **Names and room labels cannot contain invisible characters.** That includes the hidden joiners
-  inside some emoji (such as the red heart) and in a few scripts. A nickname saved before this rule
-  is asked for again.
+- **Names and room labels cannot contain invisible characters,** except the joining marks some
+  languages need between two letters. Some emoji carry a hidden marker and are refused as a
+  result, such as the red heart. A nickname saved before this rule is asked for again.
 - **Decimal input is explicit.** Positive and negative figures are supported. Use a full stop for
   the decimal point; commas and grouping separators are refused, never guessed or converted.
 - **Keep Cravage open and the phones unlocked during a round.** Locking a phone or moving the app
