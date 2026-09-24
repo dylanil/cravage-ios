@@ -223,7 +223,7 @@
     },
     {
       "file": "SketchSettings.dc.html",
-      "title": "Settings",
+      "title": "Settings (built)",
       "x": 940,
       "y": 2000,
       "w": 390,
@@ -232,7 +232,7 @@
     },
     {
       "file": "SketchLimitations.dc.html",
-      "title": "Limitations",
+      "title": "Limitations (built)",
       "x": 1410,
       "y": 2000,
       "w": 390,

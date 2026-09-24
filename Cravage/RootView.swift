@@ -27,7 +27,7 @@ struct RootView: View {
         let leave = { if actions.leave() { joined = nil; idle = .home } }
         switch Screen(coordinator, idle: idle) {
         case .home:
-            HomeView(nicknames: nicknames,
+            HomeView(coordinator: coordinator, nicknames: nicknames,
                      onNewRoom: { if actions.leave() { idle = .newRoom } },
                      onJoin: { if actions.leave() { idle = .join } })
         case .newRoom:

@@ -7,8 +7,8 @@ anything - without anyone revealing their own figure. Phones talk directly to ea
 Wi-Fi. Cravage has no server, no accounts, and saves no round data.
 
 *Status: the first-round and restart screens are built, and both paths have worked on three
-physical iPhones. Settings, the in-app Limitations screen, purchase unlock and release polish are
-still outstanding. Not yet on the App Store.*
+physical iPhones. Settings and the in-app Limitations screen are built. Purchase unlock, dark mode
+and release polish are still outstanding. Not yet on the App Store.*
 
 The web demo, which shares the same maths: [dylanil/SMPC](https://github.com/dylanil/SMPC).
 
@@ -30,7 +30,7 @@ Only the host pays; joining is always free. No adverts, ever.
 ## Known limitations
 
 These are known and, in most cases, intentional. They are listed here so they are explicit rather
-than discovered. The planned in-app Limitations screen will carry the same list in shorter form.
+than discovered. The in-app Limitations screen carries the same list in shorter form.
 
 - **Same room only.** Phones must be within Wi-Fi range of each other. Remote participants are
   planned for a later version.

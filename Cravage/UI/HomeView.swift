@@ -3,10 +3,12 @@ import SwiftUI
 /// Home, in the Paper look: the promise, the three steps, and the two ways into a round.
 /// Mockup: `design/mockups/Main.dc.html`.
 struct HomeView: View {
+    let coordinator: RoundCoordinator
     let nicknames: NicknameStore
     let onNewRoom: () -> Void
     let onJoin: () -> Void
     @State private var editingName = false
+    @State private var showingSettings = false
 
     private struct Step: Identifiable {
         let id: Int
@@ -25,6 +27,19 @@ struct HomeView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            // The gear the Home mockup has always carried; the screens behind it exist as of
+            // delivery step 9.
+            HStack {
+                Spacer()
+                Button { showingSettings = true } label: {
+                    Image(systemName: "gearshape")
+                        .font(.system(size: 20, weight: .regular))
+                        .foregroundStyle(Paper.ink)
+                }
+                .accessibilityLabel("Settings")
+            }
+            .frame(height: 44)
+            .padding(.horizontal, 16)
             ScrollView {
                 VStack(spacing: 0) {
                     PaperHeader(eyebrow: "Cravage",
@@ -51,6 +66,9 @@ struct HomeView: View {
         .paperBackground()
         .sheet(isPresented: $editingName) {
             NicknameSheet(nicknames: nicknames)
+        }
+        .sheet(isPresented: $showingSettings) {
+            SettingsView(coordinator: coordinator, nicknames: nicknames)
         }
     }
 

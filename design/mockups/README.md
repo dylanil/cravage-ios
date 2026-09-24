@@ -29,4 +29,6 @@ generated files were reconciled with the actual lobby: the joiner has asked to j
 admission or list the roster yet, and sees the advertised host as unverified. Decimal copy now
 specifies a full stop, with sign and decimal-point controls; Waiting says "No share yet" without
 guessing what the person is doing. Interruption and restart-refusal sketches record the new policy.
-Settings, Limitations and the paywall remain design sketches, not implemented capabilities.
+Settings and Limitations are now built (delivery step 9); the paywall remains a design sketch,
+not an implemented capability. The in-app Limitations screen carries SPEC's owner-approved short
+list, plus one addition for the 2026-09-22 lifecycle decision, which still needs sign-off.

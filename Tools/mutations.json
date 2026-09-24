@@ -371,6 +371,13 @@
       "file": "Cravage/Round/RoundCoordinator.swift",
       "find": "        guard browsing, engine.phase != .idle, engine.phase != .lobby else { return }",
       "replace": "        guard browsing, engine.phase == .idle else { return }"
+    },
+    {
+      "name": "diagnostics carry counts, never round content",
+      "suite": "app",
+      "file": "Cravage/Diagnostics.swift",
+      "find": "            lines.append(\"parties: \\(roster.size)\")",
+      "replace": "            lines.append(\"room: \\(roster.label)\")"
     }
   ]
 }
