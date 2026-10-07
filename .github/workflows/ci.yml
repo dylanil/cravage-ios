@@ -96,8 +96,9 @@ jobs:
   app:
     name: iOS app build + tests (simulator)
     runs-on: macos-latest
-    # A hung simulator test fails the job well before GitHub's six-hour limit.
-    timeout-minutes: 180
+    # Every app guard (a scheduled run) takes about 3.3 hours at about 3.4 minutes each; a hung
+    # simulator test still fails the job before GitHub's six-hour limit.
+    timeout-minutes: 300
     steps:
       - uses: actions/checkout@v4
         with:
