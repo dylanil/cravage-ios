@@ -476,6 +476,21 @@ final class RoundEngineTests: XCTestCase {
         }
     }
 
+    /// Review 2026-10-07, finding 1: the full-room rule is for a first round only. A restart can
+    /// still go ahead with the people who came back while someone is still deciding.
+    func testARestartCanStartWithThoseBackWhileSomeoneDecides() {
+        let bus = StarBus.locked(nodes: 4)
+        bus.advance(ms: Deadlines.forTests.confirmingMs)
+        bus.run()
+        bus.deliver(0, .restart(generation: bus.host.generation))
+        bus.run()
+        bus.acceptRestart([1, 2])
+        XCTAssertEqual(bus.host.phase, .lobby, "node 3 is connected and has not answered")
+        XCTAssertFalse(bus.host.startNeedsFullRoom)
+        bus.start()
+        XCTAssertEqual(bus.host.roster?.size, 3)
+    }
+
     func testStaleGenerationActionsAreDropped() {
         let bus = StarBus.locked(nodes: 3)
         let oldGeneration = bus.engines[1].generation

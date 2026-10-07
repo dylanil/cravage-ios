@@ -58,7 +58,7 @@ enum FailureCopy {
 
     private static func waiting(for stage: Stage) -> String {
         switch stage {
-        case .lobby: return "Nobody finished joining in time."
+        case .lobby: return "Not everyone joined in time."
         case .revealing: return "Not every phone finished making the room code in time."
         case .confirming: return "Not every phone confirmed the room code in time."
         case .keyExchange, .sharing: return "Not every phone sent a share in time."

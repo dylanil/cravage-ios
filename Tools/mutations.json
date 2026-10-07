@@ -82,15 +82,36 @@
       "name": "a round starts only when the room is full",
       "suite": "core",
       "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
-      "find": "        guard size >= maxSize else { effects.append(.rejected(.notEnoughPeople)); return }",
-      "replace": "        guard size >= Roster.minimumSize else { effects.append(.rejected(.notEnoughPeople)); return }"
+      "find": "        guard size >= (startNeedsFullRoom ? maxSize : Roster.minimumSize) else {",
+      "replace": "        guard size >= Roster.minimumSize else {"
+    },
+    {
+      "name": "a restart can start with whoever came back",
+      "suite": "core",
+      "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
+      "find": "        guard size >= (startNeedsFullRoom ? maxSize : Roster.minimumSize) else {",
+      "replace": "        guard size >= maxSize else {"
     },
     {
       "name": "the lobby's Start waits until the room is full",
       "suite": "app",
       "file": "Cravage/UI/Lobby.swift",
-      "find": "        inRoom >= Roster.minimumSize && inRoom == maxSize",
+      "find": "        inRoom >= (needsFullRoom ? maxSize : Roster.minimumSize) && inRoom <= maxSize",
       "replace": "        inRoom >= Roster.minimumSize && inRoom <= maxSize"
+    },
+    {
+      "name": "a restart lobby's Start works with whoever came back",
+      "suite": "app",
+      "file": "Cravage/UI/Lobby.swift",
+      "find": "        inRoom >= (needsFullRoom ? maxSize : Roster.minimumSize) && inRoom <= maxSize",
+      "replace": "        inRoom >= maxSize && inRoom <= maxSize"
+    },
+    {
+      "name": "a lobby timeout does not say nobody joined",
+      "suite": "app",
+      "file": "Cravage/UI/FailureCopy.swift",
+      "find": "case .lobby: return \"Not everyone joined in time.\"",
+      "replace": "case .lobby: return \"Nobody finished joining in time.\""
     },
     {
       "name": "admit all admits nobody when the list changed before the tap",

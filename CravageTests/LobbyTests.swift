@@ -24,15 +24,26 @@ final class LobbyTests: XCTestCase {
         XCTAssertTrue(Lobby.canStart(inRoom: 6, maxSize: 6))
     }
 
+    /// Review 2026-10-07, finding 1: a restart can start with whoever came back, at least 3.
+    func testARestartLobbyCanStartWithThoseBack() {
+        XCTAssertTrue(Lobby.canStart(inRoom: 3, maxSize: 4, needsFullRoom: false))
+        XCTAssertFalse(Lobby.canStart(inRoom: 2, maxSize: 4, needsFullRoom: false))
+        XCTAssertEqual(Lobby.startHint(inRoom: 2, maxSize: 4, pending: [], needsFullRoom: false),
+                       "Start needs at least 3 people.")
+        XCTAssertEqual(Lobby.startHint(inRoom: 2, maxSize: 4, pending: ["Priya"], needsFullRoom: false),
+                       "Start needs at least 3 people.", "a restart lobby cannot admit anyone new")
+        XCTAssertNil(Lobby.startHint(inRoom: 3, maxSize: 4, pending: [], needsFullRoom: false))
+    }
+
     func testTheHintCountsTheRoomAndNamesTheNextPersonToAdmit() {
         XCTAssertEqual(Lobby.startHint(inRoom: 2, maxSize: 3, pending: ["Priya"]),
                        "Start needs all 3 people. 2 are in. Admit Priya to begin.")
         XCTAssertEqual(Lobby.startHint(inRoom: 2, maxSize: 3, pending: []),
-                       "Start needs all 3 people. 2 are in.")
+                       "Start needs all 3 people. 2 are in. If someone isn't coming, close this room and create a new one.")
         XCTAssertEqual(Lobby.startHint(inRoom: 3, maxSize: 6, pending: ["Priya", "Sam"]),
                        "Start needs all 6 people. 3 are in. Admit Priya next.")
         XCTAssertEqual(Lobby.startHint(inRoom: 1, maxSize: 4, pending: []),
-                       "Start needs all 4 people. Only you are in.")
+                       "Start needs all 4 people. Only you are in. If someone isn't coming, close this room and create a new one.")
         XCTAssertNil(Lobby.startHint(inRoom: 3, maxSize: 3, pending: []))
         XCTAssertNil(Lobby.startHint(inRoom: 6, maxSize: 6, pending: []))
     }
@@ -70,6 +81,25 @@ final class LobbyTests: XCTestCase {
         host.admit(host.engine.pendingJoiners[0].verifyingKey, generation: host.engine.generation)
         XCTAssertEqual(host.lastRejection, .roomFull)
         XCTAssertEqual(Lobby.refusal(host.lastRejection, maxSize: host.engine.maxSize), "This room is set for 3 people and is full.")
+    }
+
+    /// Review 2026-10-07, finding 5: through the coordinator, a room for 4 with 3 in refuses Start
+    /// and the screen says why.
+    func testARoomForFourWithThreeInRefusesStart() async {
+        let star = FakeStar(phones: 3, entitlement: FakeEntitlement(unlocked: true))
+        let host = star.coordinators[0]
+        await host.createRoom(label: "Team", size: 4, nickname: "Sam")
+        for (index, name) in [(1, "Alex"), (2, "Dee")] {
+            star.coordinators[index].join(roomID: "room", nickname: name)
+        }
+        star.flush()
+        for _ in 0..<2 {
+            host.admit(host.engine.pendingJoiners[0].verifyingKey, generation: host.engine.generation)
+        }
+        host.start(generation: host.engine.generation)
+        XCTAssertEqual(host.lastRejection, .notEnoughPeople)
+        XCTAssertEqual(host.engine.phase, .lobby)
+        XCTAssertEqual(Lobby.refusal(host.lastRejection, maxSize: host.engine.maxSize), "Start needs all 4 people.")
     }
 
     /// Admit all appears only when the people waiting fill the room exactly: never a choice of who

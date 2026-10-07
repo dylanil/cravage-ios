@@ -68,15 +68,18 @@ struct LobbyHostView: View {
                         .accessibilityIdentifier("lobby-refusal")
                 }
                 PrimaryButton(title: "Start round",
-                              enabled: Lobby.canStart(inRoom: inRoom, maxSize: engine.maxSize)) {
+                              enabled: Lobby.canStart(inRoom: inRoom, maxSize: engine.maxSize,
+                                                       needsFullRoom: engine.startNeedsFullRoom)) {
                     actions.start()
                 }
                 if let hint = Lobby.startHint(inRoom: inRoom, maxSize: engine.maxSize,
-                                              pending: engine.pendingJoiners.map(\.nickname)) {
+                                              pending: engine.pendingJoiners.map(\.nickname),
+                                              needsFullRoom: engine.startNeedsFullRoom) {
                     Text(hint)
                         .paperFont(.sans, 14)
                         .foregroundStyle(Paper.muted)
                         .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 CountdownLabel(coordinator: coordinator) { time in
                     "Room closes in \(time) if the round has not started"

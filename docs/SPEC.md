@@ -82,8 +82,9 @@ change and not a screen change.
 **A first round locks only when the room is full** (decision 2026-10-07). The size the host picks
 is advertised to nearby phones and sent in `welcome`, so `start` is refused until the host plus
 admitted joiners equal it; a room for 6 never runs with 3. If someone does not arrive, the host
-makes a new room. A restart is unchanged: it sizes its lobby to the people still connected and
-locks once they are back.
+makes a new room. A restart keeps its earlier rule: its lobby is sized to the people still
+connected, it locks by itself once they are all back, and the host can start it sooner with whoever
+has come back, as long as there are at least 3.
 
 ### Message/action taxonomy (revises `CanonicalMessage`'s action set)
 

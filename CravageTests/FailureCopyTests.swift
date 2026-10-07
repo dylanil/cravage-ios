@@ -56,6 +56,12 @@ final class FailureCopyTests: XCTestCase {
         }
     }
 
+    /// Review 2026-10-07, finding 3: with the full-room rule, a lobby usually times out with most
+    /// people in, so the line cannot say nobody joined.
+    func testALobbyTimeoutDoesNotSayNobodyJoined() {
+        XCTAssertTrue(FailureCopy.detail(.timeout(.lobby), name: name).hasPrefix("Not everyone joined in time."))
+    }
+
     /// `TransportProblem.unavailable` documents an honest generic error with retry; the review
     /// found no screen implementing it, so both cases now have wording and only one has Settings.
     func testEveryTransportProblemHasWordingAndOnlyPermissionOffersSettings() {

@@ -222,6 +222,9 @@ public final class RoundEngine {
     public private(set) var restartRosterChanged = false
     /// Joiner: a restart the person has not yet accepted or declined.
     public private(set) var restartOffer: RestartOffer?
+    /// A first round starts only at the size the host chose; a restart can start with whoever
+    /// came back, as long as there are at least `Roster.minimumSize`.
+    public var startNeedsFullRoom: Bool { !restartPending }
     public private(set) var localConfirmed = false
     public private(set) var lastIncompatibleVersion: Int?
 
@@ -529,8 +532,11 @@ public final class RoundEngine {
     private func start(now: UInt64, into effects: inout [Effect]) {
         guard role == .host, phase == .lobby else { effects.append(.rejected(.wrongPhase)); return }
         let size = admitted.count + 1
-        // A round runs at the size the host chose and nearby phones saw advertised, never smaller.
-        guard size >= maxSize else { effects.append(.rejected(.notEnoughPeople)); return }
+        // A first round runs at the size the host chose and nearby phones saw advertised, never
+        // smaller. A restart can go ahead with whoever came back.
+        guard size >= (startNeedsFullRoom ? maxSize : Roster.minimumSize) else {
+            effects.append(.rejected(.notEnoughPeople)); return
+        }
         guard size <= maxSize else { effects.append(.rejected(.roomFull)); return }
         lock(now: now, into: &effects)
     }

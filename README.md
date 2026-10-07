@@ -56,6 +56,8 @@ than discovered. The in-app Limitations screen carries the same list in shorter 
   resume on return; create or join a new room. Temporary inactivity (such as Control Center or a
   permission prompt) covers the screen but does not itself end the round. Finished results remain
   available for sharing. The app-switcher cover still needs a physical-device acceptance check.
+- **A first round runs at the size the host chose.** A room for 6 starts only when all 6 are in;
+  if someone isn't coming, close the room and create a new one for the people who are there.
 - **If someone drops out mid-round, the round fails.** A host can restart with the same room and
   label if at least 3 phones remain connected; otherwise leave and create a new room. Every waiting
   step has a time limit. If the group is smaller after a restart
