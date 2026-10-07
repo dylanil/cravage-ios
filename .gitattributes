@@ -1,0 +1,5 @@
+# Store everything with LF so scripts and Swift sources behave identically on the Mac and on CI.
+* text=auto eol=lf
+*.png binary
+*.gif binary
+*.p8 binary

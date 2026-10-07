@@ -1,0 +1,24 @@
+import CravageCore
+
+/// The wording on the figure screen. Kept apart from the view so the honesty lines can be pinned
+/// by tests: the collusion sentence has to follow the actual room size, and the limit has to follow
+/// the actual domain.
+enum FigureCopy {
+    /// The parser is an exact port of the web app's and
+    /// takes an ASCII full stop only. Decision 2026-09-19: say why a comma is refused, since
+    /// a comma means the decimal point in some countries and a thousands separator in others, and
+    /// silently converting one into the other would change the figure by a factor of a thousand.
+    static let limit = "Up to 999,999,999,999.99. Use a full stop for the decimal point. A comma is not accepted: it marks the decimal point in some countries and separates thousands in others, so it is never guessed at here."
+
+    /// SPEC's honesty rule: a round of N protects one figure from any single other party, and from
+    /// nobody if the rest pool what they know.
+    static func collusion(size: Int) -> String {
+        let others = size - 1
+        let they = others == 1 ? "the other person could" : "the other \(others) could"
+        let sharing = others == 1 ? "" : " if they shared theirs with each other"
+        return "With \(size) people, \(they) work out your figure\(sharing)."
+    }
+
+    /// Allowed honesty copy, unchanged from CONTRIBUTING.md.
+    static let onThisPhone = "Your figure is processed on your phone; the app sends a masked share to the other participants."
+}

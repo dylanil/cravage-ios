@@ -1,0 +1,188 @@
+import SwiftUI
+import CravageCore
+
+/// New room, in the Paper look, with the unlock that appears when 4 to 8 is picked without it.
+///
+/// The padlocks and the unlock card are a courtesy: the room is opened through the coordinator,
+/// which asks the store and lets the engine enforce the answer (SPEC invariant 11). A refusal is
+/// reported here rather than hidden.
+struct NewRoomView: View {
+    let coordinator: RoundCoordinator
+    let actions: RoundActions
+    let nicknames: NicknameStore
+    let store: StoreManager
+    let onCancel: () -> Void
+
+    @State private var form = NewRoomForm()
+    @State private var opening = false
+    @State private var editingName = false
+
+    var body: some View {
+        VStack(spacing: 0) {
+            PaperNavBar(title: "Cancel", action: onCancel)
+            ScrollingBody {
+                VStack(alignment: .leading, spacing: 0) {
+                    PaperHeader(eyebrow: "New room", title: "What are you averaging?", size: 34)
+                        .padding(.top, 6)
+                    labelField
+                    if let problem = form.labelProblem {
+                        Text(problem)
+                            .paperFont(.sans, 14)
+                            .foregroundStyle(Paper.danger)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.top, 10)
+                    }
+                    Text("Everyone in the room sees this. Nearby phones can see it too, with your nickname and the group size, but never anyone's number.")
+                        .paperFont(.sans, 14)
+                        .foregroundStyle(Paper.muted)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.top, 10)
+                    SectionHeading(text: "How many people, including you")
+                        .padding(.top, 24)
+                    sizePicker
+                        .padding(.top, 14)
+                    Text("3 people is free. 4 to 8 people is a one-off unlock.")
+                        .paperFont(.sans, 14)
+                        .foregroundStyle(Paper.muted)
+                        .padding(.top, 10)
+                    if form.needsUnlock {
+                        unlockCard
+                    }
+                    if let problem = coordinator.problem {
+                        ProblemNotice(problem: problem)
+                    }
+                    if let note = refusal {
+                        Text(note)
+                            .paperFont(.sans, 14)
+                            .foregroundStyle(Paper.danger)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.top, 12)
+                    }
+                }
+                .padding(.horizontal, Paper.gutter)
+            } actions: {
+                PrimaryButton(title: "Open room", enabled: form.canOpen && !opening, action: open)
+            }
+        }
+        .paperBackground()
+        .onChange(of: store.unlocked) { _, unlocked in form.unlocked = unlocked }
+        .task {
+            form.unlocked = await store.hasVerifiedUnlock()
+            if store.price == nil { await store.loadPrice() }
+            if !nicknames.hasNickname { editingName = true }
+        }
+        .sheet(isPresented: $editingName) { NicknameSheet(nicknames: nicknames) }
+    }
+
+    /// The label sits on an accent rule rather than in a box.
+    private var labelField: some View {
+        VStack(spacing: 0) {
+            TextField("Buried treasure", text: $form.label)
+                .accessibilityLabel("What are you averaging?")
+                .paperFont(.serif, 26, weight: .regular)
+                .foregroundStyle(Paper.ink)
+                .tint(Paper.accentFill)
+                .submitLabel(.done)
+                .padding(.bottom, 8)
+            Rectangle().fill(Paper.accentFill).frame(height: 2)
+        }
+        .padding(.top, 18)
+    }
+
+    private var sizePicker: some View {
+        HStack(spacing: 6) {
+            ForEach(NewRoomForm.sizes, id: \.self) { size in
+                Button { form.size = size } label: {
+                    VStack(spacing: 4) {
+                        Text("\(size)")
+                            .paperFont(.serif, 20)
+                            .foregroundStyle(size == form.size ? Paper.onInk : Paper.ink)
+                            .frame(width: 44, height: 44)
+                            .background(size == form.size ? Paper.ink : .clear, in: Circle())
+                            .overlay(size == form.size ? nil : Circle().strokeBorder(Paper.hairline, lineWidth: 1.5))
+                        Group {
+                            if form.isLocked(size) {
+                                Image(systemName: "lock.fill")
+                                    .paperFont(.sans, 9, weight: .semibold)
+                                    .foregroundStyle(Paper.muted)
+                            }
+                        }
+                        .frame(height: 12)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .accessibilityLabel(form.isLocked(size) ? "\(size) people, locked" : "\(size) people")
+                .accessibilityAddTraits(size == form.size ? [.isSelected] : [])
+            }
+        }
+    }
+
+    /// The unlock, offered where the locked size was picked. The price is the App Store's own.
+    private var unlockCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(UnlockCopy.title)
+                .paperFont(.serif, 20)
+                .foregroundStyle(Paper.ink)
+            Text(UnlockCopy.offer)
+                .paperFont(.sans, 15)
+                .foregroundStyle(Paper.ink)
+                .fixedSize(horizontal: false, vertical: true)
+            if let title = UnlockCopy.buyTitle(price: store.price) {
+                PrimaryButton(title: store.status == .working ? "Waiting for the App Store" : title,
+                              enabled: store.status != .working) {
+                    Task { await store.buy() }
+                }
+                .padding(.top, 4)
+            } else {
+                Text(UnlockCopy.priceMissing)
+                    .paperFont(.sans, 14)
+                    .foregroundStyle(Paper.muted)
+                    .fixedSize(horizontal: false, vertical: true)
+                QuietButton(title: UnlockCopy.retryPrice) {
+                    Task { await store.loadPrice() }
+                }
+            }
+            QuietButton(title: "Restore purchase") {
+                Task { await store.restore() }
+            }
+            .disabled(store.status == .working)
+            if let note = UnlockCopy.note(store.status) {
+                Text(note)
+                    .paperFont(.sans, 14)
+                    .foregroundStyle(Paper.muted)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(16)
+        .background(Paper.card, in: RoundedRectangle(cornerRadius: Paper.corner))
+        .overlay(RoundedRectangle(cornerRadius: Paper.corner).strokeBorder(Paper.hairline, lineWidth: 1))
+        .padding(.top, 14)
+    }
+
+    /// Honest about why a room did not open.
+    private var refusal: String? {
+        switch coordinator.lastRejection {
+        case .notEntitled:
+            return "Rooms for 4 to 8 people need the one-off unlock. Choose 3 to open a room now."
+        case .invalidInput:
+            return "That name for the round cannot be used. Try one without line breaks or invisible characters."
+        case .some:
+            return "The room could not be opened. Try again."
+        case nil:
+            return nil
+        }
+    }
+
+    private func open() {
+        guard nicknames.hasNickname else {
+            editingName = true
+            return
+        }
+        opening = true
+        Task {
+            await actions.createRoom(label: form.trimmedLabel, size: form.size,
+                                         nickname: nicknames.nickname)
+            opening = false
+        }
+    }
+}

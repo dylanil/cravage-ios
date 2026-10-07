@@ -1,0 +1,3 @@
+// Shared build settings. The optional include below supplies DEVELOPMENT_TEAM on a Mac that signs
+// for a device; it is ignored by git so the team ID never enters the repository. CI builds unsigned.
+#include? "Local.xcconfig"

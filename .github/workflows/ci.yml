@@ -1,0 +1,163 @@
+# Builds and tests on every push, on GitHub's free macOS runners (free and uncapped for public repos).
+# Two jobs: the pure-Swift CravageCore package (fast, no simulator), and the iOS app on a simulator
+# (skipped until Cravage.xcodeproj exists). No code signing and no TestFlight upload happen here.
+#
+# Mutation gates (decision 2026-10-03): a push or pull request runs only the guards whose
+# file it changed (every guard if Tools/mutations.json or the gate changed); the nightly schedule
+# and a manual run check every guard. The app guards were most of a two-hour run.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  core:
+    name: CravageCore tests + Python transcript acceptance
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select the newest Xcode on the runner
+        run: |
+          XCODE="$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)"
+          echo "Using $XCODE"
+          sudo xcode-select -s "$XCODE"
+          swift --version
+      - name: Run CravageCore tests
+        run: swift test --package-path CravageCore
+        env:
+          CRAVAGE_TRANSCRIPT_OUT: ${{ runner.temp }}/golden.json
+      - name: Verify the Swift-produced transcript with the Python v2 check
+        run: |
+          python3 -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/pip" install --quiet cryptography
+          PATH="$RUNNER_TEMP/venv/bin:$PATH" Tools/transcript_acceptance.sh "$RUNNER_TEMP/golden.json"
+      - name: Check the vendored verifier still matches upstream SMPC
+        run: Tools/check_verifier_sync.sh
+      - name: Public-safety lint (no personal material in tracked files)
+        run: Tools/check_public_safe.sh
+        env:
+          PUBLIC_SAFE_PATTERNS: ${{ secrets.PUBLIC_SAFE_PATTERNS }}
+      - name: Honesty-copy lint (no claim CONTRIBUTING.md forbids in the app's strings)
+        run: Tools/check_honesty_copy.sh
+      - name: Placeholder-screen lint (no stub screen is reachable from the router)
+        run: Tools/check_no_placeholder_screens.sh
+      - name: Privacy manifest declares every required-reason API the code uses
+        run: Tools/check_privacy_manifest.sh
+      - name: Store paperwork matches the code (product ID, version)
+        run: Tools/check_store_paperwork.sh
+
+  mutations:
+    name: Mutation gate (every listed guard is caught by a test)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Work out which files this change touched (every guard on a schedule or manual run)
+        id: scope
+        env:
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          FROM="$BEFORE"
+          if [ "$EVENT" = "pull_request" ]; then FROM="$BASE"; fi
+          if [ "$EVENT" != "push" ] && [ "$EVENT" != "pull_request" ]; then
+            echo "Scheduled or manual run: every guard"
+          elif git diff --name-only "$FROM" "$GITHUB_SHA" > "$RUNNER_TEMP/changed.txt"; then
+            echo "args=--changed-files $RUNNER_TEMP/changed.txt" >> "$GITHUB_OUTPUT"
+            cat "$RUNNER_TEMP/changed.txt"
+          else
+            echo "Cannot compare with $FROM; running every guard"
+          fi
+      - name: Select the newest Xcode on the runner
+        run: |
+          XCODE="$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)"
+          sudo xcode-select -s "$XCODE"
+      - name: Break each guard in Tools/mutations.json and require a failing test
+        run: |
+          python3 -m unittest discover -s Tools -p test_check_mutations.py
+          python3 Tools/check_mutations.py ${{ steps.scope.outputs.args }}
+      - name: Upload mutation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutation-evidence
+          path: .build/mutations/
+
+  app:
+    name: iOS app build + tests (simulator)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Work out which files this change touched (every guard on a schedule or manual run)
+        id: scope
+        env:
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          FROM="$BEFORE"
+          if [ "$EVENT" = "pull_request" ]; then FROM="$BASE"; fi
+          if [ "$EVENT" != "push" ] && [ "$EVENT" != "pull_request" ]; then
+            echo "Scheduled or manual run: every guard"
+          elif git diff --name-only "$FROM" "$GITHUB_SHA" > "$RUNNER_TEMP/changed.txt"; then
+            echo "args=--changed-files $RUNNER_TEMP/changed.txt" >> "$GITHUB_OUTPUT"
+            cat "$RUNNER_TEMP/changed.txt"
+          else
+            echo "Cannot compare with $FROM; running every guard"
+          fi
+      - name: Select the newest Xcode on the runner
+        run: |
+          XCODE="$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)"
+          sudo xcode-select -s "$XCODE"
+      - name: Build and test on a simulator
+        run: |
+          if [ ! -d Cravage.xcodeproj ]; then
+            echo "No Xcode project yet - skipping app job"
+            exit 0
+          fi
+          SIM="$(xcrun simctl list devices available | grep -m1 -o 'iPhone [0-9A-Za-z ]*' | sed 's/ *$//')"
+          echo "Simulator: $SIM"
+          xcodebuild test \
+            -project Cravage.xcodeproj \
+            -scheme Cravage \
+            -destination "platform=iOS Simulator,name=$SIM" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            -derivedDataPath "$RUNNER_TEMP/debug" \
+            -resultBundlePath "$RUNNER_TEMP/result.xcresult"
+          python3 Tools/check_mutations.py --suite app ${{ steps.scope.outputs.args }} \
+            --destination "platform=iOS Simulator,name=$SIM"
+      - name: Build the Release configuration (no test hooks, no signing)
+        run: |
+          if [ ! -d Cravage.xcodeproj ]; then exit 0; fi
+          xcodebuild build \
+            -project Cravage.xcodeproj \
+            -scheme Cravage \
+            -configuration Release \
+            -destination "generic/platform=iOS Simulator" \
+            -derivedDataPath "$RUNNER_TEMP/release" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+          Tools/check_stage_compiled_out.sh \
+            "$RUNNER_TEMP/release/Build/Products/Release-iphonesimulator/Cravage.app" \
+            "$RUNNER_TEMP/debug/Build/Products/Debug-iphonesimulator/Cravage.app"
+          Tools/check_privacy_manifest.sh "$RUNNER_TEMP/release/Build/Products/Release-iphonesimulator/Cravage.app"
+      - name: Upload the test result bundle on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcresult
+          path: ${{ runner.temp }}/result.xcresult
+      - name: Upload app mutation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-mutation-evidence
+          path: .build/mutations/

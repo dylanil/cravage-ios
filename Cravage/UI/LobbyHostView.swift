@@ -1,0 +1,154 @@
+import SwiftUI
+import CravageCore
+
+/// The host's lobby.
+///
+/// Admission is the host's eyes doing the work: the caution under the requests says so, and the
+/// connected line counts phones so the host can compare it with the room. Nicknames arrive from
+/// other phones already checked by `RoomText` on parse, so they are displayed as plain text and
+/// never read as anything else.
+struct LobbyHostView: View {
+    let coordinator: RoundCoordinator
+    let actions: RoundActions
+    let nickname: String
+    let onClose: () -> Void
+
+    private var engine: RoundEngine { coordinator.live }
+    private var inRoom: Int { engine.admittedCount + 1 }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            PaperNavBar(title: "Close", action: onClose)
+            ScrollingBody {
+                VStack(alignment: .leading, spacing: 0) {
+                    PaperHeader(eyebrow: engine.label ?? "Room",
+                                title: "\(inRoom) of \(engine.maxSize) in the room")
+                        .padding(.top, 6)
+                    if !engine.pendingJoiners.isEmpty {
+                        SectionHeading(text: "Asking to join")
+                            .padding(.top, 24)
+                        ForEach(engine.pendingJoiners, id: \.verifyingKey) { joiner in
+                            requestRow(joiner)
+                        }
+                        if Lobby.canAdmitAll(inRoom: inRoom, maxSize: engine.maxSize,
+                                             pending: engine.pendingJoiners.count) {
+                            admitAllRow
+                        }
+                        Text("Only admit someone you can see in the room.")
+                            .paperFont(.sans, 14)
+                            .foregroundStyle(Paper.muted)
+                            .padding(.top, 10)
+                    }
+                    SectionHeading(text: "In the room")
+                        .padding(.top, 24)
+                    PersonRow(letter: initial(nickname), name: nickname, note: "You, host", filled: true) {
+                        Text("This phone")
+                            .paperFont(.sans, 14)
+                            .foregroundStyle(Paper.muted)
+                    }
+                    ForEach(Array(engine.admittedNicknames.enumerated()), id: \.offset) { _, name in
+                        PersonRow(letter: initial(name), name: name, filled: false) {
+                            StatusTag(text: "Connected", done: false)
+                        }
+                    }
+                    Text(Lobby.connectedLine(others: engine.admittedCount))
+                        .paperFont(.sans, 14)
+                        .foregroundStyle(Paper.muted)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.top, 14)
+                }
+                .padding(.horizontal, Paper.gutter)
+            } actions: {
+                if let refusal = Lobby.refusal(coordinator.lastRejection, maxSize: engine.maxSize) {
+                    Text(refusal)
+                        .paperFont(.sans, 14)
+                        .foregroundStyle(Paper.danger)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .accessibilityIdentifier("lobby-refusal")
+                }
+                PrimaryButton(title: "Start round",
+                              enabled: Lobby.canStart(inRoom: inRoom, maxSize: engine.maxSize)) {
+                    actions.start()
+                }
+                if let hint = Lobby.startHint(inRoom: inRoom, maxSize: engine.maxSize,
+                                              pending: engine.pendingJoiners.map(\.nickname)) {
+                    Text(hint)
+                        .paperFont(.sans, 14)
+                        .foregroundStyle(Paper.muted)
+                        .multilineTextAlignment(.center)
+                }
+                CountdownLabel(coordinator: coordinator) { time in
+                    "Room closes in \(time) if the round has not started"
+                }
+            }
+        }
+        .paperBackground()
+    }
+
+    private func requestRow(_ joiner: PendingJoiner) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            PersonRow(letter: initial(joiner.nickname), name: joiner.nickname,
+                      filled: false, showsRule: false) {
+                EmptyView()
+            }
+            HStack(spacing: 10) {
+                Button("Decline") {
+                    actions.decline(joiner.verifyingKey)
+                }
+                .paperFont(.sans, 17)
+                .foregroundStyle(Paper.danger)
+                Spacer()
+                Button("Admit") {
+                    actions.admit(joiner.verifyingKey)
+                }
+                .paperFont(.sans, 17, weight: .semibold)
+                .foregroundStyle(.white)
+                .fixedSize()
+                .padding(.horizontal, 22)
+                .padding(.vertical, 8)
+                .frame(minHeight: 40)
+                .background(Paper.accentFill, in: RoundedRectangle(cornerRadius: 12))
+            }
+            .padding(.bottom, 8)
+        }
+        .overlay(alignment: .bottom) { Rectangle().fill(Paper.hairline).frame(height: 1) }
+    }
+
+    /// Only offered when the people waiting fill the room exactly; see `Lobby.canAdmitAll`.
+    private var admitAllRow: some View {
+        let shown = engine.pendingJoiners.map(\.verifyingKey)
+        return HStack {
+            Spacer()
+            Button(shown.count == 2 ? "Admit both" : "Admit all \(shown.count)") {
+                actions.admitAll(shown: shown)
+            }
+            .paperFont(.sans, 17, weight: .semibold)
+            .foregroundStyle(.white)
+            .fixedSize()
+            .padding(.horizontal, 22)
+            .padding(.vertical, 8)
+            .frame(minHeight: 40)
+            .background(Paper.accentFill, in: RoundedRectangle(cornerRadius: 12))
+        }
+        .padding(.top, 12)
+    }
+
+    private func initial(_ name: String) -> String {
+        name.first.map { String($0).uppercased() } ?? "?"
+    }
+}
+
+/// A deadline line that re-reads the clock every second.
+struct CountdownLabel: View {
+    let coordinator: RoundCoordinator
+    let format: (String) -> String
+
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: 1)) { _ in
+            if let seconds = coordinator.secondsRemaining() {
+                DeadlineLine(text: format(Countdown.text(seconds: seconds)))
+            }
+        }
+    }
+}

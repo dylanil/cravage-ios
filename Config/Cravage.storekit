@@ -1,0 +1,36 @@
+{
+  "appPolicies": {
+    "eula": "",
+    "policies": []
+  },
+  "identifier": "6F3C2A10",
+  "nonRenewingSubscriptions": [],
+  "products": [
+    {
+      "displayPrice": "0.99",
+      "familyShareable": false,
+      "internalID": "6753000001",
+      "localizations": [
+        {
+          "description": "Rooms for 4 to 8 people, for this Apple ID.",
+          "displayName": "Rooms for 4 to 8 people",
+          "locale": "en_GB"
+        }
+      ],
+      "productID": "com.dylanliew.cravage.unlock",
+      "referenceName": "Rooms for 4 to 8 people",
+      "type": "NonConsumable"
+    }
+  ],
+  "settings": {
+    "_failTransactionsEnabled": false,
+    "_locale": "en_GB",
+    "_storefront": "GBR",
+    "_storeKitErrors": []
+  },
+  "subscriptionGroups": [],
+  "version": {
+    "major": 4,
+    "minor": 0
+  }
+}
