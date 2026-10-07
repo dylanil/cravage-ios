@@ -19,6 +19,7 @@ jobs:
   core:
     name: CravageCore tests + Python transcript acceptance
     runs-on: macos-latest
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - name: Select the newest Xcode on the runner
@@ -54,6 +55,8 @@ jobs:
   mutations:
     name: Mutation gate (every listed guard is caught by a test)
     runs-on: macos-latest
+    # A hung simulator test fails the job well before GitHub's six-hour limit.
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
         with:
@@ -93,6 +96,8 @@ jobs:
   app:
     name: iOS app build + tests (simulator)
     runs-on: macos-latest
+    # A hung simulator test fails the job well before GitHub's six-hour limit.
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
         with:
