@@ -90,6 +90,8 @@ to share. The Limitations text is council-approved and changes only with the mai
   intact.
 - `xcodebuild test -project Cravage.xcodeproj -scheme Cravage -destination 'platform=iOS Simulator,name=iPhone 17 Pro'
   CODE_SIGNING_ALLOWED=NO` on a simulator, plus a Release build; release has no test hooks.
+  `StoreKitBackendTests` (the real purchase code against Xcode's local store) runs from Xcode only;
+  CI and the mutation gate skip it by name, so a green CI run has not exercised a real purchase.
 - Device: Network framework cannot run on CI and the simulator ignores local-network privacy; test
   on three physical phones, eight before advertising eight. `Tools/install_to_phones.sh` builds the
   last commit and installs and launches it on every paired iPhone.

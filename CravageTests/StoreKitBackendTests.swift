@@ -10,6 +10,8 @@ import StoreKitTest
 /// (Xcode 26, iOS 26.5 simulator, 2026-10-03) storekitd refuses every command-line test run with
 /// "com.dylanliew.cravage is not installed for development", signed or not; the unlock rules are
 /// covered by StoreManagerTests with a fake store, and this file still has to be run from Xcode.
+/// CI skips this file by name: on GitHub's runners (Xcode 26.6, 2026-10-07) the store serves the
+/// product but the first purchase never returns.
 @MainActor
 final class StoreKitBackendTests: XCTestCase {
     private var session: SKTestSession!

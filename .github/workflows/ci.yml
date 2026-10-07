@@ -123,6 +123,8 @@ jobs:
         run: |
           XCODE="$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)"
           sudo xcode-select -s "$XCODE"
+      # StoreKitBackendTests is skipped by name: on the runner the local StoreKit store accepts the
+      # session but never completes a purchase, so the first buy waits forever. It runs from Xcode.
       - name: Build and test on a simulator
         run: |
           if [ ! -d Cravage.xcodeproj ]; then
@@ -137,7 +139,8 @@ jobs:
             -destination "platform=iOS Simulator,name=$SIM" \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
             -derivedDataPath "$RUNNER_TEMP/debug" \
-            -resultBundlePath "$RUNNER_TEMP/result.xcresult"
+            -resultBundlePath "$RUNNER_TEMP/result.xcresult" \
+            -skip-testing:CravageTests/StoreKitBackendTests
           python3 Tools/check_mutations.py --suite app ${{ steps.scope.outputs.args }} \
             --destination "platform=iOS Simulator,name=$SIM"
       - name: Build the Release configuration (no test hooks, no signing)

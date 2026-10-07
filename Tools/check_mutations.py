@@ -54,7 +54,8 @@ def run_tests(work, logs, name, suite="core", destination=None, timeout=600):
                    "-derivedDataPath", str(work / ".build/DerivedData"), "-parallel-testing-enabled", "NO",
                    "CODE_SIGNING_ALLOWED=NO"]
         build = ["xcodebuild", "build-for-testing", *options]
-        test = ["xcodebuild", "test-without-building", *options]
+        # Xcode's local StoreKit store hangs a purchase on CI runners; that file runs from Xcode only.
+        test = ["xcodebuild", "test-without-building", *options, "-skip-testing:CravageTests/StoreKitBackendTests"]
     else:
         build = ["swift", "build", "--build-tests", "--package-path", "CravageCore"]
         test = ["swift", "test", "--skip-build", "--package-path", "CravageCore"]
