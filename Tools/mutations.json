@@ -79,6 +79,20 @@
       "replace": "        pending >= 2 && inRoom + pending <= maxSize"
     },
     {
+      "name": "a round starts only when the room is full",
+      "suite": "core",
+      "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
+      "find": "        guard size >= maxSize else { effects.append(.rejected(.notEnoughPeople)); return }",
+      "replace": "        guard size >= Roster.minimumSize else { effects.append(.rejected(.notEnoughPeople)); return }"
+    },
+    {
+      "name": "the lobby's Start waits until the room is full",
+      "suite": "app",
+      "file": "Cravage/UI/Lobby.swift",
+      "find": "        inRoom >= Roster.minimumSize && inRoom == maxSize",
+      "replace": "        inRoom >= Roster.minimumSize && inRoom <= maxSize"
+    },
+    {
       "name": "admit all admits nobody when the list changed before the tap",
       "suite": "app",
       "file": "Cravage/UI/RoundActions.swift",

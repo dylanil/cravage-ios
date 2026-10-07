@@ -79,6 +79,12 @@ code. Listing unverified names earlier would spend the user's confidence before 
 earned it; doing it truthfully would need a new host-to-joiner lobby message, which is a protocol
 change and not a screen change.
 
+**A first round locks only when the room is full** (decision 2026-10-07). The size the host picks
+is advertised to nearby phones and sent in `welcome`, so `start` is refused until the host plus
+admitted joiners equal it; a room for 6 never runs with 3. If someone does not arrive, the host
+makes a new room. A restart is unchanged: it sizes its lobby to the people still connected and
+locks once they are back.
+
 ### Message/action taxonomy (revises `CanonicalMessage`'s action set)
 
 `CanonicalMessage` action values: `pubkey | share | roomcode_reveal | roomcode_confirm |

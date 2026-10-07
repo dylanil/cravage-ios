@@ -13,21 +13,28 @@ final class LobbyTests: XCTestCase {
         XCTAssertEqual(Countdown.text(seconds: -5), "0:00", "an expired deadline never reads negative")
     }
 
-    /// The engine refuses a round smaller than the smallest roster, so the button waits for it.
-    func testStartWaitsForTheSmallestRosterTheProtocolAllows() {
+    /// The engine refuses a round smaller than the size the host chose, so the button waits for it.
+    func testStartWaitsUntilTheRoomIsFull() {
         XCTAssertFalse(Lobby.canStart(inRoom: 1, maxSize: 3))
         XCTAssertFalse(Lobby.canStart(inRoom: 2, maxSize: 3))
         XCTAssertTrue(Lobby.canStart(inRoom: 3, maxSize: 3))
         XCTAssertFalse(Lobby.canStart(inRoom: 4, maxSize: 3), "a room cannot start over its size")
-        XCTAssertTrue(Lobby.canStart(inRoom: 4, maxSize: 8))
+        XCTAssertFalse(Lobby.canStart(inRoom: 3, maxSize: 6), "a room for 6 never runs with 3")
+        XCTAssertFalse(Lobby.canStart(inRoom: 5, maxSize: 6))
+        XCTAssertTrue(Lobby.canStart(inRoom: 6, maxSize: 6))
     }
 
-    func testTheHintNamesTheNextPersonToAdmit() {
+    func testTheHintCountsTheRoomAndNamesTheNextPersonToAdmit() {
         XCTAssertEqual(Lobby.startHint(inRoom: 2, maxSize: 3, pending: ["Priya"]),
-                       "Start needs 3 people. Admit Priya to begin.")
+                       "Start needs all 3 people. 2 are in. Admit Priya to begin.")
         XCTAssertEqual(Lobby.startHint(inRoom: 2, maxSize: 3, pending: []),
-                       "Start needs 3 people.")
+                       "Start needs all 3 people. 2 are in.")
+        XCTAssertEqual(Lobby.startHint(inRoom: 3, maxSize: 6, pending: ["Priya", "Sam"]),
+                       "Start needs all 6 people. 3 are in. Admit Priya next.")
+        XCTAssertEqual(Lobby.startHint(inRoom: 1, maxSize: 4, pending: []),
+                       "Start needs all 4 people. Only you are in.")
         XCTAssertNil(Lobby.startHint(inRoom: 3, maxSize: 3, pending: []))
+        XCTAssertNil(Lobby.startHint(inRoom: 6, maxSize: 6, pending: []))
     }
 
     func testTheConnectedLineCountsPhonesNotPeople() {
@@ -41,6 +48,7 @@ final class LobbyTests: XCTestCase {
     func testEveryLobbyRefusalSaysWhy() {
         XCTAssertNil(Lobby.refusal(nil, maxSize: 3))
         XCTAssertEqual(Lobby.refusal(.roomFull, maxSize: 3), "This room is set for 3 people and is full.")
+        XCTAssertEqual(Lobby.refusal(.notEnoughPeople, maxSize: 6), "Start needs all 6 people.")
         for rejection: Rejection in [.notEnoughPeople, .invalidInput, .wrongPhase, .notEntitled, .staleGeneration, .queueFull] {
             XCTAssertNotNil(Lobby.refusal(rejection, maxSize: 3), "\(rejection) was silent")
         }

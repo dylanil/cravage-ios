@@ -529,7 +529,8 @@ public final class RoundEngine {
     private func start(now: UInt64, into effects: inout [Effect]) {
         guard role == .host, phase == .lobby else { effects.append(.rejected(.wrongPhase)); return }
         let size = admitted.count + 1
-        guard size >= Roster.minimumSize else { effects.append(.rejected(.notEnoughPeople)); return }
+        // A round runs at the size the host chose and nearby phones saw advertised, never smaller.
+        guard size >= maxSize else { effects.append(.rejected(.notEnoughPeople)); return }
         guard size <= maxSize else { effects.append(.rejected(.roomFull)); return }
         lock(now: now, into: &effects)
     }

@@ -573,6 +573,23 @@ final class RoundEngineTests: XCTestCase {
         XCTAssertEqual(bus.rejections[0]?.last, .notEnoughPeople)
     }
 
+    /// The size the host picks is the size of the round: everyone nearby saw it advertised, so a
+    /// room for 4 never runs with 3.
+    func testStartWaitsUntilTheRoomIsFull() {
+        let bus = StarBus(nodes: 4)
+        bus.deliver(0, .createRoom(label: "L", maxSize: 4, nickname: "Host", entitled: true))
+        bus.join(1)
+        bus.join(2)
+        bus.admitAll()
+        bus.start()
+        XCTAssertEqual(bus.host.phase, .lobby)
+        XCTAssertEqual(bus.rejections[0]?.last, .notEnoughPeople)
+        bus.join(3)
+        bus.admitAll()
+        bus.start()
+        XCTAssertEqual(bus.host.roster?.size, 4)
+    }
+
     // MARK: - Message domain in the engine: floods, queues, versions, decline
 
     func testJoinerBoundsHostReplaysBeforeDecodingInWaitingAndTerminalStates() throws {

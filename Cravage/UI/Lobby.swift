@@ -12,8 +12,9 @@ enum Countdown {
 /// What the host's lobby can work out on its own. The engine still decides: `start` is refused
 /// there if the room is too small or too full, so this only chooses what the screen says.
 enum Lobby {
+    /// A round runs at the size the host chose, so Start waits until the room is full.
     static func canStart(inRoom: Int, maxSize: Int) -> Bool {
-        inRoom >= Roster.minimumSize && inRoom <= maxSize
+        inRoom >= Roster.minimumSize && inRoom == maxSize
     }
 
     /// Admit all is offered only when the people waiting fill the room exactly, so it never picks
@@ -22,12 +23,13 @@ enum Lobby {
         pending >= 2 && inRoom + pending == maxSize
     }
 
-    /// Why the button is waiting, naming the next person to admit when there is one.
+    /// Why the button is waiting: how many are in, and the next person to admit when there is one.
     static func startHint(inRoom: Int, maxSize: Int, pending: [String]) -> String? {
         guard !canStart(inRoom: inRoom, maxSize: maxSize) else { return nil }
-        let base = "Start needs \(Roster.minimumSize) people."
+        let count = inRoom == 1 ? "Only you are in." : "\(inRoom) are in."
+        let base = "Start needs all \(maxSize) people. \(count)"
         guard let next = pending.first else { return base }
-        return base + " Admit \(next) to begin."
+        return base + (inRoom + 1 == maxSize ? " Admit \(next) to begin." : " Admit \(next) next.")
     }
 
     /// What the host's lobby says when the engine refuses a tap. Every refusal gets a line: a tap
@@ -39,7 +41,7 @@ enum Lobby {
         case .roomFull:
             return "This room is set for \(maxSize) people and is full."
         case .notEnoughPeople:
-            return "Start needs \(Roster.minimumSize) people."
+            return "Start needs all \(maxSize) people."
         case .invalidInput:
             return "That request has already been answered, or the person has left."
         case .wrongPhase:
