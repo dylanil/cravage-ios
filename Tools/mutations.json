@@ -637,8 +637,8 @@
       "name": "an older read of what is owned never overwrites a newer one",
       "suite": "app",
       "file": "Cravage/Store/StoreManager.swift",
-      "find": "        if read == readsStarted { unlocked = answer }\n",
-      "replace": "        unlocked = answer\n"
+      "find": "            read = newest\n",
+      "replace": "            unlocked = answer\n            return answer\n"
     },
     {
       "name": "a confirmed purchase not yet listed is not called a failure",
@@ -688,6 +688,13 @@
       "file": "Cravage/UI/TranscriptExport.swift",
       "find": "        self.current = { [coordinator] in coordinator.live.record }",
       "replace": "        self.current = { [record] in record }"
+    },
+    {
+      "name": "a pending room acts on the newest read of what is owned",
+      "suite": "app",
+      "file": "Cravage/Store/StoreManager.swift",
+      "find": "            read = newest",
+      "replace": "            return answer"
     }
   ]
 }

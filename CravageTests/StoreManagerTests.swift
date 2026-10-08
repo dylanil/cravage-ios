@@ -302,6 +302,60 @@ final class StoreManagerTests: XCTestCase {
         XCTAssertFalse(store.unlocked, "the refund read later wins over the earlier read")
     }
 
+    /// A room waiting on a read of what is owned must act on the newest read, whichever finishes
+    /// first: a refund seen by a newer read stops a four-person room the older read would have
+    /// allowed.
+    func testAPendingRoomIsNotOpenedOnAnAnswerARefundSuperseded() async {
+        for newerFirst in [true, false] {
+            let (coordinator, transport) = await createRoomWhileOwnershipChanges(from: [verified], to: [],
+                                                                                newerFirst: newerFirst)
+            XCTAssertNil(transport.hosting, "newer read first: \(newerFirst)")
+            XCTAssertEqual(coordinator.lastRejection, .notEntitled, "newer read first: \(newerFirst)")
+            coordinator.leave()
+        }
+    }
+
+    /// The same rule the other way: an unlock a newer read sees opens the room the older read would
+    /// have refused.
+    func testAPendingRoomOpensOnAnUnlockANewerReadSaw() async {
+        for newerFirst in [true, false] {
+            let (coordinator, transport) = await createRoomWhileOwnershipChanges(from: [], to: [verified],
+                                                                                newerFirst: newerFirst)
+            XCTAssertEqual(transport.hosting?.size, 4, "newer read first: \(newerFirst)")
+            XCTAssertEqual(coordinator.engine.phase, .lobby, "newer read first: \(newerFirst)")
+            coordinator.leave()
+        }
+    }
+
+    private func createRoomWhileOwnershipChanges(from before: [UnlockRecord], to after: [UnlockRecord],
+                                                 newerFirst: Bool) async -> (RoundCoordinator, FakeStar.Transport) {
+        let backend = FakeStoreBackend()
+        let store = await manager(backend)
+        backend.owned = before
+        backend.holdReads = true
+        let transport = FakeStar.Transport(index: 0)
+        let coordinator = RoundCoordinator(transport: transport, clock: FakeClock(), entitlement: store)
+        let creation = Task { await coordinator.createRoom(label: "Round", size: 4, nickname: "Host") }
+        await settle()
+        backend.owned = after
+        let newer = Task { await store.hasVerifiedUnlock() }
+        await settle()
+        XCTAssertEqual(backend.readGates.count, 2)
+        backend.holdReads = false
+        if newerFirst {
+            backend.readGates[1].resume()
+            _ = await newer.value
+            backend.readGates[0].resume()
+        } else {
+            backend.readGates[0].resume()
+            await settle()
+            backend.readGates[1].resume()
+            _ = await newer.value
+        }
+        await creation.value
+        return (coordinator, transport)
+    }
+
     /// Finding 8: updates for another product or with a bad signature unlock nothing.
     func testUpdatesForAnotherProductOrUnverifiedUnlockNothing() async {
         let backend = FakeStoreBackend()

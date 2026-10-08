@@ -38,8 +38,9 @@ final class StoreManager: EntitlementProvider {
 
     @ObservationIgnored private let backend: StoreBackend
     @ObservationIgnored private var listener: Task<Void, Never>?
-    /// Reads of what is owned can overlap; only the newest one started may set `unlocked`.
-    @ObservationIgnored private var readsStarted = 0
+    /// The newest read of what is owned. Reads can overlap; only the newest one's answer counts,
+    /// both for `unlocked` and for the caller deciding whether a room may open.
+    @ObservationIgnored private var newestRead: Task<Bool, Never>?
 
     init(backend: StoreBackend) {
         self.backend = backend
@@ -65,13 +66,21 @@ final class StoreManager: EntitlementProvider {
         price = (try? await backend.displayPrice(for: Self.unlockProductID)) ?? nil
     }
 
+    /// A read that a newer one overtook waits for the newer answer rather than returning its own:
+    /// a room still being created must not open on what the store said before a refund or a
+    /// purchase. Waiting starts no new read, so overlapping callers settle on one answer.
     func hasVerifiedUnlock() async -> Bool {
-        readsStarted += 1
-        let read = readsStarted
-        let owned = await backend.currentEntitlements()
-        let answer = owned.contains { Self.counts($0) }
-        if read == readsStarted { unlocked = answer }
-        return answer
+        let backend = backend
+        var read = Task { await backend.currentEntitlements().contains { Self.counts($0) } }
+        newestRead = read
+        while true {
+            let answer = await read.value
+            guard let newest = newestRead, newest != read else {
+                unlocked = answer
+                return answer
+            }
+            read = newest
+        }
     }
 
     private static func counts(_ record: UnlockRecord) -> Bool {
