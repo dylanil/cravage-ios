@@ -45,7 +45,9 @@ jobs:
         env:
           PUBLIC_SAFE_PATTERNS: ${{ secrets.PUBLIC_SAFE_PATTERNS }}
       - name: Honesty-copy lint (no claim CONTRIBUTING.md forbids in the app's strings)
-        run: Tools/check_honesty_copy.sh
+        run: |
+          python3 -m unittest discover -s Tools -p test_check_honesty_copy.py
+          Tools/check_honesty_copy.sh
       - name: Placeholder-screen lint (no stub screen is reachable from the router)
         run: Tools/check_no_placeholder_screens.sh
       - name: Privacy manifest declares every required-reason API the code uses

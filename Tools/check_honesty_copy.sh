@@ -33,21 +33,28 @@ PATTERNS=(
 # The listing copy only: the rest of APP_STORE.md is working notes (the privacy label's rationale
 # rightly says what is not sent to the developer).
 LISTING="$(mktemp)"
-trap 'rm -f "$LISTING"' EXIT
+HITS="$(mktemp)"
+trap 'rm -f "$LISTING" "$HITS"' EXIT
 awk '/^## Listing copy/ {on = 1; next} /^## / {on = 0} on' "$ROOT/docs/APP_STORE.md" > "$LISTING"
+
+# Info.plist and project.yml carry the permission prompt text iOS shows the user, $LISTING the
+# store listing copy (it said "nothing saved" after the app began saving the appearance choice,
+# 2026-10-06), and the README and the Pages documents are the public promises the app links to.
+FILES=("$ROOT/Cravage/Resources/Info.plist" "$ROOT/project.yml" "$LISTING" "$ROOT/README.md"
+       "$ROOT/docs/index.md" "$ROOT/docs/privacy-policy.md" "$ROOT/docs/support.md")
 
 FOUND=0
 for pattern in "${PATTERNS[@]}"; do
   # Only user-visible strings: a line whose first non-space characters are // is a code comment,
-  # where the same words describe behaviour rather than claiming it to a user.
-  # Info.plist and project.yml carry the permission prompt text iOS shows the user, and
-  # $LISTING the store listing copy, which said "nothing saved" after the app began saving the
-  # appearance choice (2026-10-06).
-  if { grep -rni --include='*.swift' "$pattern" "$ROOT/Cravage"
-       grep -ni "$pattern" "$ROOT/Cravage/Resources/Info.plist" "$ROOT/project.yml" "$LISTING"; } \
-       | grep -v ':[[:space:]]*//' > /tmp/honesty_hits 2>/dev/null; then
+  # where the same words describe behaviour rather than claiming it to a user. grep prints
+  # path:line:text, so the comment test is anchored after the line number; a web address's "://"
+  # inside a string is not a comment.
+  { grep -rni --include='*.swift' "$pattern" "$ROOT/Cravage" || true
+    grep -ni "$pattern" "${FILES[@]}" || true; } \
+    | { grep -Ev '^[^:]*:[0-9]+:[[:space:]]*//' || true; } > "$HITS"
+  if [ -s "$HITS" ]; then
     echo "Forbidden claim '$pattern':" >&2
-    cat /tmp/honesty_hits >&2
+    cat "$HITS" >&2
     FOUND=1
   fi
 done

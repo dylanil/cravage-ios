@@ -74,7 +74,8 @@ to share. The Limitations text is council-approved and changes only with the mai
   per push only the guards whose file changed, and every guard nightly.
 - A screen that is not built is not routed: its case stays unhandled so the exhaustive switch
   refuses to compile. `Tools/check_no_placeholder_screens.sh` fails if a placeholder is reachable.
-- Every user-visible string passes `Tools/check_honesty_copy.sh`.
+- Every user-visible string passes `Tools/check_honesty_copy.sh` (app strings, permission prompts,
+  store listing, README and the Pages documents).
 - Keep `README.md`'s "Known limitations" current in the same commit as any capability change.
 - Images are captures of the real app in deterministic scenarios (`Tools/screenshots.sh`).
 - A skipped test is not a tested claim.
