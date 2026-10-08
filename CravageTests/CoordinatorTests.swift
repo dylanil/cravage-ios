@@ -583,13 +583,13 @@ final class CoordinatorTests: XCTestCase {
     }
 
     /// A failed listener after a discovery error is the error that stands; a room found later does
-    /// not clear it.
+    /// not clear it. Outside a lobby the listener error does not go through `leave`, so the
+    /// coordinator's own bookkeeping is what keeps it.
     func testAHostingErrorAfterADiscoveryErrorIsNotClearedByAFoundRoom() async {
         let star = FakeStar(phones: 1, entitlement: FakeEntitlement(unlocked: false))
         let phone = star.coordinators[0]
         phone.browse()
         star.transports[0].onEvent?(.discoveryFailed(.localNetworkDenied))
-        await phone.createRoom(label: "L", size: 3, nickname: "Sam")
         star.transports[0].onEvent?(.hostingFailed(.unavailable))
         star.transports[0].onEvent?(.roomsChanged([RoomAdvert(id: "other", label: "Team", size: 3, hostNickname: "Kim",
                                                                protocolVersion: CravageCore.protocolVersion)]))
