@@ -110,10 +110,14 @@ Export a transcript from the Result screen, then on any computer with Python 3:
 
 ```bash
 pip install cryptography
-python3 Tools/verify_round.py --transcript cravage-transcript.json
+python3 Tools/verify_transcript.py cravage-transcript.json
 ```
 
-That is the same verifier the web demo uses, so the phone and the browser are held to one standard.
+That runs the iPhone checks of the same verifier the web demo uses (`Tools/verify_round.py`), so the
+phone and the browser are held to one standard. Use `verify_transcript.py` rather than calling
+`verify_round.py --transcript` directly: the web verifier also accepts the web version's older
+format, which has no agreement signatures, so a phone transcript relabelled as that format could
+still pass there.
 
 ## Licence
 

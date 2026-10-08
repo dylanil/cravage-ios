@@ -86,7 +86,9 @@ to share. The Limitations text is council-approved and changes only with the mai
 - `swift test --package-path CravageCore` - contract pins, engine negative tests through the real
   message route, transcript golden test, message-domain fuzz.
 - `Tools/transcript_acceptance.sh <file>` - the pinned `verify_round.py --transcript` accepts a
-  Swift-produced v2 transcript and rejects a tampered one. `Tools/check_verifier_sync.sh` - pin
+  Swift-produced v2 transcript and rejects a tampered one, and so does `Tools/verify_transcript.py`,
+  the command the README gives people: it refuses any file that is not `cravage-transcript-2`
+  (`python3 -m unittest discover -s Tools -p test_verify_transcript.py`). `Tools/check_verifier_sync.sh` - pin
   intact.
 - `xcodebuild test -project Cravage.xcodeproj -scheme Cravage -destination 'platform=iOS Simulator,name=iPhone 17 Pro'
   CODE_SIGNING_ALLOWED=NO` on a simulator, plus a Release build; release has no test hooks.

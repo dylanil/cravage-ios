@@ -109,4 +109,7 @@ Not covered, by construction: the roster hash itself cannot be recomputed (the f
 neither mask keys nor nicknames), so the file shows that everyone signed the same roster hash,
 not which mask keys or nicknames it contained.
 Implementations: `TranscriptVerifier` (Swift) and `verify_round.py --transcript` in the SMPC
-repository (vendored and pinned here as `Tools/verify_round.py`).
+repository (vendored and pinned here as `Tools/verify_round.py`). `verify_round.py` picks its
+checks from the file's `format` field, so it also accepts the web version's format; people are
+pointed at `Tools/verify_transcript.py`, which runs only the checks above and refuses any other
+format.
