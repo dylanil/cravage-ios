@@ -49,7 +49,7 @@ struct RootView: View {
                                onUnderstood: actions.acknowledgeRestartWarning,
                                onLeave: leave)
         case .confirmCode:
-            ConfirmCodeView(coordinator: coordinator, actions: actions)
+            ConfirmCodeView(coordinator: coordinator, actions: actions, onLeave: leave)
         case .enterFigure:
             EnterFigureView(coordinator: coordinator, actions: actions, onLeave: leave)
         case .waiting:

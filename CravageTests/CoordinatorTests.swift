@@ -462,6 +462,30 @@ final class CoordinatorTests: XCTestCase {
         XCTAssertNotNil(Transcript.make(from: record))
     }
 
+    /// Check the code has a Leave as well as "The codes don't match". Leaving is not a dispute:
+    /// the others are told a phone left, never that it saw a different code.
+    func testLeavingAtTheCodeCheckIsNotADispute() async {
+        for leaver in [1, 0] {
+            let star = await lockedRoom()
+            // The leaver has already confirmed, so leaving after a tap is covered too.
+            star.coordinators[leaver].confirmRoomCode(generation: star.coordinators[leaver].engine.generation)
+            star.flush()
+            star.coordinators[leaver].leave()
+            star.flush()
+            XCTAssertEqual(star.coordinators[leaver].engine.phase, .idle)
+            for (index, other) in star.coordinators.enumerated() where index != leaver {
+                guard case let .failed(reason) = other.engine.phase else {
+                    return XCTFail("phone \(index) is still in \(other.engine.phase) after phone \(leaver) left")
+                }
+                switch reason {
+                case .peerLeft, .connectionLost, .aborted(.peerLeft), .aborted(.hostLeft): break
+                default: XCTFail("phone \(index) was told \(reason), not that a phone left")
+                }
+                XCTAssertNil(other.engine.record, "no result without every share")
+            }
+        }
+    }
+
     func testAFigureThatDoesNotParseIsReportedInlineAndSendsNothing() async {
         let star = await lockedRoom()
         let joiner = star.coordinators[1]

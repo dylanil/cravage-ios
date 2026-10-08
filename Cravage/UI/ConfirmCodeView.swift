@@ -10,9 +10,13 @@ import CravageCore
 ///
 /// The code exists only once every phone's sealed value has arrived (SPEC 14); until then the code
 /// slot says so and there is nothing to confirm or dispute.
+///
+/// Leave is the neutral way out, for a wrong room or a wrong count: the others are told a phone
+/// left. "The codes don't match" is a signed claim and is kept for exactly that.
 struct ConfirmCodeView: View {
     let coordinator: RoundCoordinator
     let actions: RoundActions
+    let onLeave: () -> Void
     /// Read here because the count line is joined Text, which takes a font rather than a modifier.
     @Environment(\.dynamicTypeSize) private var typeSize
 
@@ -20,7 +24,7 @@ struct ConfirmCodeView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Spacer().frame(height: 44)
+            PaperNavBar(title: "Leave", action: onLeave)
             ScrollingBody {
                 VStack(alignment: .leading, spacing: 0) {
                     PaperHeader(eyebrow: "Check the code", title: "Is this on every phone?")
