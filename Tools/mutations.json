@@ -68,8 +68,8 @@
       "name": "a second share does not overwrite a file being read",
       "suite": "app",
       "file": "Cravage/UI/TranscriptExport.swift",
-      "find": "            let directory = folder.appending(path: UUID().uuidString, directoryHint: .isDirectory)",
-      "replace": "            let directory = folder"
+      "find": "            let directory = Self.folder.appending(path: UUID().uuidString, directoryHint: .isDirectory)",
+      "replace": "            let directory = Self.folder"
     },
     {
       "name": "admit all only when the waiting fill the room exactly",
@@ -124,7 +124,7 @@
       "name": "nothing is written once the result has closed",
       "suite": "app",
       "file": "Cravage/UI/TranscriptExport.swift",
-      "find": "            guard open else { throw Failure.resultClosed }",
+      "find": "            guard open == lease else { throw Failure.resultClosed }",
       "replace": ""
     },
     {
@@ -674,6 +674,20 @@
       "file": "Cravage/UI/Appearance.swift",
       "find": "        didSet { apply() }",
       "replace": "        didSet {}"
+    },
+    {
+      "name": "a share from a closed result stays refused when another result opens",
+      "suite": "app",
+      "file": "Cravage/UI/TranscriptExport.swift",
+      "find": "            guard open == lease else { throw Failure.resultClosed }",
+      "replace": "            guard open != nil else { throw Failure.resultClosed }"
+    },
+    {
+      "name": "a late dispute stops a share already offered",
+      "suite": "app",
+      "file": "Cravage/UI/TranscriptExport.swift",
+      "find": "        self.current = { [coordinator] in coordinator.live.record }",
+      "replace": "        self.current = { [record] in record }"
     }
   ]
 }

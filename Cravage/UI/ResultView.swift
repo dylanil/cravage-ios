@@ -12,6 +12,8 @@ struct ResultView: View {
     let onLeave: () -> Void
 
     @State private var showingShares = false
+    /// This screen's permission to write a shared transcript; it ends when the screen closes.
+    @State private var exportLease: UUID?
 
     private var engine: RoundEngine { coordinator.live }
     private var record: RoundRecord? { engine.record }
@@ -35,8 +37,9 @@ struct ResultView: View {
                     SectionHeading(text: "This round")
                         .padding(.top, 24)
                     sharesRow
-                    if OutcomeCopy.canExport(outcome), let record {
-                        ShareLink(item: TranscriptExport(record: record),
+                    if OutcomeCopy.canExport(outcome), let exportLease,
+                       let export = TranscriptExport(lease: exportLease, coordinator: coordinator) {
+                        ShareLink(item: export,
                                   preview: SharePreview("Cravage transcript")) {
                             rowLabel(title: "Share transcript", note: "A file anyone can check")
                         }
@@ -58,7 +61,7 @@ struct ResultView: View {
             }
         }
         .paperBackground()
-        .onAppear(perform: TranscriptExport.open)
+        .onAppear { exportLease = TranscriptExport.open() }
         .onDisappear(perform: TranscriptExport.close)
         .sheet(isPresented: $showingShares) {
             SharesSheet(record: record)
