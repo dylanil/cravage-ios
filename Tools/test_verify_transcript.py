@@ -76,8 +76,10 @@ class StrictTranscriptCheck(unittest.TestCase):
                 self.assertNotEqual(self.run_cli(t).returncode, 0)
 
     def test_not_a_transcript_is_refused(self):
-        for content in ("[]", "not json", '"text"'):
-            with self.subTest(content=content):
+        bad_label = json.dumps(dict(golden(), label="\ud800"))
+        for content in ("[]", "not json", '"text"', '{"format": "cravage-transcript-2", "parties": 5}',
+                        bad_label, "[" * 100000 + "]" * 100000):
+            with self.subTest(content=content[:60]):
                 r = self.run_cli(content)
                 self.assertNotEqual(r.returncode, 0)
                 self.assertNotIn("Traceback", r.stderr)

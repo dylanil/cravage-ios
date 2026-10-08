@@ -772,6 +772,20 @@
       "file": "Cravage/UI/FigureCopy.swift",
       "find": "        question.map { \"Your figure for \\($0)\" } ?? \"Your figure\"",
       "replace": "        \"Your figure\""
+    },
+    {
+      "name": "leaving forgets a discovery error",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "        restartWarningAcknowledged = nil\n        problem = nil\n",
+      "replace": "        restartWarningAcknowledged = nil\n"
+    },
+    {
+      "name": "a hosting error after a discovery error is not cleared by a found room",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "            self.problem = problem\n            problemIsDiscovery = false\n",
+      "replace": "            self.problem = problem\n"
     }
   ]
 }

@@ -23,13 +23,19 @@ def main(argv):
     try:
         with open(argv[1], encoding="utf-8") as f:
             t = json.load(f)
-    except (OSError, ValueError) as e:
+    except (OSError, ValueError, RecursionError) as e:
         print("FAIL: could not read the file as JSON (" + verify_round._clean(e) + ")")
         return 1
     if not isinstance(t, dict) or t.get("format") != verify_round.V2_FORMAT:
         print("FAIL: not a " + verify_round.V2_FORMAT + " file; the iPhone app exports only that format")
         return 1
-    return verify_round._verify_transcript_v2(t)
+    # The pinned checks assume well-typed fields in places; a malformed file is a failure, not a
+    # crash.
+    try:
+        return verify_round._verify_transcript_v2(t)
+    except Exception as e:  # noqa: BLE001
+        print("FAIL: malformed transcript (" + verify_round._clean(type(e).__name__) + ")")
+        return 1
 
 
 if __name__ == "__main__":

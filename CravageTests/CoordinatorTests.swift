@@ -465,11 +465,13 @@ final class CoordinatorTests: XCTestCase {
     /// Check the code has a Leave as well as "The codes don't match". Leaving is not a dispute:
     /// the others are told a phone left, never that it saw a different code.
     func testLeavingAtTheCodeCheckIsNotADispute() async {
-        for leaver in [1, 0] {
+        for (leaver, confirmedFirst) in [(1, false), (1, true), (0, false), (0, true)] {
             let star = await lockedRoom()
-            // The leaver has already confirmed, so leaving after a tap is covered too.
-            star.coordinators[leaver].confirmRoomCode(generation: star.coordinators[leaver].engine.generation)
-            star.flush()
+            XCTAssertEqual(star.coordinators[leaver].engine.phase, .confirming)
+            if confirmedFirst {
+                star.coordinators[leaver].confirmRoomCode(generation: star.coordinators[leaver].engine.generation)
+                star.flush()
+            }
             star.coordinators[leaver].leave()
             star.flush()
             XCTAssertEqual(star.coordinators[leaver].engine.phase, .idle)
@@ -578,6 +580,31 @@ final class CoordinatorTests: XCTestCase {
         star.transports[0].onEvent?(.roomsChanged([RoomAdvert(id: "other", label: "Team", size: 3, hostNickname: "Kim",
                                                                protocolVersion: CravageCore.protocolVersion)]))
         XCTAssertEqual(host.problem, .unavailable)
+    }
+
+    /// A failed listener after a discovery error is the error that stands; a room found later does
+    /// not clear it.
+    func testAHostingErrorAfterADiscoveryErrorIsNotClearedByAFoundRoom() async {
+        let star = FakeStar(phones: 1, entitlement: FakeEntitlement(unlocked: false))
+        let phone = star.coordinators[0]
+        phone.browse()
+        star.transports[0].onEvent?(.discoveryFailed(.localNetworkDenied))
+        await phone.createRoom(label: "L", size: 3, nickname: "Sam")
+        star.transports[0].onEvent?(.hostingFailed(.unavailable))
+        star.transports[0].onEvent?(.roomsChanged([RoomAdvert(id: "other", label: "Team", size: 3, hostNickname: "Kim",
+                                                               protocolVersion: CravageCore.protocolVersion)]))
+        XCTAssertEqual(phone.problem, .unavailable)
+    }
+
+    /// A discovery error belongs to the Join screen it was raised on. Leaving it (Back, then New
+    /// room) must not show that error on the New room form as if the room had failed to open.
+    func testLeavingForgetsADiscoveryError() async {
+        let star = FakeStar(phones: 1, entitlement: FakeEntitlement(unlocked: false))
+        let phone = star.coordinators[0]
+        phone.browse()
+        star.transports[0].onEvent?(.discoveryFailed(.localNetworkDenied))
+        phone.leave()
+        XCTAssertNil(phone.problem)
     }
 
     func testLeavingStopsTheTransport() async {

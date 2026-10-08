@@ -60,6 +60,14 @@ class HonestyCopyLint(unittest.TestCase):
                 self.assertNotEqual(self.run_lint().returncode, 0)
                 self.write(name, "Plain text\n")
 
+    def test_a_missing_page_fails(self):
+        # grep's "No such file" must not pass for a clean scan when a page is renamed.
+        for name in ("README.md", "docs/privacy-policy.md", "Cravage/Resources/Info.plist"):
+            with self.subTest(page=name):
+                os.rename(os.path.join(self.root, name), os.path.join(self.root, name + ".moved"))
+                self.assertNotEqual(self.run_lint().returncode, 0)
+                os.rename(os.path.join(self.root, name + ".moved"), os.path.join(self.root, name))
+
 
 if __name__ == "__main__":
     unittest.main()

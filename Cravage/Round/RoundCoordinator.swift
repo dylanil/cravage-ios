@@ -140,6 +140,8 @@ final class RoundCoordinator {
         lastPeerRejection = nil
         leftIncompatibleRoom = false
         restartWarningAcknowledged = nil
+        problem = nil
+        problemIsDiscovery = false
         apply(.leave)
         transport.stopAll()
         browsing = false
@@ -174,8 +176,10 @@ final class RoundCoordinator {
         switch event {
         case let .roomsChanged(adverts):
             rooms = adverts
-            // iOS can fail the first search before the Local Network prompt is answered; a room
-            // found since shows it now works. An empty list shows nothing, so it clears nothing.
+            // A waiting browser delivers results once it moves to ready (Network.framework
+            // browser.h); the transport reports a policy-denied wait as a discovery error. That
+            // the wait comes from an unanswered Local Network prompt is inferred, not documented.
+            // A room found since shows the search works; an empty list shows nothing.
             if problemIsDiscovery, !adverts.isEmpty {
                 problem = nil
                 problemIsDiscovery = false

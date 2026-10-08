@@ -43,6 +43,15 @@ awk '/^## Listing copy/ {on = 1; next} /^## / {on = 0} on' "$ROOT/docs/APP_STORE
 FILES=("$ROOT/Cravage/Resources/Info.plist" "$ROOT/project.yml" "$LISTING" "$ROOT/README.md"
        "$ROOT/docs/index.md" "$ROOT/docs/privacy-policy.md" "$ROOT/docs/support.md")
 
+# A renamed or missing page would otherwise read as a clean scan.
+for file in "${FILES[@]}" "$ROOT/Cravage"; do
+  if [ ! -e "$file" ]; then
+    echo "Honesty-copy lint: $file is missing; update FILES in this script if it moved" >&2
+    exit 1
+  fi
+done
+
+# It judges one line at a time: a claim split across lines or string pieces is not seen.
 FOUND=0
 for pattern in "${PATTERNS[@]}"; do
   # Only user-visible strings: a line whose first non-space characters are // is a code comment,
