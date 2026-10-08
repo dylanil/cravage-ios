@@ -52,12 +52,17 @@ VERSION="$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$APP/I
 BUILD="$(/usr/libexec/PlistBuddy -c 'Print CFBundleVersion' "$APP/Info.plist")"
 echo "Archived Cravage $VERSION ($BUILD)"
 "$HERE/check_privacy_manifest.sh" "$APP"
-DEBUG_APP="$(ls -d "$ROOT"/build/*/Build/Products/Debug-iphone*/Cravage.app 2>/dev/null | head -1 || true)"
-if [ -n "$DEBUG_APP" ]; then
-  "$HERE/check_stage_compiled_out.sh" "$APP" "$DEBUG_APP"
-else
-  echo "No local Debug build to compare against; skipping the stage check (CI runs it)" >&2
-fi
+# The stage check needs a Debug build of the same commit to show its search can fire; build one
+# rather than skip the check or compare against whatever older build is lying around.
+echo "Building a Debug copy of the same commit for the stage check..."
+xcodebuild build -project "$CLEAN/Cravage.xcodeproj" -scheme Cravage -configuration Debug \
+  -destination 'generic/platform=iOS' -derivedDataPath "$WORK/debug" CODE_SIGNING_ALLOWED=NO \
+  > "$WORK/debug.log" 2>&1 || {
+    echo "Debug build failed; see $WORK/debug.log" >&2
+    tail -20 "$WORK/debug.log" >&2
+    exit 1
+  }
+"$HERE/check_stage_compiled_out.sh" "$APP" "$WORK/debug/Build/Products/Debug-iphoneos/Cravage.app"
 
 if [ "${1:-}" = "--check-only" ]; then
   echo "Checked; not uploaded (--check-only)"
