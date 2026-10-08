@@ -152,6 +152,53 @@ final class CoordinatorTests: XCTestCase {
         XCTAssertEqual(star.transports[0].hosting?.size, 3)
     }
 
+    /// A room advertising another protocol version is refused before any connection is opened.
+    func testJoiningARoomOnAnotherVersionOpensNoConnection() async {
+        let star = FakeStar(phones: 2, entitlement: FakeEntitlement(unlocked: false))
+        await star.coordinators[0].createRoom(label: "Team", size: 3, nickname: "Sam")
+        let joiner = star.coordinators[1]
+        star.transports[1].onEvent?(.roomsChanged([RoomAdvert(id: "room", label: "Team", size: 3, hostNickname: "Sam",
+                                                               protocolVersion: CravageCore.protocolVersion + 1)]))
+        joiner.join(roomID: "room", nickname: "Alex")
+        star.flush()
+        XCTAssertEqual(star.transports[1].connectionAttempts, 0)
+        XCTAssertEqual(joiner.engine.phase, .idle)
+        XCTAssertTrue(star.coordinators[0].engine.pendingJoiners.isEmpty)
+    }
+
+    /// The advert is unchecked, so it is not the only guard: a host whose messages carry another
+    /// version sends the joiner back to the room list with the reason, rather than leaving them in
+    /// a lobby that can only time out.
+    func testAHostOnAnotherVersionSendsTheJoinerBackWithTheReason() async {
+        let star = FakeStar(phones: 2, entitlement: FakeEntitlement(unlocked: false))
+        await star.coordinators[0].createRoom(label: "Team", size: 3, nickname: "Sam")
+        let joiner = star.coordinators[1]
+        joiner.browse()
+        joiner.join(roomID: "room", nickname: "Alex")
+        star.flush()
+        XCTAssertEqual(joiner.engine.phase, .lobby)
+        XCTAssertFalse(joiner.leftIncompatibleRoom)
+        star.transports[1].onEvent?(.received(Data("{\"v\":\(CravageCore.protocolVersion + 1)}".utf8), from: .host))
+        XCTAssertEqual(joiner.engine.phase, .idle)
+        XCTAssertTrue(joiner.leftIncompatibleRoom)
+        XCTAssertEqual(Screen(joiner, idle: .join), .join)
+
+        joiner.join(roomID: "room", nickname: "Alex")
+        XCTAssertFalse(joiner.leftIncompatibleRoom, "a new attempt starts without the old reason")
+    }
+
+    /// A malformed message in the current version is refused as before and does not end the join.
+    func testAMalformedMessageInThisVersionDoesNotEndTheJoin() async {
+        let star = FakeStar(phones: 2, entitlement: FakeEntitlement(unlocked: false))
+        await star.coordinators[0].createRoom(label: "Team", size: 3, nickname: "Sam")
+        let joiner = star.coordinators[1]
+        joiner.join(roomID: "room", nickname: "Alex")
+        star.flush()
+        star.transports[1].onEvent?(.received(Data("{\"v\":\(CravageCore.protocolVersion)}".utf8), from: .host))
+        XCTAssertEqual(joiner.engine.phase, .lobby)
+        XCTAssertFalse(joiner.leftIncompatibleRoom)
+    }
+
     /// The review found a refusal from one action still on screen as the answer to the next.
     func testAUserActionForgetsTheLastRefusal() async {
         let star = FakeStar(phones: 1, entitlement: FakeEntitlement(unlocked: false))

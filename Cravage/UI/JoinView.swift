@@ -34,6 +34,9 @@ struct JoinView: View {
                     if let problem = coordinator.problem {
                         ProblemNotice(problem: problem) { actions.browse() }
                     } else {
+                        if coordinator.leftIncompatibleRoom {
+                            versionMismatchNotice
+                        }
                         ForEach(coordinator.rooms) { room in
                             roomRow(room)
                         }
@@ -68,8 +71,23 @@ struct JoinView: View {
         .sheet(isPresented: $editingName) { NicknameSheet(nicknames: nicknames) }
     }
 
+    private var versionMismatchNotice: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(JoinChoice.versionMismatchTitle)
+                .paperFont(.serif, 22)
+                .foregroundStyle(Paper.ink)
+                .fixedSize(horizontal: false, vertical: true)
+            Text(JoinChoice.versionMismatchDetail)
+                .paperFont(.sans, 15)
+                .foregroundStyle(Paper.muted)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.top, 20)
+    }
+
     private func roomRow(_ room: RoomAdvert) -> some View {
         let picked = room.id == chosen?.id
+        let versionNote = JoinChoice.versionNote(for: room)
         return Button {
             chosenID = room.id
         } label: {
@@ -82,6 +100,13 @@ struct JoinView: View {
                     Text("Host: \(room.hostNickname) \u{00B7} \(room.size) people")
                         .paperFont(.sans, 14)
                         .foregroundStyle(Paper.muted)
+                    if let versionNote {
+                        Text(versionNote)
+                            .paperFont(.sans, 14, weight: .semibold)
+                            .foregroundStyle(Paper.ink)
+                            .multilineTextAlignment(.leading)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 ZStack {
@@ -104,9 +129,11 @@ struct JoinView: View {
             .animation(.snappy(duration: 0.2), value: picked)
         }
         .buttonStyle(PressableCard())
+        .disabled(!JoinChoice.canPick(room))
+        .opacity(JoinChoice.canPick(room) ? 1 : 0.6)
         .padding(.top, 14)
         .accessibilityAddTraits(picked ? [.isSelected] : [])
-        .accessibilityHint("Picks this room. Join with the button at the bottom.")
+        .accessibilityHint(JoinChoice.canPick(room) ? "Picks this room. Join with the button at the bottom." : "")
     }
 
     private func join() {

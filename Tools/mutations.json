@@ -327,8 +327,8 @@
       "name": "repeated Join keeps one connection",
       "suite": "app",
       "file": "Cravage/Round/RoundCoordinator.swift",
-      "find": "        guard engine.phase == .idle else { return }\n        lastRejection = nil\n        apply(.joinRoom(nickname: nickname))",
-      "replace": "        lastRejection = nil\n        apply(.joinRoom(nickname: nickname))"
+      "find": "    func join(roomID: String, nickname: String) {\n        guard engine.phase == .idle else { return }\n",
+      "replace": "    func join(roomID: String, nickname: String) {\n"
     },
     {
       "name": "old receive close cannot escape its session",
@@ -487,8 +487,8 @@
       "name": "leaving forgets the last refused message",
       "suite": "app",
       "file": "Cravage/Round/RoundCoordinator.swift",
-      "find": "        lastRejection = nil\n        lastPeerRejection = nil\n        restartWarningAcknowledged = nil",
-      "replace": "        lastRejection = nil\n        restartWarningAcknowledged = nil"
+      "find": "        lastPeerRejection = nil\n        leftIncompatibleRoom = false\n",
+      "replace": "        leftIncompatibleRoom = false\n"
     },
     {
       "name": "a joiner is allowed only between two visible characters",
@@ -651,7 +651,7 @@
       "name": "a chosen room that stops advertising is no longer chosen",
       "suite": "app",
       "file": "Cravage/UI/JoinChoice.swift",
-      "find": "        return rooms.first { $0.id == id }\n",
+      "find": "        return rooms.first { $0.id == id && canPick($0) }\n",
       "replace": "        return rooms.first\n"
     },
     {
@@ -695,6 +695,27 @@
       "file": "Cravage/Store/StoreManager.swift",
       "find": "            read = newest",
       "replace": "            return answer"
+    },
+    {
+      "name": "an incompatible room cannot be chosen",
+      "suite": "app",
+      "file": "Cravage/UI/JoinChoice.swift",
+      "find": "    static func canPick(_ room: RoomAdvert) -> Bool { room.isCompatible }",
+      "replace": "    static func canPick(_ room: RoomAdvert) -> Bool { true }"
+    },
+    {
+      "name": "joining a room on another version opens no connection",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "        if let advert = rooms.first(where: { $0.id == roomID }), !advert.isCompatible { return }",
+      "replace": ""
+    },
+    {
+      "name": "a host on another version sends the joiner back with the reason",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "                    hostOnAnotherVersion = true",
+      "replace": ""
     }
   ]
 }

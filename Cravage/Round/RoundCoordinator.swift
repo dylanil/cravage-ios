@@ -22,6 +22,9 @@ final class RoundCoordinator {
     /// never the answer to a tap, so no screen shows it (codebase review, 2026-09-24).
     private(set) var lastPeerRejection: Rejection?
     private(set) var isCreatingRoom = false
+    /// This phone left a room it had joined because the host's messages were from another protocol
+    /// version. The Join screen says so; the next join or Leave clears it.
+    private(set) var leftIncompatibleRoom = false
     private(set) var wasInterrupted = false
     /// Navigation/background cancellation also invalidates actions when no round generation changes.
     private(set) var actionEpoch = 0
@@ -89,7 +92,10 @@ final class RoundCoordinator {
 
     func join(roomID: String, nickname: String) {
         guard engine.phase == .idle else { return }
+        // A room listed on another version would refuse every message; no connection is opened.
+        if let advert = rooms.first(where: { $0.id == roomID }), !advert.isCompatible { return }
         lastRejection = nil
+        leftIncompatibleRoom = false
         apply(.joinRoom(nickname: nickname))
         guard engine.phase == .lobby, engine.role == .joiner else { return }
         transport.connect(to: roomID)
@@ -129,6 +135,7 @@ final class RoundCoordinator {
         wasInterrupted = false
         lastRejection = nil
         lastPeerRejection = nil
+        leftIncompatibleRoom = false
         restartWarningAcknowledged = nil
         apply(.leave)
         transport.stopAll()
@@ -190,6 +197,7 @@ final class RoundCoordinator {
         // A refusal answers a tap on the screen it was made on. When the network or the clock
         // moves the round to another screen, the refusal stays behind (review 2026-09-24).
         if !event.isPersonAction, engine.phase != phaseBefore { lastRejection = nil }
+        var hostOnAnotherVersion = false
         for effect in effects {
             switch effect {
             case let .send(data, to):
@@ -198,12 +206,22 @@ final class RoundCoordinator {
                 transport.disconnect(peer)
             case let .rejected(reason):
                 if event.isPersonAction { lastRejection = reason } else { lastPeerRejection = reason }
+                if case .message(.unsupportedVersion) = reason, case .received(_, from: .host) = event,
+                   engine.role == .joiner, engine.phase == .lobby {
+                    hostOnAnotherVersion = true
+                }
             }
         }
         revision += 1
         stopBrowsingOnceTheRoundStarts()
         stopAdvertisingOnceTheRoundStarts()
         scheduleTick()
+        // The advert claimed this version, but the host speaks another: every message would be
+        // refused, so the lobby could only time out. Leave now and say why.
+        if hostOnAnotherVersion {
+            leave()
+            leftIncompatibleRoom = true
+        }
     }
 
     /// A phone in a started round has no use for the room list, and every extra multicast is noise

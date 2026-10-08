@@ -9,6 +9,10 @@ struct RoomAdvert: Identifiable, Hashable, Sendable {
     let size: Int
     let hostNickname: String
     let protocolVersion: Int
+
+    /// Whether this phone speaks the room's protocol. Every message to or from a room on another
+    /// version is refused, so such a room is shown but never joined.
+    var isCompatible: Bool { protocolVersion == CravageCore.protocolVersion }
 }
 
 enum TransportProblem: Equatable, Sendable {
