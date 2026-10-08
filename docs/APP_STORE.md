@@ -199,3 +199,7 @@ Commission drops from 30% to 15% from the month after approval.
 5. Listing copy, keywords, URLs, screenshots, age rating, privacy label, territories entered.
 6. Review notes and video attached; contact details entered.
 7. Submit for review. Typical turnaround is one to three days.
+8. Once the app is live, open it from the App Store on a UK account, go to New room, pick 4, and
+   check the button reads "Unlock for £0.99". TestFlight cannot show this: on iOS 26 it can give
+   the app US dollar prices while Apple's payment sheet shows the local price, so a "$0.99" seen in
+   TestFlight is not evidence either way. The app shows Apple's price string unchanged.
