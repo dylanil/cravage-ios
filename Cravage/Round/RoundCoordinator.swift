@@ -16,6 +16,8 @@ final class RoundCoordinator {
     private(set) var revision = 0
     private(set) var rooms: [RoomAdvert] = []
     private(set) var problem: TransportProblem?
+    /// The problem came from discovery, so a room found later shows the search works again.
+    private var problemIsDiscovery = false
     /// The engine's refusal of the person's own last action, for the screen to explain.
     private(set) var lastRejection: Rejection?
     /// The engine's last refusal of another phone's message or a timer. Diagnostics only: it is
@@ -81,6 +83,7 @@ final class RoundCoordinator {
 
     func browse() {
         problem = nil
+        problemIsDiscovery = false
         browsing = true
         transport.startBrowsing()
     }
@@ -171,9 +174,16 @@ final class RoundCoordinator {
         switch event {
         case let .roomsChanged(adverts):
             rooms = adverts
+            // iOS can fail the first search before the Local Network prompt is answered; a room
+            // found since shows it now works. An empty list shows nothing, so it clears nothing.
+            if problemIsDiscovery, !adverts.isEmpty {
+                problem = nil
+                problemIsDiscovery = false
+            }
             revision += 1
         case let .discoveryFailed(problem):
             self.problem = problem
+            problemIsDiscovery = true
             revision += 1
         case let .hostingFailed(problem):
             // Nobody can reach a room whose listener failed: close it rather than wait out the lobby.
@@ -181,6 +191,7 @@ final class RoundCoordinator {
                 leave()
             }
             self.problem = problem
+            problemIsDiscovery = false
             revision += 1
         case let .peerConnected(peer):
             apply(.peerConnected(peer))

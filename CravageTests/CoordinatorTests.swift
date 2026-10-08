@@ -530,6 +530,32 @@ final class CoordinatorTests: XCTestCase {
         XCTAssertNil(star.transports[0].hosting)
     }
 
+    /// iOS can fail the first search before the person has answered the Local Network prompt. Once
+    /// they allow it and a room is found, the Join screen shows the room without a Retry.
+    func testAFoundRoomClearsAnEarlierDiscoveryError() async {
+        let star = FakeStar(phones: 2, entitlement: FakeEntitlement(unlocked: false))
+        let joiner = star.coordinators[1]
+        joiner.browse()
+        star.transports[1].onEvent?(.discoveryFailed(.localNetworkDenied))
+        XCTAssertEqual(joiner.problem, .localNetworkDenied)
+        star.transports[1].onEvent?(.roomsChanged([]))
+        XCTAssertEqual(joiner.problem, .localNetworkDenied, "an empty list does not show the search works")
+        star.transports[1].onEvent?(.roomsChanged([RoomAdvert(id: "room", label: "Team", size: 3, hostNickname: "Sam",
+                                                               protocolVersion: CravageCore.protocolVersion)]))
+        XCTAssertNil(joiner.problem)
+    }
+
+    /// Non-goal pin: a failed listener's error is not cleared by rooms someone else is advertising.
+    func testAFoundRoomDoesNotClearAHostingError() async {
+        let star = FakeStar(phones: 1, entitlement: FakeEntitlement(unlocked: false))
+        let host = star.coordinators[0]
+        await host.createRoom(label: "L", size: 3, nickname: "Sam")
+        star.transports[0].onEvent?(.hostingFailed(.unavailable))
+        star.transports[0].onEvent?(.roomsChanged([RoomAdvert(id: "other", label: "Team", size: 3, hostNickname: "Kim",
+                                                               protocolVersion: CravageCore.protocolVersion)]))
+        XCTAssertEqual(host.problem, .unavailable)
+    }
+
     func testLeavingStopsTheTransport() async {
         let star = FakeStar(phones: 1, entitlement: FakeEntitlement(unlocked: false))
         await star.coordinators[0].createRoom(label: "L", size: 3, nickname: "Sam")

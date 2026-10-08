@@ -744,6 +744,20 @@
       "file": "Cravage/Round/RoundCoordinator.swift",
       "find": "                   engine.role == .joiner, engine.phase == .lobby {",
       "replace": "                   engine.role == .joiner {"
+    },
+    {
+      "name": "a room found after a discovery error clears the error",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "            if problemIsDiscovery, !adverts.isEmpty {\n                problem = nil",
+      "replace": "            if problemIsDiscovery, !adverts.isEmpty {\n                _ = problem"
+    },
+    {
+      "name": "an empty room list does not clear a discovery error",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "            if problemIsDiscovery, !adverts.isEmpty {",
+      "replace": "            if problemIsDiscovery {"
     }
   ]
 }
