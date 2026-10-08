@@ -62,7 +62,7 @@ struct ResultView: View {
         }
         .paperBackground()
         .onAppear { exportLease = TranscriptExport.open() }
-        .onDisappear(perform: TranscriptExport.close)
+        .onDisappear { TranscriptExport.close(exportLease) }
         .sheet(isPresented: $showingShares) {
             SharesSheet(record: record)
         }

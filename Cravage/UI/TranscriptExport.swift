@@ -8,14 +8,14 @@ import CravageCore
 ///
 /// The screen says round history is not saved, so nothing is written until someone shares. The
 /// share sheet gets a file rather than bare data, because Gmail and other apps from outside Apple
-/// drop bare data and open an empty draft. The file is written at the
-/// moment a destination asks for it, from the record as this phone holds it then, and only while
-/// the result screen that offered the share is open. A share sheet can outlive the screen (a
-/// restart offer replaces it) and keeps the item it was given, so a late conflicting confirmation
-/// or a closed screen stops the write even after the item was handed over. Each result screen gets
-/// its own lease, so opening another result never revives an older share. Closing removes every
-/// file. Writing and removing take turns under one lock. Launch removes anything a closed app left
-/// behind.
+/// drop bare data and open an empty draft. Apple does not document when the share sheet runs the
+/// exporter, how often, or how long it holds the item, so every check is made when the file is
+/// asked for: the record as this phone holds it then must still be the offered round, agreed, and
+/// the result screen that offered the share must still be open. A share sheet seen outliving its
+/// screen (a restart offer replaces it) or a late conflicting confirmation therefore stops the
+/// write. Each result screen gets its own lease, so opening another result never revives an older
+/// share. Closing removes every file. Writing and removing take turns under one lock. Launch
+/// removes anything a closed app left behind.
 struct TranscriptExport: Transferable {
     enum Failure: Error { case notExportable, resultClosed }
 
@@ -28,12 +28,16 @@ struct TranscriptExport: Transferable {
     /// The record as the engine holds it when the file is asked for, not when Share was tapped.
     let current: @MainActor @Sendable () -> RoundRecord?
 
+    init(lease: UUID, session: String, current: @escaping @MainActor @Sendable () -> RoundRecord?) {
+        self.lease = lease
+        self.session = session
+        self.current = current
+    }
+
     @MainActor
     init?(lease: UUID, coordinator: RoundCoordinator) {
         guard let record = coordinator.live.record else { return nil }
-        self.lease = lease
-        self.session = record.boundSession
-        self.current = { [coordinator] in coordinator.live.record }
+        self.init(lease: lease, session: record.boundSession, current: { [coordinator] in coordinator.live.record })
     }
 
     static var transferRepresentation: some TransferRepresentation {
@@ -71,8 +75,11 @@ struct TranscriptExport: Transferable {
         return lease
     }
 
-    static func close() {
+    /// Ends `lease` and removes every file, or does nothing if a newer result has already taken
+    /// over. Without a lease (at launch) it always ends and removes.
+    static func close(_ lease: UUID? = nil) {
         openLease.withLock { open in
+            guard lease == nil || open == lease else { return }
             open = nil
             try? FileManager.default.removeItem(at: folder)
         }

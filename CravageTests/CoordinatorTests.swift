@@ -187,6 +187,32 @@ final class CoordinatorTests: XCTestCase {
         XCTAssertFalse(joiner.leftIncompatibleRoom, "a new attempt starts without the old reason")
     }
 
+    /// Only a joiner waiting in a lobby leaves on its host's version: a host refuses a joiner's
+    /// message from another version as before and keeps its room open.
+    func testAHostKeepsItsRoomWhenAJoinerSpeaksAnotherVersion() async {
+        let star = FakeStar(phones: 2, entitlement: FakeEntitlement(unlocked: false))
+        let host = star.coordinators[0]
+        await host.createRoom(label: "Team", size: 3, nickname: "Sam")
+        star.coordinators[1].join(roomID: "room", nickname: "Alex")
+        star.flush()
+        star.transports[0].onEvent?(.received(Data("{\"v\":\(CravageCore.protocolVersion + 1)}".utf8), from: PeerID(1)))
+        XCTAssertEqual(host.engine.phase, .lobby)
+        XCTAssertFalse(host.leftIncompatibleRoom)
+        XCTAssertEqual(star.transports[0].hosting?.size, 3)
+    }
+
+    /// Once the round has started, a stray message in another version is refused and the round
+    /// carries on: the lobby is the only place where it means the room cannot work.
+    func testAMessageInAnotherVersionDoesNotEndAStartedRound() async {
+        let star = await lockedRoom()
+        let joiner = star.coordinators[1]
+        let phase = joiner.engine.phase
+        XCTAssertNotEqual(phase, .lobby)
+        star.transports[1].onEvent?(.received(Data("{\"v\":\(CravageCore.protocolVersion + 1)}".utf8), from: .host))
+        XCTAssertEqual(joiner.engine.phase, phase)
+        XCTAssertFalse(joiner.leftIncompatibleRoom)
+    }
+
     /// A malformed message in the current version is refused as before and does not end the join.
     func testAMalformedMessageInThisVersionDoesNotEndTheJoin() async {
         let star = FakeStar(phones: 2, entitlement: FakeEntitlement(unlocked: false))

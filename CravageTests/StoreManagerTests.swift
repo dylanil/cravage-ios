@@ -353,6 +353,7 @@ final class StoreManagerTests: XCTestCase {
             _ = await newer.value
         }
         await creation.value
+        XCTAssertEqual(backend.readGates.count, 2, "waiting for the newer read starts no read of its own")
         return (coordinator, transport)
     }
 

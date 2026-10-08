@@ -109,8 +109,11 @@ struct JoinView: View {
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
+                // A room that cannot be picked has no circle to fill.
                 ZStack {
-                    if picked {
+                    if !JoinChoice.canPick(room) {
+                        EmptyView()
+                    } else if picked {
                         Circle().fill(Paper.accentFill)
                         Image(systemName: "checkmark")
                             .paperFont(.sans, 12, weight: .bold)
@@ -130,7 +133,6 @@ struct JoinView: View {
         }
         .buttonStyle(PressableCard())
         .disabled(!JoinChoice.canPick(room))
-        .opacity(JoinChoice.canPick(room) ? 1 : 0.6)
         .padding(.top, 14)
         .accessibilityAddTraits(picked ? [.isSelected] : [])
         .accessibilityHint(JoinChoice.canPick(room) ? "Picks this room. Join with the button at the bottom." : "")

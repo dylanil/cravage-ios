@@ -16,7 +16,7 @@ enum JoinChoice {
     /// Shown on a room this phone cannot join. Neither phone can tell which of the two is behind,
     /// so it asks for both to be updated.
     static func versionNote(for room: RoomAdvert) -> String? {
-        room.isCompatible ? nil : "Needs the same version of Cravage. Update the app on both phones."
+        room.isCompatible ? nil : "Needs a compatible version of Cravage. Update the app on both phones."
     }
 
     /// Shown when a room's messages turned out to be from another app version after joining.

@@ -686,8 +686,8 @@
       "name": "a late dispute stops a share already offered",
       "suite": "app",
       "file": "Cravage/UI/TranscriptExport.swift",
-      "find": "        self.current = { [coordinator] in coordinator.live.record }",
-      "replace": "        self.current = { [record] in record }"
+      "find": "        self.init(lease: lease, session: record.boundSession, current: { [coordinator] in coordinator.live.record })",
+      "replace": "        self.init(lease: lease, session: record.boundSession, current: { [record] in record })"
     },
     {
       "name": "a pending room acts on the newest read of what is owned",
@@ -716,6 +716,34 @@
       "file": "Cravage/Round/RoundCoordinator.swift",
       "find": "                    hostOnAnotherVersion = true",
       "replace": ""
+    },
+    {
+      "name": "a share refuses a record from another round",
+      "suite": "app",
+      "file": "Cravage/UI/TranscriptExport.swift",
+      "find": "        guard let record = current(), record.boundSession == session,",
+      "replace": "        guard let record = current(),"
+    },
+    {
+      "name": "closing an older result leaves the newer one open",
+      "suite": "app",
+      "file": "Cravage/UI/TranscriptExport.swift",
+      "find": "            guard lease == nil || open == lease else { return }\n",
+      "replace": ""
+    },
+    {
+      "name": "a host keeps its room when a joiner speaks another version",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "if case .message(.unsupportedVersion) = reason, case .received(_, from: .host) = event,\n                   engine.role == .joiner, engine.phase == .lobby {",
+      "replace": "if case .message(.unsupportedVersion) = reason,\n                   engine.phase == .lobby {"
+    },
+    {
+      "name": "a message in another version does not end a started round",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "                   engine.role == .joiner, engine.phase == .lobby {",
+      "replace": "                   engine.role == .joiner {"
     }
   ]
 }

@@ -48,8 +48,8 @@ final class TranscriptExportTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: TranscriptExport.folder.path))
     }
 
-    /// A share sheet can outlive the result screen (a restart offer replaces it). A destination
-    /// picked after that must not leave a file behind with nothing left to delete it.
+    /// A share sheet has been seen outliving the result screen (a restart offer replaces it). A
+    /// destination picked after that must not leave a file behind with nothing left to delete it.
     func testNothingIsWrittenOnceTheResultHasClosed() async throws {
         let export = offer(try await agreedRound())
         TranscriptExport.close()
@@ -57,22 +57,13 @@ final class TranscriptExportTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: TranscriptExport.folder.path))
     }
 
-    /// The share sheet keeps the item it was given. A signed conflicting confirmation that arrives
+    /// The share sheet may hold the item it was given. A signed conflicting confirmation that arrives
     /// after the Share row was tapped withdraws agreement, and a destination picked after that must
     /// not get a file that reads as agreed.
     func testALateDisputeStopsAShareAlreadyOffered() async throws {
         let host = try await agreedRound()
         let export = offer(host)
-        let star = try XCTUnwrap(stars.last)
-        let joiner = star.coordinators[1].engine
-        let conflicting = Envelope.signed(action: .resultConfirm, session: try XCTUnwrap(joiner.session),
-                                          rosterHash: joiner.roster?.rosterHash,
-                                          party: try XCTUnwrap(joiner.myLetter).letter,
-                                          content: String(repeating: "0", count: 64),
-                                          key: try XCTUnwrap(joiner.signingKey)).encoded()
-        star.enqueue(from: 1, to: .host, conflicting)
-        star.flush()
-        XCTAssertEqual(host.live.record?.outcome, .disputed(try XCTUnwrap(joiner.myLetter)))
+        try dispute(host)
         XCTAssertThrowsError(try export.writeFile())
         XCTAssertFalse(FileManager.default.fileExists(atPath: TranscriptExport.folder.path))
     }
@@ -88,6 +79,56 @@ final class TranscriptExportTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: TranscriptExport.folder.path))
         let written = try Data(contentsOf: offer(newer).writeFile())
         XCTAssertEqual(TranscriptVerifier.verify(written), [])
+    }
+
+    /// A share is for the round it was offered on. If the phone's record is from any other round
+    /// by the time the file is asked for, nothing is written, even though that round agreed.
+    func testAShareRefusesARecordFromAnotherRound() async throws {
+        let first = try await agreedRound()
+        let second = try await agreedRound()
+        let offered = try XCTUnwrap(first.live.record)
+        let later = try XCTUnwrap(second.live.record)
+        XCTAssertNotEqual(offered.boundSession, later.boundSession)
+        let export = TranscriptExport(lease: lease, session: offered.boundSession, current: { later })
+        XCTAssertThrowsError(try export.writeFile())
+    }
+
+    /// Closing a result ends only its own lease: a result already showing in its place keeps its
+    /// shares working.
+    func testClosingAnOlderResultLeavesTheNewerOneOpen() async throws {
+        let host = try await agreedRound()
+        let older = lease
+        lease = TranscriptExport.open()
+        TranscriptExport.close(older)
+        let written = try Data(contentsOf: offer(host).writeFile())
+        XCTAssertEqual(TranscriptVerifier.verify(written), [])
+    }
+
+    /// The share sheet asks through the transfer representation, not `writeFile` directly: that
+    /// route must apply the same checks when it runs after a dispute has arrived.
+    func testTheShareSheetRouteChecksTheRoundWhenItAsks() async throws {
+        let host = try await agreedRound()
+        let export = offer(host)
+        let shared = try await export.exported(as: .json)
+        XCTAssertEqual(TranscriptVerifier.verify(shared), [])
+        try dispute(host)
+        do {
+            _ = try await export.exported(as: .json)
+            XCTFail("a disputed round was shared")
+        } catch {}
+    }
+
+    private func dispute(_ host: RoundCoordinator) throws {
+        let star = try XCTUnwrap(stars.last)
+        let joiner = star.coordinators[1].engine
+        let conflicting = Envelope.signed(action: .resultConfirm, session: try XCTUnwrap(joiner.session),
+                                          rosterHash: joiner.roster?.rosterHash,
+                                          party: try XCTUnwrap(joiner.myLetter).letter,
+                                          content: String(repeating: "0", count: 64),
+                                          key: try XCTUnwrap(joiner.signingKey)).encoded()
+        star.enqueue(from: 1, to: .host, conflicting)
+        star.flush()
+        XCTAssertEqual(host.live.record?.outcome, .disputed(try XCTUnwrap(joiner.myLetter)))
     }
 
     private func offer(_ coordinator: RoundCoordinator) -> TranscriptExport {
