@@ -21,6 +21,13 @@ struct PaperHeader: View {
     let eyebrow: String
     let title: String
     var size: CGFloat = 28
+    /// The eyebrow carries the room's question rather than repeating the screen's name, so
+    /// VoiceOver reads it before the title.
+    var speaksEyebrow = false
+
+    static func spokenLabel(eyebrow: String, title: String, speaksEyebrow: Bool) -> String {
+        speaksEyebrow ? "\(eyebrow). \(title)" : title
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -33,7 +40,7 @@ struct PaperHeader: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(title)
+        .accessibilityLabel(Self.spokenLabel(eyebrow: eyebrow, title: title, speaksEyebrow: speaksEyebrow))
         .accessibilityAddTraits(.isHeader)
     }
 }

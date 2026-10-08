@@ -31,7 +31,8 @@ struct EnterFigureView: View {
             PaperNavBar(title: "Leave", action: onLeave)
             ScrollingBody {
                 VStack(alignment: .leading, spacing: 0) {
-                    PaperHeader(eyebrow: engine.roster?.label ?? "Round", title: "Your figure")
+                    PaperHeader(eyebrow: engine.roster?.label ?? "Round", title: "Your figure",
+                                speaksEyebrow: engine.roster != nil)
                         .padding(.top, 6)
                     figureField
                     if let error {
@@ -80,7 +81,7 @@ struct EnterFigureView: View {
     private var figureField: some View {
         VStack(spacing: 0) {
             TextField("0.00", text: $text)
-                .accessibilityLabel("Your figure")
+                .accessibilityLabel(FigureCopy.fieldLabel(question: engine.roster?.label))
                 .paperFont(.mono, 42, weight: .semibold)
                 .foregroundStyle(Paper.ink)
                 .tint(Paper.accentFill)

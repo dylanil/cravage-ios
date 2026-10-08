@@ -16,7 +16,8 @@ struct WaitingView: View {
             PaperNavBar(title: "Cancel", action: onCancel)
             ScrollingBody {
                 VStack(alignment: .leading, spacing: 0) {
-                    PaperHeader(eyebrow: engine.roster?.label ?? "Round", title: title)
+                    PaperHeader(eyebrow: engine.roster?.label ?? "Round", title: title,
+                                speaksEyebrow: engine.roster != nil)
                         .padding(.top, 6)
                     SectionHeading(text: "Phones")
                         .padding(.top, 24)

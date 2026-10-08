@@ -25,7 +25,8 @@ struct LobbyJoinerView: View {
                         .frame(height: 96)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 8)
-                    PaperHeader(eyebrow: engine.label ?? "Room", title: "Waiting for the host to start")
+                    PaperHeader(eyebrow: engine.label ?? "Room", title: "Waiting for the host to start",
+                                speaksEyebrow: engine.label != nil)
                     Text("You've asked to join. The host admits everyone, then starts the round. Keep the app open.")
                         .paperFont(.sans, 15)
                         .foregroundStyle(Paper.muted)

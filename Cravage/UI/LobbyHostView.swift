@@ -22,7 +22,8 @@ struct LobbyHostView: View {
             ScrollingBody {
                 VStack(alignment: .leading, spacing: 0) {
                     PaperHeader(eyebrow: engine.label ?? "Room",
-                                title: "\(inRoom) of \(engine.maxSize) in the room")
+                                title: "\(inRoom) of \(engine.maxSize) in the room",
+                                speaksEyebrow: engine.label != nil)
                         .padding(.top, 6)
                     if !engine.pendingJoiners.isEmpty {
                         SectionHeading(text: "Asking to join")

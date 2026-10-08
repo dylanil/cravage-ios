@@ -15,6 +15,17 @@ final class FigureCopyTests: XCTestCase {
                        "with one other party there is nobody to share with")
     }
 
+    /// The room's question sits in the eyebrow, which VoiceOver skips on other screens. On the
+    /// figure and result screens it is the only place the question appears, so it is spoken there.
+    func testVoiceOverHearsTheQuestionOnTheFigureAndResultScreens() {
+        XCTAssertEqual(PaperHeader.spokenLabel(eyebrow: "Weekly screen time", title: "Your figure", speaksEyebrow: true),
+                       "Weekly screen time. Your figure")
+        XCTAssertEqual(PaperHeader.spokenLabel(eyebrow: "Check the code", title: "Is this on every phone?", speaksEyebrow: false),
+                       "Is this on every phone?", "a decorative eyebrow stays silent")
+        XCTAssertEqual(FigureCopy.fieldLabel(question: "Weekly screen time"), "Your figure for Weekly screen time")
+        XCTAssertEqual(FigureCopy.fieldLabel(question: nil), "Your figure")
+    }
+
     /// CONTRIBUTING.md's allowed honesty copy, word for word.
     func testTheOnThisPhoneLineIsTheApprovedWording() {
         XCTAssertEqual(FigureCopy.onThisPhone,

@@ -758,6 +758,20 @@
       "file": "Cravage/Round/RoundCoordinator.swift",
       "find": "            if problemIsDiscovery, !adverts.isEmpty {",
       "replace": "            if problemIsDiscovery {"
+    },
+    {
+      "name": "VoiceOver hears the room's question in the header",
+      "suite": "app",
+      "file": "Cravage/UI/PaperControls.swift",
+      "find": "        speaksEyebrow ? \"\\(eyebrow). \\(title)\" : title",
+      "replace": "        title"
+    },
+    {
+      "name": "VoiceOver hears the room's question on the figure field",
+      "suite": "app",
+      "file": "Cravage/UI/FigureCopy.swift",
+      "find": "        question.map { \"Your figure for \\($0)\" } ?? \"Your figure\"",
+      "replace": "        \"Your figure\""
     }
   ]
 }

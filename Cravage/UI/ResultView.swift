@@ -24,7 +24,8 @@ struct ResultView: View {
             PaperNavBar()
             ScrollingBody {
                 VStack(alignment: .leading, spacing: 0) {
-                    PaperHeader(eyebrow: record?.label ?? "Round", title: OutcomeCopy.title(outcome))
+                    PaperHeader(eyebrow: record?.label ?? "Round", title: OutcomeCopy.title(outcome),
+                                speaksEyebrow: record != nil)
                         .padding(.top, 6)
                     if OutcomeCopy.showsAverage(outcome) {
                         averageBlock
