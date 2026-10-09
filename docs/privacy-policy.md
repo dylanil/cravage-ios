@@ -1,6 +1,6 @@
 # Cravage privacy policy
 
-*Last updated: 2026-10-04 (draft - finalised before submission)*
+*Last updated: 2026-10-09*
 
 Cravage is designed so that there is very little to collect, and this page says exactly what that
 little is.
@@ -10,8 +10,10 @@ little is.
 The figure you type is processed on your phone. What the app sends to the other participants is a
 masked version of it: your figure plus random amounts that cancel out when everyone's masked
 numbers are added together. No phone, including the host's, can recover your figure from what it
-receives, unless every other participant in the round conspires against you. Your figure is held
-in memory only while the round is running and is cleared when it ends.
+receives, unless every other participant in the round conspires against you. This relies on
+everyone checking the room code and counting the phones in the room. Otherwise a host could add
+pretend participants that exist only on their own phone, and those would count as conspirators.
+Your figure is held in memory only while the round is running and is cleared when it ends.
 
 ## What Cravage sends, and to whom
 
@@ -29,14 +31,16 @@ nickname.
 
 ## What is saved on your phone
 
-Your nickname, your light or dark appearance choice, and whether you have bought the one-off
-unlock. Round history is not saved. Figures are never written to storage.
+Cravage saves your nickname and your light or dark appearance choice. It does not save round
+history, and figures are never written to storage. Whether you have bought the one-off unlock is
+kept by Apple's App Store, not by Cravage.
 
 ## Exported transcripts
 
-You can choose to export a transcript of a round. It contains the masked numbers, signatures and
-result, never anyone's figure. Once exported, it is saved wherever you send it with the iOS share
-sheet, and whoever receives it can keep it and share it.
+You can choose to share a transcript of a round that every phone agreed on. It contains the room's
+label, the masked numbers, signatures and result, never anyone's figure or nickname. Cravage writes
+the file only when you pick where to send it, and deletes its own copy when you leave the result
+screen. Once sent, whoever receives it can keep it and share it.
 
 ## Purchases
 

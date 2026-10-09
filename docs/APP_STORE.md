@@ -54,11 +54,11 @@ participants that exist only on their own phone, and counting is what catches th
 NO SERVER, NO ACCOUNT
 Cravage is peer-to-peer: phones talk directly to each other over Wi-Fi. Cravage has no server, no sign-up, no analytics and
 no adverts. It saves your nickname and your light or dark setting on your phone. Round results are
-never stored.
+not stored, unless you choose to share a transcript.
 
 CHECK IT YOURSELF
-Any round can be exported as a transcript that shows the masked numbers, the signatures and the
-result. The same open-source verifier that checks the web version checks the phone's transcript,
+Any round that every phone agreed on can be shared as a transcript that shows the masked numbers,
+the signatures and the result. The same open-source verifier that checks the web version checks the phone's transcript,
 on any computer.
 
 PRICING
@@ -72,7 +72,7 @@ remaining person's figure; that is inherent to the technique, and the app says s
 your number. Three is the minimum, and the smallest group where no one else can work out your figure
 alone; in a group of three, the other two together can.
 
-Cravage is open source. The code, the plan and an independent review of its design are published
+Cravage is open source. The code, the plan and independent AI reviews of its design are published
 at github.com/dylanil/cravage-ios.
 
 **Keywords (100, comma separated, no spaces):**
