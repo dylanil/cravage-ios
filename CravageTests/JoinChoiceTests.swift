@@ -28,6 +28,7 @@ final class JoinChoiceTests: XCTestCase {
             let note = try XCTUnwrap(JoinChoice.versionNote(for: room("a", "Annual bonus", version: version)))
             XCTAssertEqual(note, JoinChoice.versionNote(for: room("a", "Annual bonus", version: CravageCore.protocolVersion + 7)))
             XCTAssertTrue(note.contains("both phones"), note)
+            XCTAssertTrue(note.contains("the same version of Cravage"), note)
             for guess in ["newer", "older", "out of date", "outdated", "your phone", "their phone"] {
                 XCTAssertFalse(note.lowercased().contains(guess), note)
             }

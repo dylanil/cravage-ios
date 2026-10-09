@@ -78,8 +78,8 @@ than discovered. The in-app Limitations screen carries the same list in shorter 
   many other phones are expected; count that many real phones in the room yourself before
   confirming - the app cannot do this check for you.
 - **Room label and nicknames are visible to nearby phones** while a room is open.
-- **Every phone needs a compatible version of Cravage.** A room from a phone on an incompatible
-  version shows in the list but can't be joined; update the app on both phones.
+- **Every phone needs the same version of Cravage.** A room from a phone on another version shows
+  in the list but can't be joined; update the app on both phones.
 - **Not sold in the EU** in this version, because EU rules would require publishing a postal
   address and phone number on the store page.
 - **The exported transcript proves internal consistency**: that the signatures verify, the
