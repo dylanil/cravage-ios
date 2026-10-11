@@ -5,8 +5,8 @@
       "name": "cancelled room creation releases its busy flag immediately",
       "suite": "app",
       "file": "Cravage/Round/RoundCoordinator.swift",
-      "find": "    func leave() {\n        actionEpoch += 1\n        isCreatingRoom = false",
-      "replace": "    func leave() {\n        actionEpoch += 1"
+      "find": "    func leave() {\n        rememberTheRound()\n        actionEpoch += 1\n        isCreatingRoom = false",
+      "replace": "    func leave() {\n        rememberTheRound()\n        actionEpoch += 1"
     },
     {
       "name": "cancelled creation cleanup cannot clear a newer operation",
@@ -448,6 +448,41 @@
       "file": "Cravage/Diagnostics.swift",
       "find": "            lines.append(\"parties: \\(roster.size)\")",
       "replace": "            lines.append(\"room: \\(roster.label)\")"
+    },
+    {
+      "name": "diagnostics keep the last round after leaving",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "    func leave() {\n        rememberTheRound()\n",
+      "replace": "    func leave() {\n"
+    },
+    {
+      "name": "the last round counts only its own send failures",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "            sendFailures: max(0, transport.sendFailures - sendFailuresAtEntry),",
+      "replace": "            sendFailures: transport.sendFailures,"
+    },
+    {
+      "name": "a link report counts a send that never finishes",
+      "suite": "app",
+      "file": "Cravage/Transport/Outbox.swift",
+      "find": "    var waitingCount: Int { queue.count + (sendingSince == nil ? 0 : 1) }",
+      "replace": "    var waitingCount: Int { queue.count }"
+    },
+    {
+      "name": "a link report counts the frames that arrived",
+      "suite": "app",
+      "file": "Cravage/Transport/NetworkTransport.swift",
+      "find": "        link.frameReceived()\n",
+      "replace": ""
+    },
+    {
+      "name": "a link report keeps the first cause of its end",
+      "suite": "app",
+      "file": "Cravage/Transport/NetworkTransport.swift",
+      "find": "            guard frozen == nil else { return }\n",
+      "replace": ""
     },
     {
       "name": "names and labels refuse invisible characters",

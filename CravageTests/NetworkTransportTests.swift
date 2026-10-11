@@ -43,8 +43,94 @@ private actor HeldTCP {
     }
 }
 
+/// Serves the given bytes to `receive(exactly:)` calls, then fails as a lost connection would.
+private actor ScriptedReader {
+    private var bytes: Data
+    init(frames: [Data]) { bytes = frames.reduce(Data()) { $0 + (try! Framing.encode($1)) } }
+
+    func receiveExactly(_ count: Int) async throws -> Data {
+        guard bytes.count >= count else { throw URLError(.networkConnectionLost) }
+        let chunk = bytes.prefix(count)
+        bytes.removeFirst(count)
+        return Data(chunk)
+    }
+}
+
 @MainActor
 final class NetworkTransportTests: XCTestCase {
+    private func settle(until done: @MainActor () -> Bool) async {
+        for _ in 0..<200 where !done() { try? await Task.sleep(for: .milliseconds(10)) }
+    }
+
+    /// Hypothesis 2 of the 2026-10-09 device report: one send never returns, so nothing fails and
+    /// nothing more goes out. The report must show the send in progress and what is queued behind it.
+    func testALinkReportShowsASendThatNeverFinishes() async {
+        let transport = NetworkTransport()
+        let tcp = HeldTCP()
+        transport.open(as: .host, send: tcp.send, receiveExactly: tcp.receiveExactly)
+        for byte in UInt8(1)...3 { transport.send(Data([byte]), to: .host) }
+        await fulfillment(of: [tcp.sending], timeout: 2)
+
+        let stuck = transport.linkReports
+        XCTAssertEqual(stuck.count, 1)
+        XCTAssertEqual(stuck.first?.toHost, true)
+        XCTAssertEqual(stuck.first?.end, .open)
+        XCTAssertEqual(stuck.first?.framesSent, 0)
+        XCTAssertEqual(stuck.first?.waitingToSend, 3, "the send in progress and the two behind it")
+        XCTAssertNotNil(stuck.first?.secondsSending, "a send is in progress")
+
+        await tcp.releaseSend()
+        await settle { transport.linkReports.first?.framesSent == 3 }
+        let flowing = transport.linkReports.first
+        XCTAssertEqual(flowing?.framesSent, 3)
+        XCTAssertEqual(flowing?.waitingToSend, 0)
+        XCTAssertNil(flowing?.secondsSending)
+        transport.stopAll()
+        await tcp.failRead()
+    }
+
+    /// Hypotheses 1 and 3: the link goes quiet, or the host stops reading. The report counts what
+    /// arrived and says how the connection ended, and keeps an ended link until `stopAll`.
+    func testALinkReportCountsWhatArrivedAndHowItEnded() async {
+        let transport = NetworkTransport()
+        let reader = ScriptedReader(frames: [Data([7]), Data([8])])
+        let ended = expectation(description: "connection lost")
+        transport.onEvent = { if case .peerDisconnected = $0 { ended.fulfill() } }
+        transport.open(as: PeerID(1), send: { _ in }, receiveExactly: reader.receiveExactly)
+        await fulfillment(of: [ended], timeout: 2)
+
+        let report = transport.linkReports
+        XCTAssertEqual(report.count, 1, "an ended link is still reported")
+        XCTAssertEqual(report.first?.toHost, false)
+        XCTAssertEqual(report.first?.end, .lost)
+        XCTAssertEqual(report.first?.framesReceived, 2)
+        XCTAssertEqual(report.first?.secondsSinceLastReceived, 0)
+
+        transport.stopAll()
+        XCTAssertTrue(transport.linkReports.isEmpty, "a new room starts a new report")
+    }
+
+    func testALinkReportSaysWhoEndedIt() async {
+        let transport = NetworkTransport()
+        let failing = HeldTCP()
+        transport.open(as: PeerID(1), send: { _ in throw URLError(.networkConnectionLost) },
+                       receiveExactly: failing.receiveExactly)
+        let closed = HeldTCP()
+        transport.open(as: PeerID(2), send: closed.send, receiveExactly: closed.receiveExactly)
+        let silent = HeldTCP()
+        transport.open(as: PeerID(3), send: silent.send, receiveExactly: silent.receiveExactly)
+        transport.send(Data([1]), to: PeerID(1))
+        transport.disconnect(PeerID(2))
+        await settle { transport.linkReports.first?.end == .sendFailed && transport.linkReports[1].end == .closedHere }
+
+        XCTAssertEqual(transport.linkReports.map(\.end), [.sendFailed, .closedHere, .open],
+                       "in the order the links opened")
+        XCTAssertEqual(transport.linkReports[0].waitingToSend, 0, "the failed send is not still waiting")
+        XCTAssertNil(transport.linkReports[0].secondsSending)
+        XCTAssertNil(transport.linkReports[2].secondsSinceLastReceived, "nothing ever arrived")
+        transport.stopAll()
+        for tcp in [failing, closed, silent] { await tcp.failRead() }
+    }
     func testOldExplicitDisconnectCannotReportFailureAfterStopAndRejoin() async {
         for (stop, replace) in [(true, false), (true, true), (false, true)] {
             let transport = NetworkTransport()

@@ -35,6 +35,8 @@ final class RoundCoordinator {
     /// so the next restart warns again (SPEC 13). Cleared by Leave, because `generation` is not
     /// strictly increasing across a leave and rejoin (the joiner's welcome decrements it once).
     private(set) var restartWarningAcknowledged: Int?
+    /// The round this phone was last in, taken as it left. Diagnostics only.
+    private(set) var lastRound: LastRound?
 
     @ObservationIgnored private let transport: RoundTransport
     @ObservationIgnored private let clock: RoundClock
@@ -42,6 +44,11 @@ final class RoundCoordinator {
     @ObservationIgnored private var tickTask: Task<Void, Never>?
     @ObservationIgnored private var browsing = false
     @ObservationIgnored private var advertising = false
+    // For `lastRound`: the since-launch failure count when the room was entered, when the roster
+    // last locked, and when this phone's own figure was accepted after that.
+    @ObservationIgnored private var sendFailuresAtEntry = 0
+    @ObservationIgnored private var rosterLockedMs: UInt64?
+    @ObservationIgnored private var ownShareMs: UInt64?
 
     init(transport: RoundTransport, clock: RoundClock, entitlement: EntitlementProvider, deadlines: Deadlines = Deadlines()) {
         self.engine = RoundEngine(deadlines: deadlines)
@@ -126,6 +133,7 @@ final class RoundCoordinator {
         do {
             let figure = try FixedPoint.parseDecimalToFixed(text)
             apply(.submitFigure(figure, generation: generation))
+            if lastRejection == nil, rosterLockedMs != nil, ownShareMs == nil { ownShareMs = clock.nowMs() }
             return nil
         } catch {
             return error as? FixedPointError ?? .invalidFormat
@@ -133,6 +141,7 @@ final class RoundCoordinator {
     }
 
     func leave() {
+        rememberTheRound()
         actionEpoch += 1
         isCreatingRoom = false
         wasInterrupted = false
@@ -160,6 +169,28 @@ final class RoundCoordinator {
 
     /// Failed sends since launch, for the diagnostics report.
     var sendFailures: Int { transport.sendFailures }
+
+    /// Taken before Leave resets the engine and the transport forgets its connections.
+    private func rememberTheRound() {
+        guard engine.role != nil else { return }
+        let now = clock.nowMs()
+        lastRound = LastRound(
+            role: engine.role, phase: engine.phase, generation: engine.generation,
+            parties: engine.roster?.size ?? 0,
+            confirmed: engine.roster == nil ? 0 : engine.confirmedLetters.count,
+            sharesIn: engine.roster == nil ? 0 : engine.sharesReceived.count,
+            sendFailures: max(0, transport.sendFailures - sendFailuresAtEntry),
+            lastRefusedMessage: lastPeerRejection,
+            secondsSinceRosterLocked: rosterLockedMs.map { Self.seconds(from: $0, to: now) },
+            secondsToOwnShare: rosterLockedMs.flatMap { locked in ownShareMs.map { Self.seconds(from: locked, to: $0) } },
+            links: transport.linkReports)
+        rosterLockedMs = nil
+        ownShareMs = nil
+    }
+
+    private static func seconds(from start: UInt64, to end: UInt64) -> Int {
+        end > start ? Int((end - start) / 1000) : 0
+    }
 
     /// Seconds left on the phase deadline, for the countdown lines. Nil when nothing is waiting.
     /// Rounded up, so a countdown reads 1 until the moment it expires rather than resting on 0.
@@ -209,6 +240,12 @@ final class RoundCoordinator {
     private func apply(_ event: Event) {
         let phaseBefore = engine.phase
         let effects = engine.handle(event, now: clock.nowMs())
+        if phaseBefore == .idle, engine.phase != .idle { sendFailuresAtEntry = transport.sendFailures }
+        // Every lock, restarts included, starts the clock for this round's timings again.
+        if engine.phase == .revealing, phaseBefore != .revealing {
+            rosterLockedMs = clock.nowMs()
+            ownShareMs = nil
+        }
         // A refusal answers a tap on the screen it was made on. When the network or the clock
         // moves the round to another screen, the refusal stays behind (review 2026-09-24).
         if !event.isPersonAction, engine.phase != phaseBefore { lastRejection = nil }
@@ -265,6 +302,26 @@ final class RoundCoordinator {
             self?.apply(.tick)
         }
     }
+}
+
+/// What happened to a round, kept after leaving it: Copy diagnostics is in Settings, which is only
+/// reachable after Leave, and Leave resets the engine (device reports 2026-10-04 and 2026-10-09).
+/// Counts, durations and fixed states only, so it can go into a support report.
+struct LastRound {
+    var role: Role?
+    var phase: Phase
+    var generation: Int
+    var parties: Int
+    var confirmed: Int
+    var sharesIn: Int
+    /// Sends that failed between entering the room and leaving it.
+    var sendFailures: Int
+    var lastRefusedMessage: Rejection?
+    /// From the roster locking to leaving. Nil when the roster never locked.
+    var secondsSinceRosterLocked: Int?
+    /// From the roster locking to this phone's own figure being accepted. Nil when it never was.
+    var secondsToOwnShare: Int?
+    var links: [LinkReport]
 }
 
 private extension Event {

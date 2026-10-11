@@ -55,4 +55,41 @@ protocol RoundTransport: AnyObject {
     func stopAll()
     /// Sends that failed since launch. A count only, for the diagnostics report.
     var sendFailures: Int { get }
+    /// Every connection opened since the last `startHosting` or `stopAll`, oldest first, ended ones
+    /// included. For the diagnostics report, which reads it before `stopAll` clears it.
+    var linkReports: [LinkReport] { get }
+}
+
+/// What one connection did, in counts and seconds only: no peer name, address or content, so it
+/// can go into a diagnostics report. Device report 2026-10-09: one phone's link to the host went
+/// silent in both directions mid-round with no failed send; these figures tell a send that never
+/// finished from a host that stopped reading from a link that went quiet.
+struct LinkReport: Equatable, Sendable {
+    enum End: Equatable, Sendable {
+        /// Still open when the report was taken.
+        case open
+        /// The other side closed it, or it failed or reset (`Framing.ConnectionEnd.failed`).
+        case lost
+        /// The other side broke the framing rules.
+        case badFrame
+        /// A send threw.
+        case sendFailed
+        /// This phone closed it: a disconnect, a replacement or a leave.
+        case closedHere
+    }
+
+    /// True for a joiner's one connection to the host; false for a host's connection to a joiner.
+    var toHost: Bool
+    var end: End = .open
+    /// How long the connection had been open when it ended, or when the report was taken.
+    var secondsOpen = 0
+    var framesSent = 0
+    var framesReceived = 0
+    /// Frames handed to the connection and not yet confirmed sent, the one being sent included.
+    var waitingToSend = 0
+    /// How long the send in progress has been running, when one is.
+    var secondsSending: Int?
+    /// Seconds since the last frame arrived, measured at the same point as `secondsOpen`. Nil when
+    /// nothing ever arrived.
+    var secondsSinceLastReceived: Int?
 }

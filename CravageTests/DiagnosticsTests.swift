@@ -8,8 +8,9 @@ import XCTest
 @MainActor
 final class DiagnosticsTests: XCTestCase {
 
-    private func roundInProgress() async -> FakeStar {
+    private func roundInProgress(sendFailuresBefore: Int = 0) async -> FakeStar {
         let star = FakeStar(phones: 3, entitlement: FakeEntitlement(unlocked: false))
+        star.transports[0].sendFailures = sendFailuresBefore
         let host = star.coordinators[0]
         await host.createRoom(label: "Quarterly bonus review", size: 3, nickname: "Zebediah")
         for (index, name) in [(1, "Wilhelmina"), (2, "Bartholomew")] {
@@ -82,6 +83,77 @@ final class DiagnosticsTests: XCTestCase {
         let report = Diagnostics.report(for: star.coordinators[0], appVersion: "0.1",
                                         build: "1", systemVersion: "26.6", model: "iPhone17,1")
         XCTAssertTrue(report.contains("send failures: 2"), report)
+    }
+
+    /// Device reports 2026-10-04 and 2026-10-09: Copy diagnostics is in Settings, reachable only after
+    /// leaving, and leaving resets the round, so every report came back "role none, phase idle".
+    /// The report has to remember the round it left.
+    func testTheLastRoundSurvivesLeaving() async {
+        let star = await roundInProgress()
+        star.clock.now += 42_000
+        star.coordinators[0].leave()
+        let report = Diagnostics.report(for: star.coordinators[0], appVersion: "0.1",
+                                        build: "1", systemVersion: "26.6", model: "iPhone17,1")
+
+        XCTAssertTrue(report.contains("phase: idle"), "the current state comes first:\n\(report)")
+        guard let section = report.range(of: "last round:") else {
+            return XCTFail("no last round after leaving:\n\(report)")
+        }
+        let last = String(report[section.upperBound...])
+        for line in ["role: host", "phase: sharing", "parties: 3", "confirmed: 3", "shares in: 1",
+                     "since roster locked: 42 s", "own share after: 0 s"] {
+            XCTAssertTrue(last.contains(line), "last round lacks \(line.debugDescription):\n\(report)")
+        }
+    }
+
+    /// The summary goes into the same support email, so it obeys the same rule as the rest.
+    func testTheLastRoundCarriesNoRoundContent() async {
+        let star = await roundInProgress()
+        let engine = star.coordinators[0].engine
+        let code = engine.roomCode!.code
+        let hash = engine.roster!.rosterHash.base64EncodedString()
+        star.coordinators[0].leave()
+        let report = Diagnostics.report(for: star.coordinators[0], appVersion: "0.1",
+                                        build: "1", systemVersion: "26.6", model: "iPhone17,1")
+        XCTAssertTrue(report.contains("last round:"), report)
+        for secret in ["Zebediah", "Wilhelmina", "Bartholomew", "Quarterly bonus review",
+                       "98765", code, hash] {
+            XCTAssertFalse(report.contains(secret), "the report leaked \(secret.debugDescription):\n\(report)")
+        }
+    }
+
+    /// Each connection's counts are what tell the three explanations apart: a send that never
+    /// finished, a host that stopped reading, or a link that went quiet.
+    func testTheLastRoundListsEachConnection() async {
+        let star = await roundInProgress()
+        star.transports[0].linkReports = [
+            LinkReport(toHost: false, end: .open, secondsOpen: 95, framesSent: 12, framesReceived: 4,
+                       waitingToSend: 3, secondsSending: 61, secondsSinceLastReceived: 70),
+            LinkReport(toHost: false, end: .lost, secondsOpen: 30, framesSent: 9, framesReceived: 6,
+                       waitingToSend: 0, secondsSending: nil, secondsSinceLastReceived: nil),
+        ]
+        star.coordinators[0].leave()
+        let report = Diagnostics.report(for: star.coordinators[0], appVersion: "0.1",
+                                        build: "1", systemVersion: "26.6", model: "iPhone17,1")
+        XCTAssertTrue(report.contains(
+            "link 1 to a joiner: open, 95 s, sent 12, received 4, waiting to send 3, sending for 61 s, quiet for 70 s"),
+            report)
+        XCTAssertTrue(report.contains(
+            "link 2 to a joiner: lost, 30 s, sent 9, received 6, waiting to send 0, nothing received"),
+            report)
+    }
+
+    /// Since-launch failures cannot say which round they belong to; the summary counts its own.
+    func testTheLastRoundCountsOnlyItsOwnSendFailures() async {
+        let star = await roundInProgress(sendFailuresBefore: 4)
+        star.transports[0].sendFailures += 5
+        star.coordinators[0].leave()
+        let report = Diagnostics.report(for: star.coordinators[0], appVersion: "0.1",
+                                        build: "1", systemVersion: "26.6", model: "iPhone17,1")
+        let parts = report.components(separatedBy: "last round:")
+        XCTAssertEqual(parts.count, 2, report)
+        XCTAssertTrue(parts[0].contains("send failures: 9"), "the since-launch line stays:\n\(report)")
+        XCTAssertTrue(parts[1].contains("send failures: 5"), "only this room's failures:\n\(report)")
     }
 
     func testAnIdleAppStillProducesAReport() {

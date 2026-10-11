@@ -43,7 +43,48 @@ enum Diagnostics {
         if let rejection = coordinator.lastPeerRejection {
             lines.append("last refused message: \(name(rejection))")
         }
+        if let last = coordinator.lastRound {
+            lines.append("last round:")
+            lines += report(last)
+        }
         return lines.joined(separator: "\n")
+    }
+
+    /// The round this phone left, so a report copied from Settings still describes it.
+    private static func report(_ last: LastRound) -> [String] {
+        var lines = [
+            "role: \(name(last.role))",
+            "phase: \(name(last.phase))",
+            "generation: \(last.generation)",
+            "parties: \(last.parties)",
+            "confirmed: \(last.confirmed)",
+            "shares in: \(last.sharesIn)",
+            "send failures: \(last.sendFailures)",
+        ]
+        if let rejection = last.lastRefusedMessage {
+            lines.append("last refused message: \(name(rejection))")
+        }
+        if let seconds = last.secondsSinceRosterLocked {
+            lines.append("since roster locked: \(seconds) s")
+            lines.append(last.secondsToOwnShare.map { "own share after: \($0) s" } ?? "own share: not sent")
+        }
+        for (index, link) in last.links.enumerated() {
+            lines.append("link \(index + 1) \(describe(link))")
+        }
+        return lines
+    }
+
+    private static func describe(_ link: LinkReport) -> String {
+        var parts = [
+            "\(link.toHost ? "to the host" : "to a joiner"): \(name(link.end))",
+            "\(link.secondsOpen) s",
+            "sent \(link.framesSent)",
+            "received \(link.framesReceived)",
+            "waiting to send \(link.waitingToSend)",
+        ]
+        if let seconds = link.secondsSending { parts.append("sending for \(seconds) s") }
+        parts.append(link.secondsSinceLastReceived.map { "quiet for \($0) s" } ?? "nothing received")
+        return parts.joined(separator: ", ")
     }
 
     // MARK: - Fixed words
@@ -107,6 +148,16 @@ enum Diagnostics {
         case .keyExchange: return "key exchange"
         case .sharing: return "sharing"
         case .collectingConfirmations: return "collecting confirmations"
+        }
+    }
+
+    private static func name(_ end: LinkReport.End) -> String {
+        switch end {
+        case .open: return "open"
+        case .lost: return "lost"
+        case .badFrame: return "bad frame"
+        case .sendFailed: return "send failed"
+        case .closedHere: return "closed here"
         }
     }
 

@@ -1,6 +1,6 @@
 # Cravage privacy policy
 
-*Last updated: 2026-10-09*
+*Last updated: 2026-10-10*
 
 Cravage is designed so that there is very little to collect, and this page says exactly what that
 little is.
@@ -57,8 +57,9 @@ phones nearby running Cravage.
 Cravage has no analytics, advertising or crash-reporting service. If you ask for help, you can copy
 a short diagnostic summary from Settings. It contains the app and iOS versions, the phone model,
 the protocol stage, counts (such as how many phones confirmed the room code or how many sends
-failed) and error codes. It never contains a figure, a nickname, a room name, a key or the room
-code. It is only sent if you send it.
+failed), timings in seconds (such as how long a connection had been quiet) and error codes,
+including for the last round you left. It never contains a figure, a nickname, a
+room name, a key or the room code. It is only sent if you send it.
 
 ## Children
 

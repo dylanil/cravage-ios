@@ -32,6 +32,10 @@ final class NetworkTransport: RoundTransport {
     private var links: [PeerID: Link] = [:]
     private var limiter = AcceptLimiter()
     private(set) var sendFailures = 0
+    /// Every link opened since the last start or stop, in order, ended ones included.
+    private var opened: [Link] = []
+    var linkReports: [LinkReport] { opened.map { $0.report() } }
+    static let reportedLinks = 32
     private let origin = ContinuousClock.now
 
     /// One open connection: its receive loop, its outbox, and whoever waits for it to close.
@@ -41,8 +45,46 @@ final class NetworkTransport: RoundTransport {
         var receiveTask: Task<Void, Never>?
         private var closedWaiters: [CheckedContinuation<Void, Never>] = []
         private var closing = false
+        // Diagnostics only: counts and times, never content.
+        private let toHost: Bool
+        private let openedAt = ContinuousClock.now
+        private var framesReceived = 0
+        private var lastReceivedAt: ContinuousClock.Instant?
+        /// Taken when the link ends, so a later report says how it was then, not after the cleanup.
+        private var frozen: LinkReport?
 
-        init(outbox: Outbox) { self.outbox = outbox }
+        init(outbox: Outbox, toHost: Bool) {
+            self.outbox = outbox
+            self.toHost = toHost
+        }
+
+        func frameReceived() {
+            framesReceived += 1
+            lastReceivedAt = .now
+        }
+
+        /// Records how the link ended. The first cause wins: a failed send that leads to a close is
+        /// still a failed send.
+        func ended(_ end: LinkReport.End) {
+            guard frozen == nil else { return }
+            var report = report()
+            report.end = end
+            frozen = report
+        }
+
+        func report() -> LinkReport {
+            if let frozen { return frozen }
+            let now = ContinuousClock.now
+            return LinkReport(toHost: toHost, end: .open,
+                              secondsOpen: Self.seconds(now - openedAt),
+                              framesSent: outbox.sentCount,
+                              framesReceived: framesReceived,
+                              waitingToSend: outbox.waitingCount,
+                              secondsSending: outbox.sendingSince.map { Self.seconds(now - $0) },
+                              secondsSinceLastReceived: lastReceivedAt.map { Self.seconds(now - $0) })
+        }
+
+        private static func seconds(_ duration: Duration) -> Int { Int(max(duration.components.seconds, 0)) }
 
         func waitUntilClosed() async {
             if closing && closedWaiters.isEmpty && receiveTask == nil { return }
@@ -187,6 +229,7 @@ final class NetworkTransport: RoundTransport {
     func connect(to roomID: String) {
         let token = startToken
         if let old = links.removeValue(forKey: .host) {
+            old.ended(.closedHere)
             Task { await old.close(drain: false) }
         }
         guard let endpoint = endpoints[roomID] else {
@@ -218,20 +261,30 @@ final class NetworkTransport: RoundTransport {
         let outbox = Outbox(send: { data in
             try await send(try Framing.encode(data))
         })
-        let link = Link(outbox: outbox)
+        let link = Link(outbox: outbox, toHost: peer == .host)
         links[peer] = link
+        opened.append(link)
+        // Bounded like everything else a peer can cause: a lobby that sees many short connections
+        // keeps only the most recent ones.
+        if opened.count > Self.reportedLinks { opened.removeFirst(opened.count - Self.reportedLinks) }
         // A failed send ends the connection now, reported like any other close, instead of leaving a
         // link that looks open while what was queued for it is gone.
         outbox.onFailure = { [weak self, weak link] in
+            link?.ended(.sendFailed)
             guard let self else { return }
             self.sendFailures += 1
             guard let link, self.links[peer] === link else { return }
             self.disconnect(peer)
         }
         link.receiveTask = Task { [weak self] in
-            _ = await Framing.pump(receiveExactly: receiveExactly, deliver: { [weak self] data in
+            let end = await Framing.pump(receiveExactly: receiveExactly, deliver: { [weak self] data in
                 await self?.delivered(data, from: peer, on: link)
             })
+            switch end {
+            case .failed: link.ended(.lost)
+            case .rejected: link.ended(.badFrame)
+            case .cancelled: link.ended(.closedHere)
+            }
             // Cleanup after the loop, whatever ended it; only if this link is still the one on record.
             guard let self, self.links[peer] === link else {
                 await link.close(drain: false)
@@ -248,6 +301,7 @@ final class NetworkTransport: RoundTransport {
 
     private func delivered(_ data: Data, from peer: PeerID, on link: Link) {
         guard links[peer] === link else { return }
+        link.frameReceived()
         onEvent?(.received(data, from: peer))
     }
 
@@ -261,6 +315,7 @@ final class NetworkTransport: RoundTransport {
 
     func disconnect(_ peer: PeerID) {
         guard let link = links.removeValue(forKey: peer) else { return }
+        link.ended(.closedHere)
         let token = startToken
         Task { [weak self] in
             await link.close(drain: true)
@@ -279,6 +334,7 @@ final class NetworkTransport: RoundTransport {
         browserTask = nil
         let closing = Array(links.values)
         links = [:]
+        opened = []
         endpoints = [:]
         for link in closing { Task { await link.close(drain: true) } }
     }

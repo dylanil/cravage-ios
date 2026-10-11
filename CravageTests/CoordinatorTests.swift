@@ -57,6 +57,7 @@ final class FakeStar {
         var sentCount = 0
         var connectionAttempts = 0
         var sendFailures = 0
+        var linkReports: [LinkReport] = []
         init(index: Int) { self.index = index }
         func startHosting(label: String, size: Int, hostNickname: String) { hosting = (label, size); advertising = true }
         func stopAdvertising() { advertising = false }
