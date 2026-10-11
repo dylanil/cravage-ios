@@ -270,6 +270,71 @@ final class NetworkTransportTests: XCTestCase {
         }
     }
 
+    /// Review of 3e916ff: nothing documents that a path's first interface is the one in use, so a
+    /// path over more than one kind says so rather than picking one.
+    func testAPathOverMoreThanOneKindOfInterfaceSaysSo() {
+        XCTAssertEqual(NetworkTransport.route(interfaces: []), .unknown)
+        XCTAssertEqual(NetworkTransport.route(interfaces: [(.other, "awdl0")]), .peerToPeer)
+        XCTAssertEqual(NetworkTransport.route(interfaces: [(.wifi, "en0"), (.wifi, "en0")]), .wifiNetwork)
+        XCTAssertEqual(NetworkTransport.route(interfaces: [(.wifi, "en0"), (.wifi, "awdl0")]), .mixed)
+    }
+
+    /// Review of 3e916ff: a link that has left the transport's table still reads until its close
+    /// finishes, and what arrives then is counted, so the other phone's "sent" still matches.
+    func testFramesThatArriveWhileALinkDrainsAreCounted() async {
+        let tcp = HeldTCP()
+        let incoming = Pipe()
+        let transport = NetworkTransport()
+        let link = transport.open(as: PeerID(1), send: tcp.send, receiveExactly: { try await incoming.read($0) })
+        transport.send(Data([1]), to: PeerID(1))
+        await fulfillment(of: [tcp.sending], timeout: 2)
+        let delivered = expectation(description: "delivered to the engine")
+        delivered.isInverted = true
+        transport.onEvent = { if case .received = $0 { delivered.fulfill() } }
+        transport.disconnect(PeerID(1))
+
+        await incoming.write(try! Framing.encode(Data([5])))
+        await settle { transport.linkLog.reports.first?.framesReceived == 1 }
+        XCTAssertEqual(transport.linkLog.reports.first?.framesReceived, 1)
+        await fulfillment(of: [delivered], timeout: 0.1)
+        await tcp.releaseSend()
+        await link.waitUntilClosed()
+        XCTAssertEqual(transport.linkLog.reports.first?.framesReceived, 1)
+        transport.stopAll()
+    }
+
+    /// The route is read as frames arrive, and the link stops holding the connection once closed.
+    func testALinkReadsItsRouteAsFramesArriveAndLetsGoOfTheConnection() async {
+        let transport = NetworkTransport()
+        let reader = ClosingReader(frames: [Data([7])])
+        let ended = expectation(description: "connection closed")
+        transport.onEvent = { if case .peerDisconnected = $0 { ended.fulfill() } }
+        let link = transport.open(as: PeerID(1), send: { _ in }, receiveExactly: reader.receiveExactly)
+        link.currentRoute = { .peerToPeer }
+        await fulfillment(of: [ended], timeout: 2)
+        XCTAssertEqual(transport.linkLog.reports.first?.route, .peerToPeer)
+        XCTAssertNil(link.currentRoute, "a closed link no longer reaches its connection")
+        transport.stopAll()
+    }
+
+    /// Review of 3e916ff: the log outlives the link, so a close that could not send everything
+    /// lets go of the rest, after the report has counted it.
+    func testAClosedLinkLetsGoOfWhatItCouldNotSend() async {
+        let transport = NetworkTransport()
+        let tcp = HeldTCP()
+        let link = transport.open(as: PeerID(1), send: tcp.send, receiveExactly: tcp.receiveExactly)
+        for byte in UInt8(1)...3 { transport.send(Data([byte]), to: PeerID(1)) }
+        await fulfillment(of: [tcp.sending], timeout: 2)
+        transport.disconnect(PeerID(1))
+        await fulfillment(of: [tcp.sendCancelled], timeout: 5)
+        await tcp.releaseSend()
+        await link.waitUntilClosed()
+        XCTAssertEqual(transport.linkLog.reports.first?.waitingToSend, 2, "the report counts what was left")
+        XCTAssertEqual(link.outbox.waitingCount, 0, "and the frames themselves are gone")
+        transport.stopAll()
+        await tcp.failRead()
+    }
+
     func testALinkReportsRouteChangesAndUnusableSpells() async {
         let transport = NetworkTransport()
         let tcp = HeldTCP()
@@ -281,12 +346,13 @@ final class NetworkTransportTests: XCTestCase {
         XCTAssertEqual(transport.linkLog.reports.first?.routeChanges, 0, "the first route is not a change")
         link.routeSeen(.wifiNetwork)
         link.usableChanged(false)
+        link.usableChanged(false)
         link.usableChanged(true)
         link.usableChanged(false)
         let report = transport.linkLog.reports.first
         XCTAssertEqual(report?.route, .wifiNetwork)
         XCTAssertEqual(report?.routeChanges, 1)
-        XCTAssertEqual(report?.timesUnusable, 2)
+        XCTAssertEqual(report?.timesUnusable, 2, "once per spell, however often it is repeated")
         transport.stopAll()
         await tcp.failRead()
     }

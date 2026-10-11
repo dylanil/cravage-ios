@@ -51,6 +51,7 @@ final class NetworkTransport: RoundTransport {
         private var route: LinkReport.Route = .unknown
         private var routeChanges = 0
         private var timesUnusable = 0
+        private var usable: Bool?
         /// Reads the route the connection is on now; set for a real connection only.
         var currentRoute: (() -> LinkReport.Route)?
         /// Why the link ended. The first cause wins: a failed send that leads to a close is still a
@@ -77,8 +78,10 @@ final class NetworkTransport: RoundTransport {
             route = seen
         }
 
-        func usableChanged(_ usable: Bool) {
-            if !usable { timesUnusable += 1 }
+        /// Counts spells, not callbacks: nothing documents how often the handler repeats itself.
+        func usableChanged(_ now: Bool) {
+            if !now, usable != false { timesUnusable += 1 }
+            usable = now
         }
 
         func ended(_ end: LinkReport.End) {
@@ -114,8 +117,9 @@ final class NetworkTransport: RoundTransport {
             receiveTask = nil
             ended(.closedHere)
             frozen = report()
-            // The log outlives the link; it must not keep the connection alive.
+            // The log outlives the link; it must not keep the connection or unsent envelopes alive.
             currentRoute = nil
+            outbox.discardQueued()
             let waiters = closedWaiters
             closedWaiters = []
             waiters.forEach { $0.resume() }
@@ -269,23 +273,33 @@ final class NetworkTransport: RoundTransport {
         }, receiveExactly: { count in
             try await connection.receive(exactly: count).content
         })
-        // connection.h: the path "will reflect the connected path" once established, and viability
-        // says "whether or not read and write calls will succeed on a ready connection". The route
-        // is also read on every frame, because a handler set on a connection the listener has
-        // already started may never see its first path.
+        // connection.h documents the C calls: nw_connection_copy_current_path "will reflect the
+        // connected path" once established, and the viability handler says "whether or not read and
+        // write calls will succeed on a ready connection". That `currentPath`, `onPathUpdate` and
+        // `onViabilityUpdate` behave the same is inferred; they have no doc comments. The route is
+        // also read on every frame, in case a handler set on a connection the listener has already
+        // started misses its first path. The handlers are formed here, on the main actor, and run
+        // there (`@_inheritActorContext`), so they update the link in order with the frames.
         link.currentRoute = { [weak connection] in connection?.currentPath.map(Self.route(of:)) ?? .unknown }
         connection.onPathUpdate { [weak link] _, path in
-            let route = Self.route(of: path)
-            Task { @MainActor in link?.routeSeen(route) }
+            link?.routeSeen(Self.route(of: path))
         }
         connection.onViabilityUpdate { [weak link] _, viable in
-            Task { @MainActor in link?.usableChanged(viable) }
+            link?.usableChanged(viable)
         }
         return link
     }
 
     nonisolated static func route(of path: NWPath) -> LinkReport.Route {
-        path.availableInterfaces.first.map { route(type: $0.type, name: $0.name) } ?? .unknown
+        route(interfaces: path.availableInterfaces.map { ($0.type, $0.name) })
+    }
+
+    /// path.h lists "all interfaces associated with the path" and says nothing of their order or of
+    /// which one carries the connection, so a path over more than one kind says so.
+    nonisolated static func route(interfaces: [(NWInterface.InterfaceType, String)]) -> LinkReport.Route {
+        let routes = Set(interfaces.map { route(type: $0.0, name: $0.1) })
+        guard let only = routes.first else { return .unknown }
+        return routes.count == 1 ? only : .mixed
     }
 
     /// The interface name is read only to tell Apple's peer-to-peer Wi-Fi from a Wi-Fi network,
@@ -348,9 +362,11 @@ final class NetworkTransport: RoundTransport {
         return link
     }
 
+    /// A link that has left the table still reads until its close finishes; what arrives then is
+    /// counted, so both phones' counts agree, but never handed to the engine.
     private func delivered(_ data: Data, from peer: PeerID, on link: Link) {
-        guard links[peer] === link else { return }
         link.frameReceived()
+        guard links[peer] === link else { return }
         onEvent?(.received(data, from: peer))
     }
 

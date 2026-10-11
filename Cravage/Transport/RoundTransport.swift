@@ -109,7 +109,7 @@ struct LinkReport: Equatable, Sendable {
     }
 
     /// The kind of interface the connection ran over, as last seen.
-    enum Route: Equatable, Sendable {
+    enum Route: Hashable, Sendable {
         case unknown
         /// Apple's direct phone-to-phone Wi-Fi, which needs no Wi-Fi network.
         case peerToPeer
@@ -119,6 +119,8 @@ struct LinkReport: Equatable, Sendable {
         case cellular
         case loopback
         case other
+        /// The path listed interfaces of more than one kind, and nothing says which carried it.
+        case mixed
     }
 
     /// True for a joiner's one connection to the host; false for a host's connection to a joiner.

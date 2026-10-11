@@ -79,8 +79,8 @@ enum Diagnostics {
             "\(link.toHost ? "to the host" : "to a joiner"): \(name(link.end))",
             name(link.route),
         ]
-        if link.routeChanges > 0 { parts.append("route changed \(link.routeChanges) times") }
-        if link.timesUnusable > 0 { parts.append("unusable \(link.timesUnusable) times") }
+        if link.routeChanges > 0 { parts.append("route changed \(times(link.routeChanges))") }
+        if link.timesUnusable > 0 { parts.append("unusable \(times(link.timesUnusable))") }
         parts += [
             "\(link.secondsOpen) s",
             "sent \(link.framesSent)",
@@ -178,8 +178,11 @@ enum Diagnostics {
         case .cellular: return "via mobile data"
         case .loopback: return "via this phone"
         case .other: return "via another route"
+        case .mixed: return "via more than one kind of interface"
         }
     }
+
+    private static func times(_ count: Int) -> String { count == 1 ? "1 time" : "\(count) times" }
 
     private static func name(_ problem: TransportProblem) -> String {
         switch problem {

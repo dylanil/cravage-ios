@@ -57,14 +57,15 @@ final class FakeStar {
         var sentCount = 0
         var connectionAttempts = 0
         var sendFailures = 0
-        /// Like the real transport's: a new log at every stop. The host's one entry reads the frames
-        /// sent so far whenever the report is made.
+        /// Like the real transport's: a new log at every start and stop. The host's one entry reads
+        /// the frames sent so far whenever the report is made.
         var linkLog = LinkLog()
         init(index: Int) { self.index = index }
         func startHosting(label: String, size: Int, hostNickname: String) {
             hosting = (label, size)
             advertising = true
-            linkLog.add { [unowned self] in LinkReport(toHost: false, framesSent: self.sentCount) }
+            linkLog = LinkLog()
+            linkLog.add { [weak self] in LinkReport(toHost: false, framesSent: self?.sentCount ?? 0) }
         }
         func stopAdvertising() { advertising = false }
         func startBrowsing() {

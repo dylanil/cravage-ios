@@ -39,6 +39,11 @@ final class Outbox {
         return true
     }
 
+    /// Drops what was never sent, once the report has counted it.
+    func discardQueued() {
+        queue.removeAll()
+    }
+
     /// Stops accepting new data; finishes when the queue is sent, a send fails, or `drainMs` passes.
     func close(drainMs: UInt64) async {
         closing = true

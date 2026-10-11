@@ -889,7 +889,7 @@
       "name": "a link counts unusable spells",
       "suite": "app",
       "file": "Cravage/Transport/NetworkTransport.swift",
-      "find": "            if !usable { timesUnusable += 1 }\n",
+      "find": "            if !now, usable != false { timesUnusable += 1 }\n",
       "replace": ""
     },
     {
@@ -905,6 +905,48 @@
       "file": "Cravage/Round/RoundCoordinator.swift",
       "find": "        if ownShareMade, !ownShareBefore { ownShareMs = clock.nowMs() }\n",
       "replace": "        if engine.phase == .sharing, phaseBefore != .sharing { ownShareMs = clock.nowMs() }\n"
+    },
+    {
+      "name": "a path over more than one kind of interface says so",
+      "suite": "app",
+      "file": "Cravage/Transport/NetworkTransport.swift",
+      "find": "        return routes.count == 1 ? only : .mixed\n",
+      "replace": "        return only\n"
+    },
+    {
+      "name": "frames that arrive while a link drains are counted",
+      "suite": "app",
+      "file": "Cravage/Transport/NetworkTransport.swift",
+      "find": "        link.frameReceived()\n        guard links[peer] === link else { return }\n",
+      "replace": "        guard links[peer] === link else { return }\n        link.frameReceived()\n"
+    },
+    {
+      "name": "an unusable spell is counted once",
+      "suite": "app",
+      "file": "Cravage/Transport/NetworkTransport.swift",
+      "find": "            if !now, usable != false { timesUnusable += 1 }\n",
+      "replace": "            if !now { timesUnusable += 1 }\n"
+    },
+    {
+      "name": "a closed link lets go of what it could not send",
+      "suite": "app",
+      "file": "Cravage/Transport/NetworkTransport.swift",
+      "find": "            outbox.discardQueued()\n",
+      "replace": ""
+    },
+    {
+      "name": "a link reads its route as frames arrive",
+      "suite": "app",
+      "file": "Cravage/Transport/NetworkTransport.swift",
+      "find": "            if let currentRoute { routeSeen(currentRoute()) }\n",
+      "replace": ""
+    },
+    {
+      "name": "a closed link lets go of its connection",
+      "suite": "app",
+      "file": "Cravage/Transport/NetworkTransport.swift",
+      "find": "            currentRoute = nil\n",
+      "replace": ""
     }
   ]
 }

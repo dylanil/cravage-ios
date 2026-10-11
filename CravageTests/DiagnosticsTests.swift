@@ -161,18 +161,21 @@ final class DiagnosticsTests: XCTestCase {
                        waitingToSend: 0, secondsSending: nil, secondsSinceLastReceived: nil),
             LinkReport(toHost: true, end: .closedThere, secondsOpen: 0),
             LinkReport(toHost: true, end: .leftRoom, route: .other),
+            LinkReport(toHost: true, end: .open, route: .mixed, routeChanges: 2, timesUnusable: 1),
         ])
         star.coordinators[0].leave()
         let report = Diagnostics.report(for: star.coordinators[0], appVersion: "0.1",
                                         build: "1", systemVersion: "26.6", model: "iPhone17,1")
         XCTAssertTrue(report.contains(
-            "link 1 to a joiner: open, via peer-to-peer Wi-Fi, route changed 1 times, unusable 2 times, 95 s, sent 12, received 4, waiting to send 3, sending for 61 s, quiet for 70 s"),
+            "link 1 to a joiner: open, via peer-to-peer Wi-Fi, route changed 1 time, unusable 2 times, 95 s, sent 12, received 4, waiting to send 3, sending for 61 s, quiet for 70 s"),
             report)
         XCTAssertTrue(report.contains(
             "link 2 to a joiner: lost, via a Wi-Fi network, 30 s, sent 9, received 6, waiting to send 0, nothing received"),
             report)
         XCTAssertTrue(report.contains("link 3 to the host: closed by the other phone, route unknown, 0 s,"), report)
         XCTAssertTrue(report.contains("link 4 to the host: closed on leaving, via another route,"), report)
+        XCTAssertTrue(report.contains(
+            "link 5 to the host: open, via more than one kind of interface, route changed 2 times, unusable 1 time,"), report)
     }
 
     /// Device report 2026-10-11: the summary was taken before Leave queued the host's abort, so every
