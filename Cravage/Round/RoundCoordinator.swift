@@ -182,9 +182,14 @@ final class RoundCoordinator {
             lastRefusedMessage: lastPeerRejection,
             secondsSinceRosterLocked: rosterLockedMs.map { Self.seconds(from: $0, to: now) },
             secondsToOwnShare: rosterLockedMs.flatMap { locked in ownShareMs.map { Self.seconds(from: locked, to: $0) } },
-            links: transport.linkReports)
+            links: transport.linkLog)
         rosterLockedMs = nil
         ownShareMs = nil
+    }
+
+    /// This phone's own share is in the round's set, which happens only when it is queued to send.
+    private var ownShareMade: Bool {
+        engine.myLetter.map { engine.sharesReceived.contains($0) } ?? false
     }
 
     private static func seconds(from start: UInt64, to end: UInt64) -> Int {
@@ -238,6 +243,7 @@ final class RoundCoordinator {
 
     private func apply(_ event: Event) {
         let phaseBefore = engine.phase
+        let ownShareBefore = ownShareMade
         let effects = engine.handle(event, now: clock.nowMs())
         if phaseBefore == .idle, engine.phase != .idle { sendFailuresAtEntry = transport.sendFailures }
         // Every lock, restarts included, starts the clock for this round's timings again.
@@ -245,9 +251,10 @@ final class RoundCoordinator {
             rosterLockedMs = clock.nowMs()
             ownShareMs = nil
         }
-        // The engine enters sharing in the same step that queues this phone's share; a figure typed
-        // earlier is only held until every phone has confirmed the code.
-        if engine.phase == .sharing, phaseBefore != .sharing { ownShareMs = clock.nowMs() }
+        // A figure typed early is only held until every phone has confirmed the code. The share is
+        // queued in the step that adds it to the engine's set, which can also complete the set and
+        // pass through sharing within the same step (device report 2026-10-11), so the set is what is read.
+        if ownShareMade, !ownShareBefore { ownShareMs = clock.nowMs() }
         // A refusal answers a tap on the screen it was made on. When the network or the clock
         // moves the round to another screen, the refusal stays behind (review 2026-09-24).
         if !event.isPersonAction, engine.phase != phaseBefore { lastRejection = nil }
@@ -323,7 +330,8 @@ struct LastRound {
     var secondsSinceRosterLocked: Int?
     /// From the roster locking to this phone's own share being queued. Nil when it never was.
     var secondsToOwnShare: Int?
-    var links: [LinkReport]
+    /// Read when the report is made, so it counts what Leave sent on the way out.
+    var links: LinkLog
 }
 
 private extension Event {

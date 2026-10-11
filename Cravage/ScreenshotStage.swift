@@ -125,7 +125,7 @@ private final class Star {
         weak var star: Star?
         let index: Int
         let sendFailures = 0
-        let linkReports: [LinkReport] = []
+        let linkLog = LinkLog()
         init(index: Int) { self.index = index }
         func startHosting(label: String, size: Int, hostNickname: String) {}
         func stopAdvertising() {}

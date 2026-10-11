@@ -56,8 +56,30 @@ protocol RoundTransport: AnyObject {
     /// Sends that failed since launch. A count only, for the diagnostics report.
     var sendFailures: Int { get }
     /// Every connection opened since the last `startHosting` or `stopAll`, oldest first, ended ones
-    /// included. For the diagnostics report, which reads it before `stopAll` clears it.
-    var linkReports: [LinkReport] { get }
+    /// included. `stopAll` starts a new log; the old one keeps its links, so the diagnostics report
+    /// can hold it past Leave and read it after what Leave queued has been sent.
+    var linkLog: LinkLog { get }
+}
+
+/// The connections of one room, read when the report is made rather than when the room was left:
+/// Leave queues an abort and `stopAll` sends it before the links close, and a report taken before
+/// that is one frame short (device report 2026-10-11). Bounded, like everything else a peer can cause.
+@MainActor
+final class LinkLog {
+    static let capacity = 32
+    private var entries: [() -> LinkReport] = []
+
+    init(_ fixed: [LinkReport] = []) {
+        entries = fixed.map { report in { report } }
+    }
+
+    /// A lobby that sees many short connections keeps only the most recent ones.
+    func add(_ read: @escaping () -> LinkReport) {
+        entries.append(read)
+        if entries.count > Self.capacity { entries.removeFirst(entries.count - Self.capacity) }
+    }
+
+    var reports: [LinkReport] { entries.map { $0() } }
 }
 
 /// What one connection did, in counts and seconds only: no peer name, address or content, so it
@@ -70,21 +92,43 @@ struct LinkReport: Equatable, Sendable {
     enum End: Equatable, Sendable {
         /// Still open when the report was taken.
         case open
-        /// The other side closed it, or it failed or reset (`Framing.ConnectionEnd.failed`).
+        /// It failed or reset (`Framing.ConnectionEnd.failed`).
         case lost
+        /// The other side closed it (`Framing.ConnectionEnd.closed`).
+        case closedThere
         /// The other side broke the framing rules.
         case badFrame
         /// A send threw.
         case sendFailed
         /// The queue for it was full: the other side had stopped taking data.
         case queueFull
-        /// This phone closed it: a disconnect, a replacement or a leave.
+        /// This phone closed it: a disconnect or a replacement.
         case closedHere
+        /// This phone left the room, or started another, with the link still open.
+        case leftRoom
+    }
+
+    /// The kind of interface the connection ran over, as last seen.
+    enum Route: Equatable, Sendable {
+        case unknown
+        /// Apple's direct phone-to-phone Wi-Fi, which needs no Wi-Fi network.
+        case peerToPeer
+        /// A Wi-Fi network both phones are on.
+        case wifiNetwork
+        case wired
+        case cellular
+        case loopback
+        case other
     }
 
     /// True for a joiner's one connection to the host; false for a host's connection to a joiner.
     var toHost: Bool
     var end: End = .open
+    var route: Route = .unknown
+    /// Times the route moved to another kind of interface after the first one was seen.
+    var routeChanges = 0
+    /// Times Network said reads and writes would no longer succeed on it (viability went false).
+    var timesUnusable = 0
     /// How long the connection had been open when it ended, or when the report was taken.
     var secondsOpen = 0
     var framesSent = 0

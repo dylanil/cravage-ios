@@ -1,6 +1,7 @@
 import XCTest
 @testable import Cravage
 import CravageCore
+import Network
 
 /// Control the actual TCP byte boundary while retaining NetworkTransport's framing, outbox,
 /// receive loop and close callbacks. No Network framework substitute is compiled into the app.
@@ -56,6 +57,54 @@ private actor ScriptedReader {
     }
 }
 
+/// Serves the given frames, then answers every read with nothing: a stream the other side closed.
+private actor ClosingReader {
+    private var bytes: Data
+    init(frames: [Data]) { bytes = frames.reduce(Data()) { $0 + (try! Framing.encode($1)) } }
+
+    func receiveExactly(_ count: Int) async throws -> Data {
+        let chunk = bytes.prefix(count)
+        bytes.removeFirst(chunk.count)
+        return Data(chunk)
+    }
+}
+
+/// One direction of an in-memory TCP stream: what one transport sends, the other reads.
+private actor Pipe {
+    private var bytes = Data()
+    private var reader: (count: Int, continuation: CheckedContinuation<Data, Error>)?
+
+    func write(_ data: Data) {
+        bytes += data
+        serve()
+    }
+
+    func read(_ count: Int) async throws -> Data {
+        try await withTaskCancellationHandler {
+            try Task.checkCancellation()
+            return try await withCheckedThrowingContinuation { continuation in
+                reader = (count, continuation)
+                serve()
+            }
+        } onCancel: {
+            Task { await self.cancelRead() }
+        }
+    }
+
+    private func serve() {
+        guard let waiting = reader, bytes.count >= waiting.count else { return }
+        reader = nil
+        let chunk = Data(bytes.prefix(waiting.count))
+        bytes.removeFirst(waiting.count)
+        waiting.continuation.resume(returning: chunk)
+    }
+
+    private func cancelRead() {
+        reader?.continuation.resume(throwing: CancellationError())
+        reader = nil
+    }
+}
+
 @MainActor
 final class NetworkTransportTests: XCTestCase {
     private func settle(until done: @MainActor () -> Bool) async {
@@ -71,7 +120,7 @@ final class NetworkTransportTests: XCTestCase {
         for byte in UInt8(1)...3 { transport.send(Data([byte]), to: .host) }
         await fulfillment(of: [tcp.sending], timeout: 2)
 
-        let stuck = transport.linkReports
+        let stuck = transport.linkLog.reports
         XCTAssertEqual(stuck.count, 1)
         XCTAssertEqual(stuck.first?.toHost, true)
         XCTAssertEqual(stuck.first?.end, .open)
@@ -80,8 +129,8 @@ final class NetworkTransportTests: XCTestCase {
         XCTAssertNotNil(stuck.first?.secondsSending, "a send is in progress")
 
         await tcp.releaseSend()
-        await settle { transport.linkReports.first?.framesSent == 3 }
-        let flowing = transport.linkReports.first
+        await settle { transport.linkLog.reports.first?.framesSent == 3 }
+        let flowing = transport.linkLog.reports.first
         XCTAssertEqual(flowing?.framesSent, 3)
         XCTAssertEqual(flowing?.waitingToSend, 0)
         XCTAssertNil(flowing?.secondsSending)
@@ -99,7 +148,7 @@ final class NetworkTransportTests: XCTestCase {
         transport.open(as: PeerID(1), send: { _ in }, receiveExactly: reader.receiveExactly)
         await fulfillment(of: [ended], timeout: 2)
 
-        let report = transport.linkReports
+        let report = transport.linkLog.reports
         XCTAssertEqual(report.count, 1, "an ended link is still reported")
         XCTAssertEqual(report.first?.toHost, false)
         XCTAssertEqual(report.first?.end, .lost)
@@ -107,7 +156,7 @@ final class NetworkTransportTests: XCTestCase {
         XCTAssertEqual(report.first?.secondsSinceLastReceived, 0)
 
         transport.stopAll()
-        XCTAssertTrue(transport.linkReports.isEmpty, "a new room starts a new report")
+        XCTAssertTrue(transport.linkLog.reports.isEmpty, "a new room starts a new report")
     }
 
     /// Review of e833da5: a peer that stops reading fills the queue and the link is dropped. That is
@@ -119,7 +168,7 @@ final class NetworkTransportTests: XCTestCase {
         transport.send(Data([0]), to: PeerID(1))
         await fulfillment(of: [tcp.sending], timeout: 2)
         for _ in 0...Outbox.capacity { transport.send(Data([1]), to: PeerID(1)) }
-        XCTAssertEqual(transport.linkReports.first?.end, .queueFull)
+        XCTAssertEqual(transport.linkLog.reports.first?.end, .queueFull)
         transport.stopAll()
         await tcp.releaseSend()
         await tcp.failRead()
@@ -136,16 +185,112 @@ final class NetworkTransportTests: XCTestCase {
         transport.open(as: PeerID(3), send: silent.send, receiveExactly: silent.receiveExactly)
         transport.send(Data([1]), to: PeerID(1))
         transport.disconnect(PeerID(2))
-        await settle { transport.linkReports.first?.end == .sendFailed && transport.linkReports[1].end == .closedHere }
+        await settle { transport.linkLog.reports.first?.end == .sendFailed && transport.linkLog.reports[1].end == .closedHere }
 
-        XCTAssertEqual(transport.linkReports.map(\.end), [.sendFailed, .closedHere, .open],
+        XCTAssertEqual(transport.linkLog.reports.map(\.end), [.sendFailed, .closedHere, .open],
                        "in the order the links opened")
-        XCTAssertEqual(transport.linkReports[0].waitingToSend, 0, "the failed send is not still waiting")
-        XCTAssertNil(transport.linkReports[0].secondsSending)
-        XCTAssertNil(transport.linkReports[2].secondsSinceLastReceived, "nothing ever arrived")
+        XCTAssertEqual(transport.linkLog.reports[0].waitingToSend, 0, "the failed send is not still waiting")
+        XCTAssertNil(transport.linkLog.reports[0].secondsSending)
+        XCTAssertNil(transport.linkLog.reports[2].secondsSinceLastReceived, "nothing ever arrived")
         transport.stopAll()
         for tcp in [failing, closed, silent] { await tcp.failRead() }
     }
+    /// Device report 2026-10-11: a link the other phone closed read "bad frame", as if it had
+    /// broken the framing rules.
+    func testALinkTheOtherPhoneClosedSaysSo() async {
+        let transport = NetworkTransport()
+        let reader = ClosingReader(frames: [Data([7])])
+        let ended = expectation(description: "connection closed")
+        transport.onEvent = { if case .peerDisconnected = $0 { ended.fulfill() } }
+        transport.open(as: PeerID(1), send: { _ in }, receiveExactly: reader.receiveExactly)
+        await fulfillment(of: [ended], timeout: 2)
+        XCTAssertEqual(transport.linkLog.reports.first?.end, .closedThere)
+        XCTAssertEqual(transport.linkLog.reports.first?.framesReceived, 1)
+        transport.stopAll()
+    }
+
+    /// Device report 2026-10-11: the host's report was taken before its Cancel sent the abort, so a joiner
+    /// had received one frame more than the host said it sent, and the reports were misread. Kept
+    /// past leaving and read once the drain is over, the two now match.
+    func testAfterLeavingTheHostsSentMatchesTheJoinersReceived() async {
+        let host = NetworkTransport()
+        let joiner = NetworkTransport()
+        let up = Pipe()
+        let down = Pipe()
+        host.open(as: PeerID(1), send: { await down.write($0) }, receiveExactly: { try await up.read($0) })
+        joiner.open(as: .host, send: { await up.write($0) }, receiveExactly: { try await down.read($0) })
+        for byte in UInt8(1)...3 { host.send(Data([byte]), to: PeerID(1)) }
+        await settle { joiner.linkLog.reports.first?.framesReceived == 3 }
+
+        // Leave as the coordinator does: the abort is queued, the log is kept, then everything stops.
+        host.send(Data([9]), to: PeerID(1))
+        let log = host.linkLog
+        host.stopAll()
+        XCTAssertTrue(host.linkLog.reports.isEmpty, "the next room starts a new log")
+        await settle { joiner.linkLog.reports.first?.framesReceived == 4 && log.reports.first?.framesSent == 4 }
+
+        XCTAssertEqual(log.reports.first?.framesSent, joiner.linkLog.reports.first?.framesReceived)
+        XCTAssertEqual(log.reports.first?.framesSent, 4, "the abort is counted")
+        XCTAssertEqual(log.reports.first?.waitingToSend, 0)
+        XCTAssertEqual(log.reports.first?.end, .leftRoom)
+        joiner.stopAll()
+    }
+
+    /// A disconnect drains what was queued (an abort, a decline) before the link goes; the report
+    /// counts it rather than freezing at the moment the disconnect was asked for.
+    func testADisconnectCountsWhatItDrained() async {
+        let transport = NetworkTransport()
+        let tcp = HeldTCP()
+        let link = transport.open(as: PeerID(1), send: tcp.send, receiveExactly: tcp.receiveExactly)
+        transport.send(Data([1]), to: PeerID(1))
+        await fulfillment(of: [tcp.sending], timeout: 2)
+        transport.disconnect(PeerID(1))
+        XCTAssertEqual(transport.linkLog.reports.first?.end, .closedHere)
+        XCTAssertEqual(transport.linkLog.reports.first?.waitingToSend, 1)
+
+        await tcp.releaseSend()
+        await link.waitUntilClosed()
+        XCTAssertEqual(transport.linkLog.reports.first?.framesSent, 1)
+        XCTAssertEqual(transport.linkLog.reports.first?.waitingToSend, 0)
+        XCTAssertEqual(transport.linkLog.reports.first?.end, .closedHere)
+        transport.stopAll()
+        await tcp.failRead()
+    }
+
+    /// Hypothesis of 2026-10-11: the peer-to-peer link dies once browsing and advertising stop. Each
+    /// link says which route it took, so a stalled link can be checked against it.
+    func testARouteIsNamedFromItsInterface() {
+        let cases: [(NWInterface.InterfaceType, String, LinkReport.Route)] = [
+            (.wifi, "awdl0", .peerToPeer), (.other, "awdl0", .peerToPeer), (.other, "llw0", .peerToPeer),
+            (.wifi, "en0", .wifiNetwork), (.wiredEthernet, "en2", .wired), (.cellular, "pdp_ip0", .cellular),
+            (.loopback, "lo0", .loopback), (.other, "utun3", .other),
+        ]
+        for (type, name, route) in cases {
+            XCTAssertEqual(NetworkTransport.route(type: type, name: name), route, name)
+        }
+    }
+
+    func testALinkReportsRouteChangesAndUnusableSpells() async {
+        let transport = NetworkTransport()
+        let tcp = HeldTCP()
+        let link = transport.open(as: .host, send: tcp.send, receiveExactly: tcp.receiveExactly)
+        XCTAssertEqual(transport.linkLog.reports.first?.route, .unknown)
+        link.routeSeen(.peerToPeer)
+        link.routeSeen(.peerToPeer)
+        XCTAssertEqual(transport.linkLog.reports.first?.route, .peerToPeer)
+        XCTAssertEqual(transport.linkLog.reports.first?.routeChanges, 0, "the first route is not a change")
+        link.routeSeen(.wifiNetwork)
+        link.usableChanged(false)
+        link.usableChanged(true)
+        link.usableChanged(false)
+        let report = transport.linkLog.reports.first
+        XCTAssertEqual(report?.route, .wifiNetwork)
+        XCTAssertEqual(report?.routeChanges, 1)
+        XCTAssertEqual(report?.timesUnusable, 2)
+        transport.stopAll()
+        await tcp.failRead()
+    }
+
     func testOldExplicitDisconnectCannotReportFailureAfterStopAndRejoin() async {
         for (stop, replace) in [(true, false), (true, true), (false, true)] {
             let transport = NetworkTransport()

@@ -33,9 +33,7 @@ final class NetworkTransport: RoundTransport {
     private var limiter = AcceptLimiter()
     private(set) var sendFailures = 0
     /// Every link opened since the last start or stop, in order, ended ones included.
-    private var opened: [Link] = []
-    var linkReports: [LinkReport] { opened.map { $0.report() } }
-    static let reportedLinks = 32
+    private(set) var linkLog = LinkLog()
     private let origin = ContinuousClock.now
 
     /// One open connection: its receive loop, its outbox, and whoever waits for it to close.
@@ -50,7 +48,16 @@ final class NetworkTransport: RoundTransport {
         private let openedAt = ContinuousClock.now
         private var framesReceived = 0
         private var lastReceivedAt: ContinuousClock.Instant?
-        /// Taken when the link ends, so a later report says how it was then, not after the cleanup.
+        private var route: LinkReport.Route = .unknown
+        private var routeChanges = 0
+        private var timesUnusable = 0
+        /// Reads the route the connection is on now; set for a real connection only.
+        var currentRoute: (() -> LinkReport.Route)?
+        /// Why the link ended. The first cause wins: a failed send that leads to a close is still a
+        /// failed send.
+        private var cause: LinkReport.End?
+        /// Taken once the link has closed, so a later report says how it was then and counts what
+        /// the close drained (an abort, a decline).
         private var frozen: LinkReport?
 
         init(outbox: Outbox, toHost: Bool) {
@@ -61,21 +68,28 @@ final class NetworkTransport: RoundTransport {
         func frameReceived() {
             framesReceived += 1
             lastReceivedAt = .now
+            if let currentRoute { routeSeen(currentRoute()) }
         }
 
-        /// Records how the link ended. The first cause wins: a failed send that leads to a close is
-        /// still a failed send.
+        func routeSeen(_ seen: LinkReport.Route) {
+            guard seen != .unknown, seen != route else { return }
+            if route != .unknown { routeChanges += 1 }
+            route = seen
+        }
+
+        func usableChanged(_ usable: Bool) {
+            if !usable { timesUnusable += 1 }
+        }
+
         func ended(_ end: LinkReport.End) {
-            guard frozen == nil else { return }
-            var report = report()
-            report.end = end
-            frozen = report
+            if cause == nil { cause = end }
         }
 
         func report() -> LinkReport {
             if let frozen { return frozen }
             let now = ContinuousClock.now
-            return LinkReport(toHost: toHost, end: .open,
+            return LinkReport(toHost: toHost, end: cause ?? .open,
+                              route: route, routeChanges: routeChanges, timesUnusable: timesUnusable,
                               secondsOpen: Self.seconds(now - openedAt),
                               framesSent: outbox.sentCount,
                               framesReceived: framesReceived,
@@ -98,6 +112,10 @@ final class NetworkTransport: RoundTransport {
             await outbox.close(drainMs: drain ? drainMs : 0)
             receiveTask?.cancel()
             receiveTask = nil
+            ended(.closedHere)
+            frozen = report()
+            // The log outlives the link; it must not keep the connection alive.
+            currentRoute = nil
             let waiters = closedWaiters
             closedWaiters = []
             waiters.forEach { $0.resume() }
@@ -246,11 +264,44 @@ final class NetworkTransport: RoundTransport {
     // MARK: - Shared
 
     private func open(_ connection: NetworkConnection<TCP>, as peer: PeerID) -> Link {
-        open(as: peer, send: { data in
+        let link = open(as: peer, send: { data in
             try await connection.send(data)
         }, receiveExactly: { count in
             try await connection.receive(exactly: count).content
         })
+        // connection.h: the path "will reflect the connected path" once established, and viability
+        // says "whether or not read and write calls will succeed on a ready connection". The route
+        // is also read on every frame, because a handler set on a connection the listener has
+        // already started may never see its first path.
+        link.currentRoute = { [weak connection] in connection?.currentPath.map(Self.route(of:)) ?? .unknown }
+        connection.onPathUpdate { [weak link] _, path in
+            let route = Self.route(of: path)
+            Task { @MainActor in link?.routeSeen(route) }
+        }
+        connection.onViabilityUpdate { [weak link] _, viable in
+            Task { @MainActor in link?.usableChanged(viable) }
+        }
+        return link
+    }
+
+    nonisolated static func route(of path: NWPath) -> LinkReport.Route {
+        path.availableInterfaces.first.map { route(type: $0.type, name: $0.name) } ?? .unknown
+    }
+
+    /// The interface name is read only to tell Apple's peer-to-peer Wi-Fi from a Wi-Fi network,
+    /// which the interface type does not: `awdl` (Apple Wireless Direct Link) and `llw` (low
+    /// latency WLAN) are the names it has been seen under, not documented ones. Only the fixed word
+    /// leaves this function.
+    nonisolated static func route(type: NWInterface.InterfaceType, name: String) -> LinkReport.Route {
+        if name.hasPrefix("awdl") || name.hasPrefix("llw") { return .peerToPeer }
+        switch type {
+        case .wifi: return .wifiNetwork
+        case .wiredEthernet: return .wired
+        case .cellular: return .cellular
+        case .loopback: return .loopback
+        case .other: return .other
+        @unknown default: return .other
+        }
     }
 
     /// TCP byte IO is supplied at this boundary; framing and connection lifetime stay here.
@@ -263,10 +314,7 @@ final class NetworkTransport: RoundTransport {
         })
         let link = Link(outbox: outbox, toHost: peer == .host)
         links[peer] = link
-        opened.append(link)
-        // Bounded like everything else a peer can cause: a lobby that sees many short connections
-        // keeps only the most recent ones.
-        if opened.count > Self.reportedLinks { opened.removeFirst(opened.count - Self.reportedLinks) }
+        linkLog.add { link.report() }
         // A failed send ends the connection now, reported like any other close, instead of leaving a
         // link that looks open while what was queued for it is gone.
         outbox.onFailure = { [weak self, weak link] in
@@ -282,6 +330,7 @@ final class NetworkTransport: RoundTransport {
             })
             switch end {
             case .failed: link.ended(.lost)
+            case .closed: link.ended(.closedThere)
             case .rejected: link.ended(.badFrame)
             case .cancelled: link.ended(.closedHere)
             }
@@ -336,9 +385,12 @@ final class NetworkTransport: RoundTransport {
         browserTask = nil
         let closing = Array(links.values)
         links = [:]
-        opened = []
+        linkLog = LinkLog()
         endpoints = [:]
-        for link in closing { Task { await link.close(drain: true) } }
+        for link in closing {
+            link.ended(.leftRoom)
+            Task { await link.close(drain: true) }
+        }
     }
 
     private static func fatalProblem(_ state: NetworkListener<TCP>.State) -> TransportProblem? {

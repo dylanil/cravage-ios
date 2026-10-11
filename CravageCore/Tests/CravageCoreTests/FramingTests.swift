@@ -91,6 +91,40 @@ final class FramingTests: XCTestCase {
         }
     }
 
+    /// A byte source that serves `bytes`, then answers every read with whatever is left, possibly
+    /// nothing: how a stream the other side closed is assumed to read (see `Framing.readFrame`).
+    final class ClosingSource: @unchecked Sendable {
+        var bytes: [UInt8]
+        init(_ bytes: [UInt8]) { self.bytes = bytes }
+        func receiveExactly(_ count: Int) async throws -> Data {
+            let chunk = Data(bytes.prefix(count))
+            bytes.removeFirst(chunk.count)
+            return chunk
+        }
+    }
+
+    /// Device report 2026-10-11: a connection the other phone closed was reported as breaking the
+    /// framing rules. A stream that ends between frames is a close, not a bad frame.
+    func testAStreamThatEndsBetweenFramesIsAClose() async {
+        let source = ClosingSource(Array(try! Framing.encode(Data("ok".utf8))))
+        let delivered = Collector()
+        let end = await Framing.pump(receiveExactly: source.receiveExactly) { delivered.add($0) }
+        XCTAssertEqual(delivered.items, [Data("ok".utf8)])
+        XCTAssertEqual(end, .closed)
+    }
+
+    /// A stream that ends inside a frame is a close too, and the part that arrived is not delivered
+    /// as if it were the whole envelope.
+    func testAStreamThatEndsMidFrameIsACloseAndDeliversNothingPartial() async {
+        for cut in [2, 9] {
+            let source = ClosingSource(Array(try! Framing.encode(Data("never delivered".utf8)).prefix(cut)))
+            let delivered = Collector()
+            let end = await Framing.pump(receiveExactly: source.receiveExactly) { delivered.add($0) }
+            XCTAssertEqual(delivered.items, [], "cut at \(cut)")
+            XCTAssertEqual(end, .closed, "cut at \(cut)")
+        }
+    }
+
     /// A receive that is blocked waiting for bytes ends promptly when the loop's task is cancelled.
     func testCancellingABlockedReceiveEndsTheLoop() async {
         let task = Task {

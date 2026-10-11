@@ -68,7 +68,7 @@ enum Diagnostics {
             lines.append("since roster locked: \(seconds) s")
             lines.append(last.secondsToOwnShare.map { "own share sent after: \($0) s" } ?? "own share: not sent")
         }
-        for (index, link) in last.links.enumerated() {
+        for (index, link) in last.links.reports.enumerated() {
             lines.append("link \(index + 1) \(describe(link))")
         }
         return lines
@@ -77,6 +77,11 @@ enum Diagnostics {
     private static func describe(_ link: LinkReport) -> String {
         var parts = [
             "\(link.toHost ? "to the host" : "to a joiner"): \(name(link.end))",
+            name(link.route),
+        ]
+        if link.routeChanges > 0 { parts.append("route changed \(link.routeChanges) times") }
+        if link.timesUnusable > 0 { parts.append("unusable \(link.timesUnusable) times") }
+        parts += [
             "\(link.secondsOpen) s",
             "sent \(link.framesSent)",
             "received \(link.framesReceived)",
@@ -155,10 +160,24 @@ enum Diagnostics {
         switch end {
         case .open: return "open"
         case .lost: return "lost"
+        case .closedThere: return "closed by the other phone"
         case .badFrame: return "bad frame"
         case .sendFailed: return "send failed"
         case .queueFull: return "queue full"
         case .closedHere: return "closed here"
+        case .leftRoom: return "closed on leaving"
+        }
+    }
+
+    private static func name(_ route: LinkReport.Route) -> String {
+        switch route {
+        case .unknown: return "route unknown"
+        case .peerToPeer: return "via peer-to-peer Wi-Fi"
+        case .wifiNetwork: return "via a Wi-Fi network"
+        case .wired: return "via a wired network"
+        case .cellular: return "via mobile data"
+        case .loopback: return "via this phone"
+        case .other: return "via another route"
         }
     }
 

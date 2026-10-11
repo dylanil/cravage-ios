@@ -57,9 +57,15 @@ final class FakeStar {
         var sentCount = 0
         var connectionAttempts = 0
         var sendFailures = 0
-        var linkReports: [LinkReport] = []
+        /// Like the real transport's: a new log at every stop. The host's one entry reads the frames
+        /// sent so far whenever the report is made.
+        var linkLog = LinkLog()
         init(index: Int) { self.index = index }
-        func startHosting(label: String, size: Int, hostNickname: String) { hosting = (label, size); advertising = true }
+        func startHosting(label: String, size: Int, hostNickname: String) {
+            hosting = (label, size)
+            advertising = true
+            linkLog.add { [unowned self] in LinkReport(toHost: false, framesSent: self.sentCount) }
+        }
         func stopAdvertising() { advertising = false }
         func startBrowsing() {
             browsing = true
@@ -72,7 +78,7 @@ final class FakeStar {
         }
         func send(_ data: Data, to peer: PeerID) { sentCount += 1; star?.enqueue(from: index, to: peer, data) }
         func disconnect(_ peer: PeerID) { star?.drop(index == 0 ? peer.raw : index) }
-        func stopAll() { hosting = nil; advertising = false; browsing = false }
+        func stopAll() { hosting = nil; advertising = false; browsing = false; linkLog = LinkLog() }
     }
 
     let transports: [Transport]

@@ -284,8 +284,8 @@
     {
       "name": "frame length is capped before the body is read",
       "file": "CravageCore/Sources/CravageCore/Framing.swift",
-      "find": "        guard length <= MessageDomain.maxEnvelopeBytes else { throw FrameError.oversized }\n        return try await receiveExactly(length)",
-      "replace": "        return try await receiveExactly(length)"
+      "find": "        guard length <= MessageDomain.maxEnvelopeBytes else { throw FrameError.oversized }\n        let body = try await receiveExactly(length)",
+      "replace": "        let body = try await receiveExactly(length)"
     },
     {
       "name": "lower letter adds its mask",
@@ -481,14 +481,14 @@
       "name": "a link report keeps the first cause of its end",
       "suite": "app",
       "file": "Cravage/Transport/NetworkTransport.swift",
-      "find": "            guard frozen == nil else { return }\n",
-      "replace": ""
+      "find": "            if cause == nil { cause = end }\n",
+      "replace": "            cause = end\n"
     },
     {
       "name": "a figure held before the code is confirmed is not reported as sent",
       "suite": "app",
       "file": "Cravage/Round/RoundCoordinator.swift",
-      "find": "        if engine.phase == .sharing, phaseBefore != .sharing { ownShareMs = clock.nowMs() }",
+      "find": "        if ownShareMade, !ownShareBefore { ownShareMs = clock.nowMs() }",
       "replace": "        if engine.phase != phaseBefore || event.isPersonAction, rosterLockedMs != nil, ownShareMs == nil { ownShareMs = clock.nowMs() }"
     },
     {
@@ -835,6 +835,76 @@
       "file": "Cravage/Round/RoundCoordinator.swift",
       "find": "            self.problem = problem\n            problemIsDiscovery = false\n",
       "replace": "            self.problem = problem\n"
+    },
+    {
+      "name": "a stream that ends between frames is a close",
+      "suite": "core",
+      "file": "CravageCore/Sources/CravageCore/Framing.swift",
+      "find": "        guard header.count == headerBytes else { throw EndOfStream() }\n",
+      "replace": "        guard header.count == headerBytes else { throw FrameError.empty }\n"
+    },
+    {
+      "name": "a stream that ends mid-frame delivers nothing partial",
+      "suite": "core",
+      "file": "CravageCore/Sources/CravageCore/Framing.swift",
+      "find": "        guard body.count == length else { throw EndOfStream() }\n",
+      "replace": ""
+    },
+    {
+      "name": "a link the other phone closed says so",
+      "suite": "app",
+      "file": "Cravage/Transport/NetworkTransport.swift",
+      "find": "            case .closed: link.ended(.closedThere)\n",
+      "replace": "            case .closed: link.ended(.lost)\n"
+    },
+    {
+      "name": "a link still open on leaving says so",
+      "suite": "app",
+      "file": "Cravage/Transport/NetworkTransport.swift",
+      "find": "            link.ended(.leftRoom)\n",
+      "replace": ""
+    },
+    {
+      "name": "a closed link counts what its close drained",
+      "suite": "app",
+      "file": "Cravage/Transport/NetworkTransport.swift",
+      "find": "            await outbox.close(drainMs: drain ? drainMs : 0)\n            receiveTask?.cancel()\n            receiveTask = nil\n            ended(.closedHere)\n            frozen = report()\n",
+      "replace": "            ended(.closedHere)\n            frozen = report()\n            await outbox.close(drainMs: drain ? drainMs : 0)\n            receiveTask?.cancel()\n            receiveTask = nil\n"
+    },
+    {
+      "name": "a route is named from its interface",
+      "suite": "app",
+      "file": "Cravage/Transport/NetworkTransport.swift",
+      "find": "        if name.hasPrefix(\"awdl\") || name.hasPrefix(\"llw\") { return .peerToPeer }\n",
+      "replace": ""
+    },
+    {
+      "name": "a link counts route changes",
+      "suite": "app",
+      "file": "Cravage/Transport/NetworkTransport.swift",
+      "find": "            if route != .unknown { routeChanges += 1 }\n",
+      "replace": ""
+    },
+    {
+      "name": "a link counts unusable spells",
+      "suite": "app",
+      "file": "Cravage/Transport/NetworkTransport.swift",
+      "find": "            if !usable { timesUnusable += 1 }\n",
+      "replace": ""
+    },
+    {
+      "name": "the last round counts what leaving sent",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "            links: transport.linkLog)",
+      "replace": "            links: LinkLog(transport.linkLog.reports))"
+    },
+    {
+      "name": "a share that completes the set is reported as sent",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "        if ownShareMade, !ownShareBefore { ownShareMs = clock.nowMs() }\n",
+      "replace": "        if engine.phase == .sharing, phaseBefore != .sharing { ownShareMs = clock.nowMs() }\n"
     }
   ]
 }

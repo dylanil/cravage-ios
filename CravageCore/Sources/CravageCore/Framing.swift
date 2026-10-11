@@ -18,8 +18,10 @@ public enum Framing {
     /// How a connection's receive loop ended. The caller cleans up after `pump` returns, whatever
     /// the case, so cleanup can never be skipped by a thrown error.
     public enum ConnectionEnd: Equatable, Sendable {
-        /// The stream threw (closed, reset, timed out): the normal way a connection ends.
+        /// The stream threw (reset, timed out, failed).
         case failed
+        /// The stream ended: a read came back short, between frames or inside one.
+        case closed
         /// The peer broke the framing rules; the caller should close the connection.
         case rejected(FrameError)
         case cancelled
@@ -35,13 +37,22 @@ public enum Framing {
         return frame
     }
 
+    /// The stream ended before a whole frame arrived.
+    public struct EndOfStream: Error, Equatable, Sendable {}
+
+    /// A read shorter than asked for is the end of the stream. The app's `receive(exactly:)` has no
+    /// doc comment; on a Mac over loopback (2026-10-11) a read after the other side sent end of
+    /// stream returned 0 bytes rather than throwing, and links that had ended normally on phones
+    /// read as an empty frame.
     public static func readFrame(receiveExactly: @Sendable (Int) async throws -> Data) async throws -> Data {
         let header = try await receiveExactly(headerBytes)
-        guard header.count == headerBytes else { throw FrameError.empty }
+        guard header.count == headerBytes else { throw EndOfStream() }
         let length = header.reduce(0) { ($0 << 8) | Int($1) }
         guard length > 0 else { throw FrameError.empty }
         guard length <= MessageDomain.maxEnvelopeBytes else { throw FrameError.oversized }
-        return try await receiveExactly(length)
+        let body = try await receiveExactly(length)
+        guard body.count == length else { throw EndOfStream() }
+        return body
     }
 
     /// Reads frames until the connection ends, handing each to `deliver`. Never throws.
@@ -54,6 +65,8 @@ public enum Framing {
                 await deliver(frame)
             } catch let error as FrameError {
                 return .rejected(error)
+            } catch is EndOfStream {
+                return .closed
             } catch {
                 return Task.isCancelled ? .cancelled : .failed
             }

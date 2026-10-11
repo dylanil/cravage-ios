@@ -153,21 +153,72 @@ final class DiagnosticsTests: XCTestCase {
     /// finished, a host that stopped reading, or a link that went quiet.
     func testTheLastRoundListsEachConnection() async {
         let star = await roundInProgress()
-        star.transports[0].linkReports = [
-            LinkReport(toHost: false, end: .open, secondsOpen: 95, framesSent: 12, framesReceived: 4,
+        star.transports[0].linkLog = LinkLog([
+            LinkReport(toHost: false, end: .open, route: .peerToPeer, routeChanges: 1, timesUnusable: 2,
+                       secondsOpen: 95, framesSent: 12, framesReceived: 4,
                        waitingToSend: 3, secondsSending: 61, secondsSinceLastReceived: 70),
-            LinkReport(toHost: false, end: .lost, secondsOpen: 30, framesSent: 9, framesReceived: 6,
+            LinkReport(toHost: false, end: .lost, route: .wifiNetwork, secondsOpen: 30, framesSent: 9, framesReceived: 6,
                        waitingToSend: 0, secondsSending: nil, secondsSinceLastReceived: nil),
-        ]
+            LinkReport(toHost: true, end: .closedThere, secondsOpen: 0),
+            LinkReport(toHost: true, end: .leftRoom, route: .other),
+        ])
         star.coordinators[0].leave()
         let report = Diagnostics.report(for: star.coordinators[0], appVersion: "0.1",
                                         build: "1", systemVersion: "26.6", model: "iPhone17,1")
         XCTAssertTrue(report.contains(
-            "link 1 to a joiner: open, 95 s, sent 12, received 4, waiting to send 3, sending for 61 s, quiet for 70 s"),
+            "link 1 to a joiner: open, via peer-to-peer Wi-Fi, route changed 1 times, unusable 2 times, 95 s, sent 12, received 4, waiting to send 3, sending for 61 s, quiet for 70 s"),
             report)
         XCTAssertTrue(report.contains(
-            "link 2 to a joiner: lost, 30 s, sent 9, received 6, waiting to send 0, nothing received"),
+            "link 2 to a joiner: lost, via a Wi-Fi network, 30 s, sent 9, received 6, waiting to send 0, nothing received"),
             report)
+        XCTAssertTrue(report.contains("link 3 to the host: closed by the other phone, route unknown, 0 s,"), report)
+        XCTAssertTrue(report.contains("link 4 to the host: closed on leaving, via another route,"), report)
+    }
+
+    /// Device report 2026-10-11: the summary was taken before Leave queued the host's abort, so every
+    /// joiner had received one frame more than the host's report said it sent. The links are read
+    /// when the report is made, after leaving has sent what it queued.
+    func testTheLastRoundCountsWhatLeavingSent() async {
+        let star = await roundInProgress()
+        let sentBefore = star.transports[0].sentCount
+        star.coordinators[0].leave()
+        let sentAfter = star.transports[0].sentCount
+        XCTAssertGreaterThan(sentAfter, sentBefore, "the host's leave sends an abort")
+        let report = Diagnostics.report(for: star.coordinators[0], appVersion: "0.1",
+                                        build: "1", systemVersion: "26.6", model: "iPhone17,1")
+        XCTAssertTrue(report.contains("link 1 to a joiner: open, route unknown, 0 s, sent \(sentAfter),"), report)
+    }
+
+    /// Device report 2026-10-11: when this phone's figure completed the set, the engine passed through
+    /// sharing within one step and the report said the share was never sent.
+    func testAShareThatCompletesTheSetIsReportedAsSent() async {
+        let star = FakeStar(phones: 3, entitlement: FakeEntitlement(unlocked: false))
+        let host = star.coordinators[0]
+        await host.createRoom(label: "Lunch", size: 3, nickname: "Host")
+        for index in 1...2 {
+            star.coordinators[index].join(roomID: "room", nickname: "Joiner")
+            star.flush()
+        }
+        for pending in host.engine.pendingJoiners {
+            host.admit(pending.verifyingKey, generation: host.engine.generation)
+        }
+        host.start(generation: host.engine.generation)
+        star.flush()
+        for coordinator in star.coordinators {
+            coordinator.confirmRoomCode(generation: coordinator.engine.generation)
+        }
+        star.flush()
+        for joiner in star.coordinators.dropFirst() {
+            XCTAssertNil(joiner.submitFigure("5", generation: joiner.engine.generation))
+        }
+        star.flush()
+        star.clock.now += 3_000
+        XCTAssertNil(host.submitFigure("7", generation: host.engine.generation))
+        XCTAssertNotEqual(host.engine.phase, .sharing, "the host's share was the last one in")
+        host.leave()
+        let report = Diagnostics.report(for: host, appVersion: "0.1", build: "1",
+                                        systemVersion: "26.6", model: "iPhone17,1")
+        XCTAssertTrue(report.contains("own share sent after: 3 s"), report)
     }
 
     /// Since-launch failures cannot say which round they belong to; the summary counts its own.
