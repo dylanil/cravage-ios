@@ -64,7 +64,7 @@ Product
   (exact decimals, explicit full-stop separator, negatives, 2dp display, trillion cap), run round,
   per-phone verification, agreement display, share transcript, unlock + restore, settings, about,
   limitations, user-initiated diagnostics copy (allowlisted: app version, OS, protocol stage, error
-  code), "run again". Not in v1: history, remote, dropout recovery, practice/solo mode (prepared
+  code, counts and durations, including for the last round left), "run again". Not in v1: history, remote, dropout recovery, practice/solo mode (prepared
   fallback if App Review pushes back), iPad, Android, accounts.
 - Visual: system light/dark, orange accent, Apple font, standard controls, monospace only for figures
   and the room code. Apple-native with brand moments. Mockups first on a design canvas that is

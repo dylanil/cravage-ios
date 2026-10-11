@@ -309,6 +309,8 @@ final class NetworkTransport: RoundTransport {
         guard let link = links[peer] else { return }
         if !link.outbox.enqueue(data) {
             // Full or failed: the peer is not reading. Drop the connection rather than lose envelopes quietly.
+            // A failed send has already recorded itself; otherwise the queue was full.
+            link.ended(.queueFull)
             disconnect(peer)
         }
     }

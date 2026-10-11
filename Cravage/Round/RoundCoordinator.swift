@@ -45,7 +45,7 @@ final class RoundCoordinator {
     @ObservationIgnored private var browsing = false
     @ObservationIgnored private var advertising = false
     // For `lastRound`: the since-launch failure count when the room was entered, when the roster
-    // last locked, and when this phone's own figure was accepted after that.
+    // last locked, and when this phone's own share was queued after that.
     @ObservationIgnored private var sendFailuresAtEntry = 0
     @ObservationIgnored private var rosterLockedMs: UInt64?
     @ObservationIgnored private var ownShareMs: UInt64?
@@ -133,7 +133,6 @@ final class RoundCoordinator {
         do {
             let figure = try FixedPoint.parseDecimalToFixed(text)
             apply(.submitFigure(figure, generation: generation))
-            if lastRejection == nil, rosterLockedMs != nil, ownShareMs == nil { ownShareMs = clock.nowMs() }
             return nil
         } catch {
             return error as? FixedPointError ?? .invalidFormat
@@ -246,6 +245,9 @@ final class RoundCoordinator {
             rosterLockedMs = clock.nowMs()
             ownShareMs = nil
         }
+        // The engine enters sharing in the same step that queues this phone's share; a figure typed
+        // earlier is only held until every phone has confirmed the code.
+        if engine.phase == .sharing, phaseBefore != .sharing { ownShareMs = clock.nowMs() }
         // A refusal answers a tap on the screen it was made on. When the network or the clock
         // moves the round to another screen, the refusal stays behind (review 2026-09-24).
         if !event.isPersonAction, engine.phase != phaseBefore { lastRejection = nil }
@@ -319,7 +321,7 @@ struct LastRound {
     var lastRefusedMessage: Rejection?
     /// From the roster locking to leaving. Nil when the roster never locked.
     var secondsSinceRosterLocked: Int?
-    /// From the roster locking to this phone's own figure being accepted. Nil when it never was.
+    /// From the roster locking to this phone's own share being queued. Nil when it never was.
     var secondsToOwnShare: Int?
     var links: [LinkReport]
 }

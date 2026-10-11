@@ -4,7 +4,7 @@ import CravageCore
 /// A support report someone can paste into an email without reading it.
 ///
 /// CONTRIBUTING.md: figures, keys, masks, names and labels never appear in diagnostics. So this carries
-/// only counts, enum names and build information - never a nickname, a room name, a figure, a key,
+/// only counts, durations in seconds, enum names and build information - never a nickname, a room name, a figure, a key,
 /// the room code or the roster hash. Everything here is either a number or a fixed word chosen in
 /// this file, which is what makes that promise checkable.
 @MainActor
@@ -66,7 +66,7 @@ enum Diagnostics {
         }
         if let seconds = last.secondsSinceRosterLocked {
             lines.append("since roster locked: \(seconds) s")
-            lines.append(last.secondsToOwnShare.map { "own share after: \($0) s" } ?? "own share: not sent")
+            lines.append(last.secondsToOwnShare.map { "own share sent after: \($0) s" } ?? "own share: not sent")
         }
         for (index, link) in last.links.enumerated() {
             lines.append("link \(index + 1) \(describe(link))")
@@ -157,6 +157,7 @@ enum Diagnostics {
         case .lost: return "lost"
         case .badFrame: return "bad frame"
         case .sendFailed: return "send failed"
+        case .queueFull: return "queue full"
         case .closedHere: return "closed here"
         }
     }

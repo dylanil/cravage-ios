@@ -110,6 +110,21 @@ final class NetworkTransportTests: XCTestCase {
         XCTAssertTrue(transport.linkReports.isEmpty, "a new room starts a new report")
     }
 
+    /// Review of e833da5: a peer that stops reading fills the queue and the link is dropped. That is
+    /// the clearest sign of a stall, so it must not read like an ordinary Leave.
+    func testALinkDroppedForAFullQueueSaysSo() async {
+        let transport = NetworkTransport()
+        let tcp = HeldTCP()
+        transport.open(as: PeerID(1), send: tcp.send, receiveExactly: tcp.receiveExactly)
+        transport.send(Data([0]), to: PeerID(1))
+        await fulfillment(of: [tcp.sending], timeout: 2)
+        for _ in 0...Outbox.capacity { transport.send(Data([1]), to: PeerID(1)) }
+        XCTAssertEqual(transport.linkReports.first?.end, .queueFull)
+        transport.stopAll()
+        await tcp.releaseSend()
+        await tcp.failRead()
+    }
+
     func testALinkReportSaysWhoEndedIt() async {
         let transport = NetworkTransport()
         let failing = HeldTCP()

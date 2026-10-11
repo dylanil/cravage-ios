@@ -485,6 +485,20 @@
       "replace": ""
     },
     {
+      "name": "a figure held before the code is confirmed is not reported as sent",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "        if engine.phase == .sharing, phaseBefore != .sharing { ownShareMs = clock.nowMs() }",
+      "replace": "        if engine.phase != phaseBefore || event.isPersonAction, rosterLockedMs != nil, ownShareMs == nil { ownShareMs = clock.nowMs() }"
+    },
+    {
+      "name": "a link dropped for a full queue says so",
+      "suite": "app",
+      "file": "Cravage/Transport/NetworkTransport.swift",
+      "find": "            link.ended(.queueFull)\n",
+      "replace": ""
+    },
+    {
       "name": "names and labels refuse invisible characters",
       "file": "CravageCore/Sources/CravageCore/Roster.swift",
       "find": "            } else if isInvisible(scalar) {\n                return false\n            }",

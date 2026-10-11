@@ -101,9 +101,36 @@ final class DiagnosticsTests: XCTestCase {
         }
         let last = String(report[section.upperBound...])
         for line in ["role: host", "phase: sharing", "parties: 3", "confirmed: 3", "shares in: 1",
-                     "since roster locked: 42 s", "own share after: 0 s"] {
+                     "since roster locked: 42 s", "own share sent after: 0 s"] {
             XCTAssertTrue(last.contains(line), "last round lacks \(line.debugDescription):\n\(report)")
         }
+    }
+
+    /// Review of e833da5: a figure typed while the room code is still being confirmed is only held;
+    /// the share leaves when every phone has confirmed. A round stuck there sent nothing, and the
+    /// report must not say it did.
+    func testAFigureHeldBeforeTheCodeIsConfirmedIsNotReportedAsSent() async {
+        let star = FakeStar(phones: 3, entitlement: FakeEntitlement(unlocked: false))
+        let host = star.coordinators[0]
+        await host.createRoom(label: "Lunch", size: 3, nickname: "Host")
+        for index in 1...2 {
+            star.coordinators[index].join(roomID: "room", nickname: "Joiner")
+            star.flush()
+        }
+        for pending in host.engine.pendingJoiners {
+            host.admit(pending.verifyingKey, generation: host.engine.generation)
+        }
+        host.start(generation: host.engine.generation)
+        star.flush()
+        host.confirmRoomCode(generation: host.engine.generation)
+        star.flush()
+        XCTAssertNil(host.submitFigure("12", generation: host.engine.generation))
+        star.flush()
+        XCTAssertEqual(host.engine.phase, .confirming, "the joiners never confirmed")
+        host.leave()
+        let report = Diagnostics.report(for: host, appVersion: "0.1", build: "1",
+                                        systemVersion: "26.6", model: "iPhone17,1")
+        XCTAssertTrue(report.contains("own share: not sent"), report)
     }
 
     /// The summary goes into the same support email, so it obeys the same rule as the rest.

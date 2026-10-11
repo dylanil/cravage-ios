@@ -12,11 +12,14 @@ final class Outbox {
     private var waiter: CheckedContinuation<Void, Never>?
     private var closing = false
     private(set) var failed = false
-    /// Sends that completed, for the diagnostics report.
+    /// Sends that completed, for the diagnostics report. Completed means the network stack took the
+    /// bytes, not that they arrived: connection.h, nw_connection_send_completion_t, says content is
+    /// "processed by the stack (not necessarily that it has left the host)". That the async
+    /// `NetworkConnection.send` returns at the same point is inferred; it has no doc comment.
     private(set) var sentCount = 0
     /// When the send now in progress began; nil between sends.
     private(set) var sendingSince: ContinuousClock.Instant?
-    /// Frames accepted and not yet confirmed sent, the one in progress included.
+    /// Frames accepted and not yet taken by the network stack, the one in progress included.
     var waitingCount: Int { queue.count + (sendingSince == nil ? 0 : 1) }
     private var task: Task<Void, Never>?
     /// Called once, on the main actor, when a send fails. The connection is then useless: everything

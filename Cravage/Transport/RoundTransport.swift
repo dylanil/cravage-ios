@@ -62,8 +62,10 @@ protocol RoundTransport: AnyObject {
 
 /// What one connection did, in counts and seconds only: no peer name, address or content, so it
 /// can go into a diagnostics report. Device report 2026-10-09: one phone's link to the host went
-/// silent in both directions mid-round with no failed send; these figures tell a send that never
-/// finished from a host that stopped reading from a link that went quiet.
+/// silent in both directions mid-round with no failed send. A send that never finishes shows here
+/// directly. A link that went quiet and a host that stopped reading look alike, because a send
+/// counts as done once the network stack takes it (see `Outbox.sentCount`); comparing both
+/// phones' reports narrows it, it does not settle it.
 struct LinkReport: Equatable, Sendable {
     enum End: Equatable, Sendable {
         /// Still open when the report was taken.
@@ -74,6 +76,8 @@ struct LinkReport: Equatable, Sendable {
         case badFrame
         /// A send threw.
         case sendFailed
+        /// The queue for it was full: the other side had stopped taking data.
+        case queueFull
         /// This phone closed it: a disconnect, a replacement or a leave.
         case closedHere
     }
@@ -85,7 +89,8 @@ struct LinkReport: Equatable, Sendable {
     var secondsOpen = 0
     var framesSent = 0
     var framesReceived = 0
-    /// Frames handed to the connection and not yet confirmed sent, the one being sent included.
+    /// Frames handed to the connection and not yet taken by the network stack, the one being sent
+    /// included.
     var waitingToSend = 0
     /// How long the send in progress has been running, when one is.
     var secondsSending: Int?
