@@ -85,11 +85,17 @@ while IFS=$'\t' read -r udid name; do
   # Capture the whole output first: `grep -q` stops reading at the first match, and under pipefail
   # the installer's resulting broken pipe turned every successful install into a reported failure.
   result="$(xcrun devicectl device install app --device "$udid" "$APP" < /dev/null 2>&1 || true)"
+  # On 2026-10-11 the first install failed on all three phones and the same command succeeded
+  # straight after (cause not known), so try once more before calling it a failure.
+  if ! grep -q 'App installed' <<< "$result"; then
+    result="$(xcrun devicectl device install app --device "$udid" "$APP" < /dev/null 2>&1 || true)"
+  fi
   if grep -q 'App installed' <<< "$result"; then
     xcrun devicectl device process launch --device "$udid" "$BUNDLE_ID" < /dev/null > /dev/null 2>&1 \
       && echo "installed and launched" || echo "installed (tap the app to open it)"
   else
     echo "FAILED - unlock it and check it is on this Wi-Fi"
+    grep -iE 'error|locked|unavailable' <<< "$result" | tail -2 | sed 's/^/    /' || true
     FAILED=1
   fi
 done <<< "$PHONES"
