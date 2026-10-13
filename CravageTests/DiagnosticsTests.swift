@@ -106,6 +106,22 @@ final class DiagnosticsTests: XCTestCase {
         }
     }
 
+    /// Review of a5279bc: a listener that fails after the lock no longer ends the round, so the
+    /// round's report is where the failure shows. A joiner, whose phone has no listener, never
+    /// reports one.
+    func testTheLastRoundSaysTheListenerFailed() async {
+        let star = await roundInProgress()
+        star.transports[0].onEvent?(.hostingFailed(.localNetworkDenied))
+        for phone in star.coordinators[0...1] { phone.leave() }
+        let host = Diagnostics.report(for: star.coordinators[0], appVersion: "0.1", build: "1",
+                                      systemVersion: "26.6", model: "iPhone17,1")
+        let joiner = Diagnostics.report(for: star.coordinators[1], appVersion: "0.1", build: "1",
+                                        systemVersion: "26.6", model: "iPhone17,1")
+        XCTAssertTrue(host.components(separatedBy: "last round:").last?.contains("listener failed: local network denied") == true,
+                      host)
+        XCTAssertFalse(joiner.contains("listener failed"), joiner)
+    }
+
     /// Review of e833da5: a figure typed while the room code is still being confirmed is only held;
     /// the share leaves when every phone has confirmed. A round stuck there sent nothing, and the
     /// report must not say it did.

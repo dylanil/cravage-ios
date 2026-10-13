@@ -40,12 +40,12 @@ protocol RoundTransport: AnyObject {
     var onEvent: ((TransportEvent) -> Void)? { get set }
     func startHosting(label: String, size: Int, hostNickname: String)
     /// Host: take the room off the nearby list while keeping the listener and every open
-    /// connection. Not called while experiment 2026-10-13 keeps the room listed until Leave (see
-    /// `RoundCoordinator.leave`); the device result decides whether it is called again.
+    /// connection. Experiment 2026-10-13 keeps the room listed until Leave (see
+    /// `RoundCoordinator.leave`) and calls this only when a finished round goes to the background.
     func stopAdvertising()
     func startBrowsing()
-    /// Stop looking for rooms while keeping any open connection. Not called while experiment
-    /// 2026-10-13 keeps every phone looking until Leave (see `RoundCoordinator.leave`).
+    /// Stop looking for rooms while keeping any open connection. Experiment 2026-10-13 keeps every
+    /// joiner looking until Leave and calls this only when a finished round goes to the background.
     func stopBrowsing()
     /// Joiner: open the single connection to a room's host.
     func connect(to roomID: String)

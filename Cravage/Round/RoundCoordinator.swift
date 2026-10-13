@@ -47,6 +47,7 @@ final class RoundCoordinator {
     @ObservationIgnored private var sendFailuresAtEntry = 0
     @ObservationIgnored private var rosterLockedMs: UInt64?
     @ObservationIgnored private var ownShareMs: UInt64?
+    @ObservationIgnored private var listenerFailure: TransportProblem?
 
     init(transport: RoundTransport, clock: RoundClock, entitlement: EntitlementProvider, deadlines: Deadlines = Deadlines()) {
         self.engine = RoundEngine(deadlines: deadlines)
@@ -84,6 +85,8 @@ final class RoundCoordinator {
         }
     }
 
+    /// From the Join screen only, never in a room: the transport's `startBrowsing` marks the work of
+    /// any earlier start as stale, so a room's connections would go unreported.
     func browse() {
         problem = nil
         problemIsDiscovery = false
@@ -159,7 +162,16 @@ final class RoundCoordinator {
     func appEnteredBackground() {
         // Invalidate even idle-screen work queued before it could enter createRoom.
         actionEpoch += 1
-        guard isCreatingRoom || !engine.phase.isTerminalOrIdle || engine.restartOffer != nil else { return }
+        guard isCreatingRoom || !engine.phase.isTerminalOrIdle || engine.restartOffer != nil else {
+            // A finished round keeps its result for sharing, but a phone in a pocket has no reason
+            // to list the room or look for rooms, which experiment 2026-10-13 otherwise keeps doing
+            // until Leave. The Join screen's own search (no role yet) is left alone.
+            if engine.role != nil {
+                transport.stopAdvertising()
+                transport.stopBrowsing()
+            }
+            return
+        }
         leave()
         wasInterrupted = true
     }
@@ -180,9 +192,11 @@ final class RoundCoordinator {
             lastRefusedMessage: lastPeerRejection,
             secondsSinceRosterLocked: rosterLockedMs.map { Self.seconds(from: $0, to: now) },
             secondsToOwnShare: rosterLockedMs.flatMap { locked in ownShareMs.map { Self.seconds(from: locked, to: $0) } },
-            links: transport.linkLog)
+            links: transport.linkLog,
+            listenerFailure: listenerFailure)
         rosterLockedMs = nil
         ownShareMs = nil
+        listenerFailure = nil
     }
 
     /// This phone's own share is in the round's set, which happens only when it is queued to send.
@@ -223,9 +237,13 @@ final class RoundCoordinator {
             problemIsDiscovery = true
             revision += 1
         case let .hostingFailed(problem):
-            // Nobody can reach a room whose listener failed: close it rather than wait out the lobby.
-            if engine.role == .host, !engine.phase.isTerminalOrIdle {
+            // Nobody can reach a room whose listener failed: close a room still taking people rather
+            // than wait out the lobby. Once the roster has locked nobody new is needed (a restart
+            // takes back only phones already connected), so the round goes on and its report says so.
+            if engine.role == .host, engine.phase == .lobby, engine.startNeedsFullRoom {
                 leave()
+            } else if engine.role == .host {
+                listenerFailure = problem
             }
             self.problem = problem
             problemIsDiscovery = false
@@ -312,6 +330,8 @@ struct LastRound {
     var secondsToOwnShare: Int?
     /// Read when the report is made, so it counts what Leave sent on the way out.
     var links: LinkLog
+    /// Host: the listener failed after the round no longer needed it, so the round went on.
+    var listenerFailure: TransportProblem?
 }
 
 private extension Event {

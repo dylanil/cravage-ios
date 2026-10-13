@@ -519,7 +519,7 @@
       "replace": "        revision += 1\n        if engine.phase != .idle, engine.phase != .lobby { transport.stopAdvertising() }\n        scheduleTick()"
     },
     {
-      "name": "phones keep looking for rooms through the round",
+      "name": "joiners keep looking for rooms through the round",
       "suite": "app",
       "file": "Cravage/Round/RoundCoordinator.swift",
       "find": "        revision += 1\n        scheduleTick()",
@@ -533,11 +533,53 @@
       "replace": "        rooms = []"
     },
     {
-      "name": "a latecomer is turned away from a started round",
+      "name": "a listener failure after the lock leaves the round going",
       "suite": "app",
-      "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
-      "find": "        guard role == .host, phase == .lobby, connected.count < RoundEngine.maxConnections else {",
-      "replace": "        guard role == .host, connected.count < RoundEngine.maxConnections else {"
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "            if engine.role == .host, engine.phase == .lobby, engine.startNeedsFullRoom {",
+      "replace": "            if engine.role == .host, !engine.phase.isTerminalOrIdle {"
+    },
+    {
+      "name": "a listener failure leaves a restart gathering",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "            if engine.role == .host, engine.phase == .lobby, engine.startNeedsFullRoom {",
+      "replace": "            if engine.role == .host, engine.phase == .lobby {"
+    },
+    {
+      "name": "the last round keeps a listener failure",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "            } else if engine.role == .host {\n                listenerFailure = problem\n            }",
+      "replace": "            }"
+    },
+    {
+      "name": "the report says the listener failed",
+      "suite": "app",
+      "file": "Cravage/Diagnostics.swift",
+      "find": "        if let problem = last.listenerFailure {\n            lines.append(\"listener failed: \\(name(problem))\")\n        }\n",
+      "replace": ""
+    },
+    {
+      "name": "a finished round leaves the nearby list when the phone locks",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "                transport.stopAdvertising()\n                transport.stopBrowsing()",
+      "replace": "                transport.stopBrowsing()"
+    },
+    {
+      "name": "a locked phone with a finished round stops looking for rooms",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "                transport.stopAdvertising()\n                transport.stopBrowsing()",
+      "replace": "                transport.stopAdvertising()"
+    },
+    {
+      "name": "the Join screen keeps looking for rooms in the background",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "            if engine.role != nil {\n                transport.stopAdvertising()",
+      "replace": "            if true {\n                transport.stopAdvertising()"
     },
     {
       "name": "a connection after the roster locks is refused",
@@ -545,13 +587,6 @@
       "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
       "find": "        guard role == .host, phase == .lobby, connected.count < RoundEngine.maxConnections else {",
       "replace": "        guard role == .host, connected.count < RoundEngine.maxConnections else {"
-    },
-    {
-      "name": "a restart takes in no one from outside the last round",
-      "suite": "app",
-      "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
-      "find": "phase == .lobby, !restartPending else",
-      "replace": "phase == .lobby else"
     },
     {
       "name": "a refusal does not follow the round onto the next screen",
@@ -924,8 +959,8 @@
       "name": "the last round counts what leaving sent",
       "suite": "app",
       "file": "Cravage/Round/RoundCoordinator.swift",
-      "find": "            links: transport.linkLog)",
-      "replace": "            links: LinkLog(transport.linkLog.reports))"
+      "find": "            links: transport.linkLog,",
+      "replace": "            links: LinkLog(transport.linkLog.reports),"
     },
     {
       "name": "a share that completes the set is reported as sent",

@@ -78,11 +78,11 @@ than discovered. The in-app Limitations screen carries the same list in shorter 
   many other phones are expected; count that many real phones in the room yourself before
   confirming - the app cannot do this check for you.
 - **Room label and nicknames are visible to nearby phones** while a room is open.
-- **A started round stays in nearby phones' room lists until the host leaves (test build).** A
-  phone that taps it is turned away: "Lost the connection to the host", or "You weren't admitted"
-  if the host is restarting the round at the time. This build tests whether taking the room off
-  the list, and stopping the search for rooms, is what makes some rounds stall over peer-to-peer
-  Wi-Fi.
+- **A started round stays in nearby phones' room lists until the host leaves or locks their phone
+  (test build).** A phone that taps it is not let in, and the message it then sees was not written
+  for this case: usually "Lost the connection to the host" and that the round has stopped, though
+  the round goes on without it. This build tests whether taking the room off the list, and
+  stopping the search for rooms, is what makes some rounds stall over peer-to-peer Wi-Fi.
 - **Every phone needs the same version of Cravage.** A room from a phone on another version shows
   in the list but can't be joined; update the app on both phones.
 - **Not sold in the EU** in this version, because EU rules would require publishing a postal

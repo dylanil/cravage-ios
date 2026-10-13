@@ -61,6 +61,9 @@ enum Diagnostics {
             "shares in: \(last.sharesIn)",
             "send failures: \(last.sendFailures)",
         ]
+        if let problem = last.listenerFailure {
+            lines.append("listener failed: \(name(problem))")
+        }
         if let rejection = last.lastRefusedMessage {
             lines.append("last refused message: \(name(rejection))")
         }
