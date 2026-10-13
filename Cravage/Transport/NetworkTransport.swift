@@ -136,7 +136,7 @@ final class NetworkTransport: RoundTransport {
     func startHosting(label: String, size: Int, hostNickname: String) {
         stopAll()
         let token = startToken
-        let txt = NWTXTRecord(["v": String(CravageCore.protocolVersion), "label": label, "size": String(size), "host": hostNickname])
+        let txt = Self.openListing(label: label, size: size, hostNickname: hostNickname)
         let listener: NetworkListener<TCP>
         do {
             listener = try NetworkListener(for: .bonjour(name: nil, type: serviceType, txtRecord: txt),
@@ -173,6 +173,26 @@ final class NetworkTransport: RoundTransport {
     /// Wi-Fi alone before this is trusted (review 2026-09-24).
     func stopAdvertising() {
         listener?.service = nil
+    }
+
+    /// listener.h, nw_listener_set_advertise_descriptor: "Setting the advertise descriptor more than
+    /// once may be used to update the TXT record." `NetworkListener.service` has no doc comment, so
+    /// that it does the same is inferred. A probe on the Mac (2026-10-13) saw the record change with
+    /// no removal of the registration, a running browser deliver the new record within a second,
+    /// and an open connection carry on; that this holds over peer-to-peer Wi-Fi is for the device run.
+    func closeListing() {
+        listener?.service = NWListener.Service(name: nil, type: serviceType, txtRecord: Self.closedListing)
+    }
+
+    /// What a room taking people lists: its name and size, the host's name and the version.
+    static func openListing(label: String, size: Int, hostNickname: String) -> NWTXTRecord {
+        NWTXTRecord(["v": String(CravageCore.protocolVersion), "label": label, "size": String(size), "host": hostNickname])
+    }
+
+    /// Decision 2026-10-13: what a room taking nobody new lists. It names nothing, so a build from
+    /// before the "closed" key leaves it off its list as well, for want of a room name.
+    static var closedListing: NWTXTRecord {
+        NWTXTRecord(["v": String(CravageCore.protocolVersion), "closed": "1"])
     }
 
     /// Runs for the life of one inbound connection; returning lets Network close it.
@@ -237,15 +257,17 @@ final class NetworkTransport: RoundTransport {
 
     private func roomsFound(_ found: [Bonjour.Endpoint]) {
         endpoints = Dictionary(found.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
-        let adverts = found.compactMap { endpoint -> RoomAdvert? in
-            let txt = endpoint.txtRecord
-            guard let label = txt["label"], RoomText.isValidLabel(label),
-                  let host = txt["host"], RoomText.isValidNickname(host),
-                  let size = txt["size"].flatMap(Int.init), (Roster.minimumSize...Roster.maximumSize).contains(size),
-                  let version = txt["v"].flatMap(Int.init) else { return nil }
-            return RoomAdvert(id: endpoint.id, label: label, size: size, hostNickname: host, protocolVersion: version)
-        }
-        onEvent?(.roomsChanged(adverts))
+        onEvent?(.roomsChanged(found.compactMap { Self.advert(id: $0.id, txt: $0.txtRecord) }))
+    }
+
+    /// A room for the nearby list, or nil for a closed or malformed listing.
+    static func advert(id: String, txt: NWTXTRecord) -> RoomAdvert? {
+        guard txt["closed"] == nil,
+              let label = txt["label"], RoomText.isValidLabel(label),
+              let host = txt["host"], RoomText.isValidNickname(host),
+              let size = txt["size"].flatMap(Int.init), (Roster.minimumSize...Roster.maximumSize).contains(size),
+              let version = txt["v"].flatMap(Int.init) else { return nil }
+        return RoomAdvert(id: id, label: label, size: size, hostNickname: host, protocolVersion: version)
     }
 
     func connect(to roomID: String) {

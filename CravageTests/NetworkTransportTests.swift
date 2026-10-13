@@ -279,6 +279,23 @@ final class NetworkTransportTests: XCTestCase {
         XCTAssertEqual(NetworkTransport.route(interfaces: [(.wifi, "en0"), (.wifi, "awdl0")]), .mixed)
     }
 
+    /// Decision 2026-10-13: a room that takes nobody new keeps its registration but closes its
+    /// listing. The closed listing names neither the room nor the host, and a closed room is left
+    /// off the nearby list even when its listing does carry names.
+    func testAClosedListingNamesNothingAndIsLeftOffTheNearbyList() {
+        let open = NetworkTransport.openListing(label: "Annual bonus", size: 3, hostNickname: "Sam")
+        XCTAssertEqual(NetworkTransport.advert(id: "room", txt: open),
+                       RoomAdvert(id: "room", label: "Annual bonus", size: 3, hostNickname: "Sam",
+                                  protocolVersion: CravageCore.protocolVersion))
+
+        let closed = NetworkTransport.closedListing
+        XCTAssertEqual(closed.dictionary.keys.sorted(), ["closed", "v"], "a closed listing still names something")
+        XCTAssertNil(NetworkTransport.advert(id: "room", txt: closed))
+        var namedButClosed = open
+        namedButClosed["closed"] = "1"
+        XCTAssertNil(NetworkTransport.advert(id: "room", txt: namedButClosed), "a closed room was put on the nearby list")
+    }
+
     /// Review of 3e916ff: a link that has left the transport's table still reads until its close
     /// finishes, and what arrives then is counted, so the other phone's "sent" still matches.
     func testFramesThatArriveWhileALinkDrainsAreCounted() async {

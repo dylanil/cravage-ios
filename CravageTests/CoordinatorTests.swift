@@ -52,7 +52,9 @@ final class FakeStar {
         weak var star: FakeStar?
         let index: Int
         var hosting: (label: String, size: Int)?
+        /// The room is registered. `listingClosed`: its listing says it takes nobody new.
         var advertising = false
+        var listingClosed = false
         var browsing = false
         var sentCount = 0
         var connectionAttempts = 0
@@ -64,10 +66,12 @@ final class FakeStar {
         func startHosting(label: String, size: Int, hostNickname: String) {
             hosting = (label, size)
             advertising = true
+            listingClosed = false
             linkLog = LinkLog()
             linkLog.add { [weak self] in LinkReport(toHost: false, framesSent: self?.sentCount ?? 0) }
         }
         func stopAdvertising() { advertising = false }
+        func closeListing() { listingClosed = true }
         func startBrowsing() {
             browsing = true
             if let advert = star?.advert { onEvent?(.roomsChanged([advert])) }
@@ -79,7 +83,7 @@ final class FakeStar {
         }
         func send(_ data: Data, to peer: PeerID) { sentCount += 1; star?.enqueue(from: index, to: peer, data) }
         func disconnect(_ peer: PeerID) { star?.drop(index == 0 ? peer.raw : index) }
-        func stopAll() { hosting = nil; advertising = false; browsing = false; linkLog = LinkLog() }
+        func stopAll() { hosting = nil; advertising = false; listingClosed = false; browsing = false; linkLog = LinkLog() }
     }
 
     let transports: [Transport]
@@ -88,8 +92,9 @@ final class FakeStar {
     var connected: Set<Int> = []
     private var queue: [(to: Int, event: TransportEvent)] = []
 
+    /// A closed listing is left off the list, as `NetworkTransport.advert` does.
     var advert: RoomAdvert? {
-        guard let hosting = transports[0].hosting, transports[0].advertising else { return nil }
+        guard let hosting = transports[0].hosting, transports[0].advertising, !transports[0].listingClosed else { return nil }
         return RoomAdvert(id: "room", label: hosting.label, size: hosting.size, hostNickname: "Host", protocolVersion: CravageCore.protocolVersion)
     }
 
@@ -314,11 +319,11 @@ final class CoordinatorTests: XCTestCase {
         XCTAssertEqual(host.lastRejection, .notEnoughPeople, "a real refusal must still reach the screen")
     }
 
-    /// Experiment 2026-10-13: a joiner keeps looking for rooms through its round, restarts included,
-    /// and stops only when it leaves. Rounds have stalled with one link silent both ways soon after
-    /// the roster locked (device reports 2026-10-09, -11 and -13). On 2026-10-13 it was the round's
-    /// only peer-to-peer link, and it went quiet about a second after the lock, which is when
-    /// looking for rooms used to stop. This build tests whether that is the cause.
+    /// Decision 2026-10-13: a joiner keeps looking for rooms through its round, restarts included,
+    /// and stops only when it leaves. Rounds stalled with one link silent both ways soon after the
+    /// roster locked (device reports 2026-10-09, -11 and -13); on 2026-10-13 it was the round's only
+    /// peer-to-peer link, gone quiet about a second after the lock, which is when looking for rooms
+    /// used to stop. A device run that kept looking, and kept the room registered, had no stall.
     func testJoinersKeepLookingForRoomsThroughTheRoundUntilTheyLeave() async {
         let star = FakeStar(phones: 3, entitlement: FakeEntitlement(unlocked: false))
         let host = star.coordinators[0]
@@ -352,48 +357,62 @@ final class CoordinatorTests: XCTestCase {
         XCTAssertTrue(star.transports[2].browsing, "a joiner stopped looking for rooms in a restarted round")
     }
 
-    /// Experiment 2026-10-13, setting aside the decision of 2026-09-24 for a device test: the room
-    /// stays on the nearby list until the host leaves, restarts included, because taking it off is
-    /// the other change made when the roster locks. A latecomer now sees the started room, and is
-    /// turned away if they try it (the pin below).
-    func testTheRoomStaysListedThroughTheRoundUntilTheHostLeaves() async {
-        let star = FakeStar(phones: 4, entitlement: FakeEntitlement(unlocked: false))
+    /// Decision 2026-10-13: the room stays registered until the host leaves, restarts included,
+    /// because rounds stalled over peer-to-peer Wi-Fi when the registration was removed at the lock
+    /// and the search for rooms stopped, and none stalled in a device run that did neither. Once the
+    /// round starts, its listing is closed instead, so nearby phones leave it off their lists.
+    func testAStartedRoomStaysRegisteredButClosesItsListingUntilTheHostLeaves() async {
+        let star = FakeStar(phones: 3, entitlement: FakeEntitlement(unlocked: false))
         let host = star.coordinators[0]
         await host.createRoom(label: "Annual bonus", size: 3, nickname: "Sam")
         for (index, name) in [(1, "Alex"), (2, "Dee")] {
             star.coordinators[index].join(roomID: "room", nickname: name)
             star.flush()
         }
-        XCTAssertTrue(star.transports[0].advertising, "a room waiting for people must be visible")
         for pending in host.engine.pendingJoiners {
             host.admit(pending.verifyingKey, generation: host.engine.generation)
         }
-        XCTAssertTrue(star.transports[0].advertising)
+        XCTAssertTrue(star.transports[0].advertising, "a room waiting for people must be visible")
+        XCTAssertFalse(star.transports[0].listingClosed, "a room still taking people closed its listing")
 
         host.start(generation: host.engine.generation)
         star.flush()
         XCTAssertEqual(host.engine.phase, .confirming)
-        XCTAssertTrue(star.transports[0].advertising, "the started round left the nearby list")
-        star.coordinators[3].browse()
-        XCTAssertEqual(star.coordinators[3].rooms.map(\.id), ["room"], "a nearby phone could not see the started round")
+        XCTAssertTrue(star.transports[0].advertising, "the started round removed its registration")
+        XCTAssertTrue(star.transports[0].listingClosed, "the started round is still listed as taking people")
 
         let generation = host.engine.generation
         host.restart(generation: generation)
         star.flush()
+        XCTAssertEqual(host.engine.phase, .lobby)
+        XCTAssertTrue(star.transports[0].listingClosed, "a restart listed the room as taking people again")
         for joiner in star.coordinators[1...2] {
             joiner.acceptRestart(generation: joiner.engine.generation)
         }
         star.flush()
         XCTAssertGreaterThan(host.engine.generation, generation, "the round was never restarted")
         XCTAssertEqual(host.engine.phase, .confirming, "the restarted round did not lock")
-        XCTAssertTrue(star.transports[0].advertising, "a restarted round left the nearby list")
+        XCTAssertTrue(star.transports[0].advertising, "a restarted round removed its registration")
+        XCTAssertTrue(star.transports[0].listingClosed)
 
         host.leave()
-        XCTAssertFalse(star.transports[0].advertising, "Leave left the room on the nearby list")
+        XCTAssertFalse(star.transports[0].advertising, "Leave left the room registered")
     }
 
-    /// Non-goal pin: whatever the nearby list shows, a phone that connects to a started round is
-    /// turned away, and the round goes on with the people it locked with.
+    /// A lobby that ends without starting takes nobody new either, so its listing closes too.
+    func testALobbyThatEndsWithoutStartingClosesItsListing() async {
+        let star = FakeStar(phones: 1, entitlement: FakeEntitlement(unlocked: false))
+        let host = star.coordinators[0]
+        await host.createRoom(label: "Team", size: 3, nickname: "Sam")
+        XCTAssertFalse(star.transports[0].listingClosed)
+        await star.clock.advance(ms: 600_000)
+        XCTAssertEqual(host.engine.phase, .failed(.timeout(.lobby)))
+        XCTAssertTrue(star.transports[0].listingClosed, "a lobby that timed out is still listed as taking people")
+        XCTAssertTrue(star.transports[0].advertising)
+    }
+
+    /// Non-goal pin: a phone that connects to a started round, from a listing it saw before the
+    /// round started, is turned away, and the round goes on with the people it locked with.
     func testALatecomerIsTurnedAwayAndTheRoundIsUnchanged() async {
         let star = FakeStar(phones: 4, entitlement: FakeEntitlement(unlocked: false))
         let host = star.coordinators[0]
@@ -713,9 +732,9 @@ final class CoordinatorTests: XCTestCase {
         XCTAssertEqual(host.lastRound?.listenerFailure, .unavailable)
     }
 
-    /// Review of a5279bc: a finished round keeps its result when the phone locks, and with the
-    /// experiment of 2026-10-13 it would also have stayed listed nearby until Leave. Going to the
-    /// background takes it off the list and stops the search for rooms.
+    /// Review of a5279bc: a finished round keeps its result when the phone locks, and since
+    /// 2026-10-13 it would also have stayed registered until Leave. Going to the background removes
+    /// the registration and stops the search for rooms.
     func testBackgroundTakesAFinishedRoundOffTheNearbyList() async {
         let star = await startedThreePhoneRound(joinersBrowse: true)
         for phone in star.coordinators { phone.confirmRoomCode(generation: phone.engine.generation) }

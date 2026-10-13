@@ -39,13 +39,17 @@ enum TransportEvent: Sendable {
 protocol RoundTransport: AnyObject {
     var onEvent: ((TransportEvent) -> Void)? { get set }
     func startHosting(label: String, size: Int, hostNickname: String)
-    /// Host: take the room off the nearby list while keeping the listener and every open
-    /// connection. Experiment 2026-10-13 keeps the room listed until Leave (see
-    /// `RoundCoordinator.leave`) and calls this only when a finished round goes to the background.
+    /// Host: remove the room's registration while keeping the listener and every open connection.
+    /// Since 2026-10-13 the room stays registered until Leave (see `RoundCoordinator.leave`), and
+    /// this is called only when a finished round goes to the background.
     func stopAdvertising()
+    /// Host: keep the registration, the listener and every open connection, but say the room takes
+    /// nobody new, without its name or the host's, so nearby phones leave it off their lists.
+    func closeListing()
     func startBrowsing()
-    /// Stop looking for rooms while keeping any open connection. Experiment 2026-10-13 keeps every
-    /// joiner looking until Leave and calls this only when a finished round goes to the background.
+    /// Stop looking for rooms while keeping any open connection. Since 2026-10-13 every joiner
+    /// keeps looking until Leave, and this is called only when a finished round goes to the
+    /// background.
     func stopBrowsing()
     /// Joiner: open the single connection to a room's host.
     func connect(to roomID: String)

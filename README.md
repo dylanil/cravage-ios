@@ -77,12 +77,12 @@ than discovered. The in-app Limitations screen carries the same list in shorter 
   showing a lone real participant what looks like a normal room. The confirmation screen shows how
   many other phones are expected; count that many real phones in the room yourself before
   confirming - the app cannot do this check for you.
-- **Room label and nicknames are visible to nearby phones** while a room is open.
-- **A started round stays in nearby phones' room lists until the host leaves or locks their phone
-  (test build).** A phone that taps it is not let in, and the message it then sees was not written
-  for this case: usually "Lost the connection to the host" and that the round has stopped, though
-  the round goes on without it. This build tests whether taking the room off the list, and
-  stopping the search for rooms, is what makes some rounds stall over peer-to-peer Wi-Fi.
+- **Room label and nicknames are visible to nearby phones** while a room is taking people.
+- **A phone that taps a room just as its round starts is turned away with a message not written
+  for this case**: usually "Lost the connection to the host" and that the round has stopped,
+  though the round goes on without it. A started round leaves nearby phones' lists within about a
+  second. That this holds over peer-to-peer Wi-Fi, and that rounds there no longer stall, is still
+  being checked on phones (test build).
 - **Every phone needs the same version of Cravage.** A room from a phone on another version shows
   in the list but can't be joined; update the app on both phones.
 - **Not sold in the EU** in this version, because EU rules would require publishing a postal

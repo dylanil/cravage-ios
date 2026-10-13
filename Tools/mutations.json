@@ -512,11 +512,39 @@
       "replace": "        default:\n            return nil"
     },
     {
-      "name": "a started round stays on the nearby list until Leave",
+      "name": "a started room stays registered until Leave",
       "suite": "app",
       "file": "Cravage/Round/RoundCoordinator.swift",
       "find": "        revision += 1\n        scheduleTick()",
       "replace": "        revision += 1\n        if engine.phase != .idle, engine.phase != .lobby { transport.stopAdvertising() }\n        scheduleTick()"
+    },
+    {
+      "name": "a room that takes nobody new closes its listing",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "        listingOpen = false\n        transport.closeListing()",
+      "replace": "        listingOpen = false"
+    },
+    {
+      "name": "a room still taking people keeps its listing open",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "guard listingOpen, engine.phase != .idle, engine.phase != .lobby else { return }",
+      "replace": "guard listingOpen, engine.phase != .idle else { return }"
+    },
+    {
+      "name": "a closed listing names neither the room nor the host",
+      "suite": "app",
+      "file": "Cravage/Transport/NetworkTransport.swift",
+      "find": "NWTXTRecord([\"v\": String(CravageCore.protocolVersion), \"closed\": \"1\"])",
+      "replace": "NWTXTRecord([\"v\": String(CravageCore.protocolVersion), \"closed\": \"1\", \"label\": \"Annual bonus\"])"
+    },
+    {
+      "name": "a closed room is left off the nearby list",
+      "suite": "app",
+      "file": "Cravage/Transport/NetworkTransport.swift",
+      "find": "        guard txt[\"closed\"] == nil,\n              let label",
+      "replace": "        guard let label"
     },
     {
       "name": "joiners keep looking for rooms through the round",

@@ -129,6 +129,7 @@ private final class Star {
         init(index: Int) { self.index = index }
         func startHosting(label: String, size: Int, hostNickname: String) {}
         func stopAdvertising() {}
+        func closeListing() {}
         func startBrowsing() {}
         func stopBrowsing() {}
         func connect(to roomID: String) { star?.connect(joiner: index) }

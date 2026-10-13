@@ -42,6 +42,7 @@ final class RoundCoordinator {
     @ObservationIgnored private let clock: RoundClock
     @ObservationIgnored private let entitlement: EntitlementProvider
     @ObservationIgnored private var tickTask: Task<Void, Never>?
+    @ObservationIgnored private var listingOpen = false
     // For `lastRound`: the since-launch failure count when the room was entered, when the roster
     // last locked, and when this phone's own share was queued after that.
     @ObservationIgnored private var sendFailuresAtEntry = 0
@@ -82,6 +83,8 @@ final class RoundCoordinator {
         apply(.createRoom(label: label, maxSize: size, nickname: nickname, entitled: entitled))
         if engine.phase == .lobby, engine.role == .host {
             transport.startHosting(label: label, size: size, hostNickname: nickname)
+            // A listener that failed at once has already closed the room through `leave`.
+            listingOpen = engine.phase == .lobby
         }
     }
 
@@ -149,11 +152,11 @@ final class RoundCoordinator {
         problem = nil
         problemIsDiscovery = false
         apply(.leave)
-        // The one place the room leaves the nearby list and the search for rooms stops. Experiment
-        // 2026-10-13 sets aside the 2026-09-24 decision to stop both when the roster locks: a link
-        // over peer-to-peer Wi-Fi went silent about a second after that (device report), and this
-        // build tests whether stopping them is the cause. A latecomer now sees a started room and
-        // is turned away if they try it.
+        // The one place in a round the registration goes and the search for rooms stops. Decision
+        // 2026-10-13 replaces the 2026-09-24 one to stop both when the roster locks: a link over
+        // peer-to-peer Wi-Fi went silent about a second after that (device report), and a device
+        // run that stopped neither had no stall. Which of the two mattered is not known.
+        listingOpen = false
         transport.stopAll()
         rooms = []
     }
@@ -164,8 +167,8 @@ final class RoundCoordinator {
         actionEpoch += 1
         guard isCreatingRoom || !engine.phase.isTerminalOrIdle || engine.restartOffer != nil else {
             // A finished round keeps its result for sharing, but a phone in a pocket has no reason
-            // to list the room or look for rooms, which experiment 2026-10-13 otherwise keeps doing
-            // until Leave. The Join screen's own search (no role yet) is left alone.
+            // to keep the room registered or look for rooms, which it otherwise does until Leave.
+            // The Join screen's own search (no role yet) is left alone.
             if engine.role != nil {
                 transport.stopAdvertising()
                 transport.stopBrowsing()
@@ -291,12 +294,23 @@ final class RoundCoordinator {
         }
         revision += 1
         scheduleTick()
+        closeTheListingOnceTheRoomTakesNobodyNew()
         // The advert claimed this version, but the host speaks another: every message would be
         // refused, so the lobby could only time out. Leave now and say why.
         if hostOnAnotherVersion {
             leave()
             leftIncompatibleRoom = true
         }
+    }
+
+    /// Decision 2026-10-13: a room that takes nobody new, started or not, stays registered (see
+    /// `leave`) but closes its listing, so nearby phones leave it off their lists and it no longer
+    /// names the room or the host. Restarts keep it closed: they take back only phones already
+    /// connected.
+    private func closeTheListingOnceTheRoomTakesNobodyNew() {
+        guard listingOpen, engine.phase != .idle, engine.phase != .lobby else { return }
+        listingOpen = false
+        transport.closeListing()
     }
 
     private func scheduleTick() {

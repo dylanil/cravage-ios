@@ -39,15 +39,22 @@ in PLAN.md's "Decisions (settled, do not reopen without sign-off)" section.
 - Apple Network framework, iOS 26 `NetworkListener`/`NetworkBrowser`/`NetworkConnection` interface,
   peer-to-peer Wi-Fi. Star topology: every joiner opens exactly one `NetworkConnection` to the
   host; the host forwards to all connections. Bonjour service `_cravage._tcp` (peer-to-peer),
-  TXT record `{v, label, size, host}`. **Decisions 2026-09-24**: the host advertises only
-  while the room is taking people. Once the roster locks it removes the Bonjour registration and
-  keeps the listener and every open connection; a restart does not advertise again, because it
-  only takes back phones that are already connected. **Experiment 2026-10-13**, until a device
-  result decides: the host keeps the registration and every joiner keeps browsing until it leaves,
-  to learn whether removing them ends a peer-to-peer Wi-Fi link (a round's only peer-to-peer link
-  went silent about a second after the roster locked). A connection to a started round is still
-  refused, so a latecomer sees the room and is turned away. A phone that goes to the background
-  with its round finished stops both; a listener that fails after the lock no longer ends the
+  TXT record `{v, label, size, host}` while the room takes people. **Decisions 2026-09-24**: the
+  host advertised only while the room was taking people and removed the Bonjour registration once
+  the roster locked, keeping the listener and every open connection; a restart does not advertise
+  again, because it only takes back phones that are already connected. **Decision 2026-10-13**,
+  replacing the removal: rounds stalled with a peer-to-peer Wi-Fi link silent both ways about a
+  second after the lock, and a device run that kept the registration and kept every joiner
+  browsing until Leave had no stall in at least 20 rounds, 10 of them with every link
+  peer-to-peer. Which of the two mattered is not known, so both stay until the phone leaves. Once
+  the room takes nobody new (the roster locked, or the lobby ended) the host replaces the TXT
+  record with `{v, closed}`, which names neither the room nor the host, and phones leave a room
+  whose record has `closed` off their lists; a build from before the key does too, for want of a
+  label. Restarts keep it closed. That replacing the record leaves the registration and an open
+  connection alone was seen on the Mac (loopback); over peer-to-peer Wi-Fi it awaits a device run.
+  A connection to a started round is still refused, so a phone that saw the room before it closed
+  and taps it is turned away. A phone that goes to the background with its round finished removes
+  the registration and stops browsing; a listener that fails after the lock no longer ends the
   round, because nobody new is needed by then.
 - **Decision (was open as PLAN.md R8, now closed): signatures-only, no link-layer TLS.** In a star
   topology, hop-level TLS (joiner<->host, separately host<->joiner) cannot give end-to-end
