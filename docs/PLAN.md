@@ -431,3 +431,9 @@ out of release). Built 2026-10-05; room codes come from fresh keys, so they diff
   pinned; CI runs it against the Swift-produced transcript.
 - R8 Link security choice: resolved 2026-09-13, signatures-only, no link-layer TLS (docs/SPEC.md
   §2 has the reasoning).
+- R9 Tagline: open since 2026-10-13. "Get the group average without exposing the secrets." is on
+  trial in the launch video as a replacement for "Get the average, not the secrets.", with
+  "Private group averages. No middleman." as a closing line. If adopted, change README.md,
+  docs/index.md, docs/_config.yml, this plan's Context line, the App Store listing copy
+  (docs/APP_STORE.md) and the GitHub repository description together, and run
+  Tools/check_honesty_copy.sh.
