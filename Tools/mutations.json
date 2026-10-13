@@ -519,11 +519,46 @@
       "replace": "        default:\n            return nil"
     },
     {
-      "name": "a started round leaves the nearby list",
+      "name": "a started round stays on the nearby list until Leave",
       "suite": "app",
       "file": "Cravage/Round/RoundCoordinator.swift",
-      "find": "        advertising = false\n        transport.stopAdvertising()",
-      "replace": "        advertising = false"
+      "find": "        revision += 1\n        scheduleTick()",
+      "replace": "        revision += 1\n        if engine.phase != .idle, engine.phase != .lobby { transport.stopAdvertising() }\n        scheduleTick()"
+    },
+    {
+      "name": "phones keep looking for rooms through the round",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "        revision += 1\n        scheduleTick()",
+      "replace": "        revision += 1\n        if engine.phase != .idle, engine.phase != .lobby { transport.stopBrowsing() }\n        scheduleTick()"
+    },
+    {
+      "name": "Leave ends discovery in a started round",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "        transport.stopAll()\n        rooms = []",
+      "replace": "        rooms = []"
+    },
+    {
+      "name": "a latecomer is turned away from a started round",
+      "suite": "app",
+      "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
+      "find": "        guard role == .host, phase == .lobby, connected.count < RoundEngine.maxConnections else {",
+      "replace": "        guard role == .host, connected.count < RoundEngine.maxConnections else {"
+    },
+    {
+      "name": "a connection after the roster locks is refused",
+      "suite": "core",
+      "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
+      "find": "        guard role == .host, phase == .lobby, connected.count < RoundEngine.maxConnections else {",
+      "replace": "        guard role == .host, connected.count < RoundEngine.maxConnections else {"
+    },
+    {
+      "name": "a restart takes in no one from outside the last round",
+      "suite": "app",
+      "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
+      "find": "phase == .lobby, !restartPending else",
+      "replace": "phase == .lobby else"
     },
     {
       "name": "a refusal does not follow the round onto the next screen",

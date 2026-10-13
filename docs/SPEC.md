@@ -42,7 +42,11 @@ in PLAN.md's "Decisions (settled, do not reopen without sign-off)" section.
   TXT record `{v, label, size, host}`. **Decisions 2026-09-24**: the host advertises only
   while the room is taking people. Once the roster locks it removes the Bonjour registration and
   keeps the listener and every open connection; a restart does not advertise again, because it
-  only takes back phones that are already connected.
+  only takes back phones that are already connected. **Experiment 2026-10-13**, until a device
+  result decides: the host keeps the registration and every phone keeps browsing until it leaves,
+  to learn whether removing them ends a peer-to-peer Wi-Fi link (a round's only peer-to-peer link
+  went silent about a second after the roster locked). A connection to a started round is still
+  refused, so a latecomer sees the room and is turned away.
 - **Decision (was open as PLAN.md R8, now closed): signatures-only, no link-layer TLS.** In a star
   topology, hop-level TLS (joiner<->host, separately host<->joiner) cannot give end-to-end
   confidentiality — the host must decrypt to forward regardless — so it can only ever protect

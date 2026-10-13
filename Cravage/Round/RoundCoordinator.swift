@@ -42,8 +42,6 @@ final class RoundCoordinator {
     @ObservationIgnored private let clock: RoundClock
     @ObservationIgnored private let entitlement: EntitlementProvider
     @ObservationIgnored private var tickTask: Task<Void, Never>?
-    @ObservationIgnored private var browsing = false
-    @ObservationIgnored private var advertising = false
     // For `lastRound`: the since-launch failure count when the room was entered, when the roster
     // last locked, and when this phone's own share was queued after that.
     @ObservationIgnored private var sendFailuresAtEntry = 0
@@ -83,15 +81,12 @@ final class RoundCoordinator {
         apply(.createRoom(label: label, maxSize: size, nickname: nickname, entitled: entitled))
         if engine.phase == .lobby, engine.role == .host {
             transport.startHosting(label: label, size: size, hostNickname: nickname)
-            // A listener that failed at once has already closed the room through `leave`.
-            advertising = engine.phase == .lobby
         }
     }
 
     func browse() {
         problem = nil
         problemIsDiscovery = false
-        browsing = true
         transport.startBrowsing()
     }
 
@@ -151,9 +146,12 @@ final class RoundCoordinator {
         problem = nil
         problemIsDiscovery = false
         apply(.leave)
+        // The one place the room leaves the nearby list and the search for rooms stops. Experiment
+        // 2026-10-13 sets aside the 2026-09-24 decision to stop both when the roster locks: a link
+        // over peer-to-peer Wi-Fi went silent about a second after that (device report), and this
+        // build tests whether stopping them is the cause. A latecomer now sees a started room and
+        // is turned away if they try it.
         transport.stopAll()
-        browsing = false
-        advertising = false
         rooms = []
     }
 
@@ -274,8 +272,6 @@ final class RoundCoordinator {
             }
         }
         revision += 1
-        stopBrowsingOnceTheRoundStarts()
-        stopAdvertisingOnceTheRoundStarts()
         scheduleTick()
         // The advert claimed this version, but the host speaks another: every message would be
         // refused, so the lobby could only time out. Leave now and say why.
@@ -283,22 +279,6 @@ final class RoundCoordinator {
             leave()
             leftIncompatibleRoom = true
         }
-    }
-
-    /// A phone in a started round has no use for the room list, and every extra multicast is noise
-    /// on the same Wi-Fi the round is running over. The connection it already holds is untouched.
-    private func stopBrowsingOnceTheRoundStarts() {
-        guard browsing, engine.phase != .idle, engine.phase != .lobby else { return }
-        browsing = false
-        transport.stopBrowsing()
-    }
-
-    /// Decision 2026-09-24: a started round leaves the nearby list and stays off it, restarts
-    /// included, because a restart only takes back phones that are already connected.
-    private func stopAdvertisingOnceTheRoundStarts() {
-        guard advertising, engine.phase != .idle, engine.phase != .lobby else { return }
-        advertising = false
-        transport.stopAdvertising()
     }
 
     private func scheduleTick() {

@@ -314,9 +314,12 @@ final class CoordinatorTests: XCTestCase {
         XCTAssertEqual(host.lastRejection, .notEnoughPeople, "a real refusal must still reach the screen")
     }
 
-    /// A phone in a started round has no use for the room list, and every extra multicast is noise
-    /// on the Wi-Fi the round runs over.
-    func testBrowsingStopsOnceTheRoundStarts() async {
+    /// Experiment 2026-10-13: a phone keeps looking for rooms through its round, restarts included,
+    /// and stops only when it leaves. Rounds have stalled with one link silent both ways soon after
+    /// the roster locked (device reports 2026-10-09, -11 and -13). On 2026-10-13 it was the round's
+    /// only peer-to-peer link, and it went quiet about a second after the lock, which is when
+    /// looking for rooms used to stop. This build tests whether that is the cause.
+    func testPhonesKeepLookingForRoomsThroughTheRoundUntilTheyLeave() async {
         let star = FakeStar(phones: 3, entitlement: FakeEntitlement(unlocked: false))
         let host = star.coordinators[0]
         await host.createRoom(label: "Annual bonus", size: 3, nickname: "Sam")
@@ -333,14 +336,25 @@ final class CoordinatorTests: XCTestCase {
         host.start(generation: host.engine.generation)
         star.flush()
         XCTAssertEqual(star.coordinators[1].engine.phase, .confirming)
-        XCTAssertFalse(star.transports[1].browsing, "the joiner kept browsing inside the round")
-        XCTAssertFalse(star.transports[2].browsing)
+        XCTAssertTrue(star.transports[1].browsing, "a joiner stopped looking for rooms when the round started")
+        XCTAssertTrue(star.transports[2].browsing, "a joiner stopped looking for rooms when the round started")
+
+        host.restart(generation: host.engine.generation)
+        star.flush()
+        for joiner in star.coordinators.dropFirst() {
+            joiner.acceptRestart(generation: joiner.engine.generation)
+        }
+        star.flush()
+        XCTAssertEqual(star.coordinators[1].engine.phase, .confirming, "the restarted round did not lock")
+        XCTAssertTrue(star.transports[1].browsing, "a joiner stopped looking for rooms in a restarted round")
+        XCTAssertTrue(star.transports[2].browsing, "a joiner stopped looking for rooms in a restarted round")
     }
 
-    /// Decision 2026-09-24: once the round starts the room leaves the nearby list, so a
-    /// latecomer is not shown a room that will only turn them away with "Lost the connection". It
-    /// stays hidden through a restart, which only takes back phones that are already connected.
-    func testTheRoomIsHiddenOnceTheRoundStarts() async {
+    /// Experiment 2026-10-13, setting aside the decision of 2026-09-24 for a device test: the room
+    /// stays on the nearby list until the host leaves, restarts included, because taking it off is
+    /// the other change made when the roster locks. A latecomer now sees the started room, and is
+    /// turned away if they try it (the pin below).
+    func testTheRoomStaysListedThroughTheRoundUntilTheHostLeaves() async {
         let star = FakeStar(phones: 4, entitlement: FakeEntitlement(unlocked: false))
         let host = star.coordinators[0]
         await host.createRoom(label: "Annual bonus", size: 3, nickname: "Sam")
@@ -357,13 +371,116 @@ final class CoordinatorTests: XCTestCase {
         host.start(generation: host.engine.generation)
         star.flush()
         XCTAssertEqual(host.engine.phase, .confirming)
-        XCTAssertFalse(star.transports[0].advertising, "a started round was still listed nearby")
+        XCTAssertTrue(star.transports[0].advertising, "the started round left the nearby list")
         star.coordinators[3].browse()
-        XCTAssertTrue(star.coordinators[3].rooms.isEmpty, "a latecomer was shown a started round")
+        XCTAssertEqual(star.coordinators[3].rooms.map(\.id), ["room"], "a nearby phone could not see the started round")
 
         host.restart(generation: host.engine.generation)
         star.flush()
-        XCTAssertFalse(star.transports[0].advertising, "a restart listed the room again")
+        for joiner in star.coordinators[1...2] {
+            joiner.acceptRestart(generation: joiner.engine.generation)
+        }
+        star.flush()
+        XCTAssertEqual(host.engine.phase, .confirming, "the restarted round did not lock")
+        XCTAssertTrue(star.transports[0].advertising, "a restarted round left the nearby list")
+
+        host.leave()
+        XCTAssertFalse(star.transports[0].advertising, "Leave left the room on the nearby list")
+    }
+
+    /// Non-goal pin: whatever the nearby list shows, a phone that connects to a started round is
+    /// turned away, and the round goes on with the people it locked with.
+    func testALatecomerIsTurnedAwayAndTheRoundIsUnchanged() async {
+        let star = FakeStar(phones: 4, entitlement: FakeEntitlement(unlocked: false))
+        let host = star.coordinators[0]
+        await host.createRoom(label: "Annual bonus", size: 3, nickname: "Sam")
+        for (index, name) in [(1, "Alex"), (2, "Dee")] {
+            star.coordinators[index].join(roomID: "room", nickname: name)
+            star.flush()
+        }
+        for pending in host.engine.pendingJoiners {
+            host.admit(pending.verifyingKey, generation: host.engine.generation)
+        }
+        host.start(generation: host.engine.generation)
+        star.flush()
+        XCTAssertEqual(host.engine.phase, .confirming)
+        let roster = host.engine.roster
+
+        let latecomer = star.coordinators[3]
+        latecomer.join(roomID: "room", nickname: "Kim")
+        star.flush()
+        XCTAssertEqual(star.transports[3].connectionAttempts, 1, "the latecomer never reached the host")
+        XCTAssertNil(latecomer.engine.roster, "a latecomer was let into a started round")
+        XCTAssertEqual(latecomer.engine.phase, .failed(.connectionLost),
+                       "a latecomer was not told the room turned them away")
+        XCTAssertEqual(host.engine.phase, .confirming)
+        XCTAssertEqual(host.engine.roster, roster)
+        XCTAssertEqual(star.coordinators[1].engine.phase, .confirming)
+        XCTAssertEqual(star.coordinators[2].engine.phase, .confirming)
+    }
+
+    /// Non-goal pin: a restart only takes back phones from the round it replaces. A phone that
+    /// reaches the room while the restart gathers is shown to the host but cannot be let in, and is
+    /// turned away when the restarted round locks.
+    func testALatecomerDuringARestartIsNotTakenIn() async {
+        let star = FakeStar(phones: 4, entitlement: FakeEntitlement(unlocked: false))
+        let host = star.coordinators[0]
+        await host.createRoom(label: "Annual bonus", size: 3, nickname: "Sam")
+        for (index, name) in [(1, "Alex"), (2, "Dee")] {
+            star.coordinators[index].join(roomID: "room", nickname: name)
+            star.flush()
+        }
+        for pending in host.engine.pendingJoiners {
+            host.admit(pending.verifyingKey, generation: host.engine.generation)
+        }
+        host.start(generation: host.engine.generation)
+        star.flush()
+        let roster = host.engine.roster
+        host.restart(generation: host.engine.generation)
+        star.flush()
+        XCTAssertEqual(host.engine.phase, .lobby)
+
+        let latecomer = star.coordinators[3]
+        latecomer.join(roomID: "room", nickname: "Kim")
+        star.flush()
+        XCTAssertEqual(host.engine.pendingJoiners.map(\.nickname), ["Kim"])
+        host.admit(host.engine.pendingJoiners[0].verifyingKey, generation: host.engine.generation)
+        XCTAssertEqual(host.lastRejection, .wrongPhase, "a restart let in someone from outside the last round")
+
+        for joiner in star.coordinators[1...2] {
+            joiner.acceptRestart(generation: joiner.engine.generation)
+        }
+        star.flush()
+        XCTAssertEqual(host.engine.phase, .confirming, "the restarted round did not lock")
+        XCTAssertEqual(host.engine.roster?.parties.map(\.nickname).sorted(),
+                       roster?.parties.map(\.nickname).sorted())
+        XCTAssertEqual(latecomer.engine.phase, .failed(.declined), "the latecomer was not turned away")
+    }
+
+    /// Non-goal pin: Leave takes the room off the nearby list and stops looking for rooms, whatever
+    /// the round was doing.
+    func testLeaveEndsDiscoveryInAStartedRound() async {
+        let star = FakeStar(phones: 3, entitlement: FakeEntitlement(unlocked: false))
+        let host = star.coordinators[0]
+        await host.createRoom(label: "Annual bonus", size: 3, nickname: "Sam")
+        host.browse()
+        for (index, name) in [(1, "Alex"), (2, "Dee")] {
+            star.coordinators[index].browse()
+            star.coordinators[index].join(roomID: "room", nickname: name)
+            star.flush()
+        }
+        for pending in host.engine.pendingJoiners {
+            host.admit(pending.verifyingKey, generation: host.engine.generation)
+        }
+        host.start(generation: host.engine.generation)
+        star.flush()
+        XCTAssertEqual(star.coordinators[1].engine.phase, .confirming)
+
+        star.coordinators[1].leave()
+        XCTAssertFalse(star.transports[1].browsing, "a joiner that left still looks for rooms")
+        host.leave()
+        XCTAssertFalse(star.transports[0].advertising, "a host that left still lists its room")
+        XCTAssertFalse(star.transports[0].browsing, "a host that left still looks for rooms")
     }
 
     func testUnlockedHostOpensAnEightPersonRoom() async {

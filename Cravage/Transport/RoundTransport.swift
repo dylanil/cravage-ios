@@ -40,12 +40,12 @@ protocol RoundTransport: AnyObject {
     var onEvent: ((TransportEvent) -> Void)? { get set }
     func startHosting(label: String, size: Int, hostNickname: String)
     /// Host: take the room off the nearby list while keeping the listener and every open
-    /// connection. Called once the round starts, so a latecomer is not shown a room that can only
-    /// turn them away.
+    /// connection. Not called while experiment 2026-10-13 keeps the room listed until Leave (see
+    /// `RoundCoordinator.leave`); the device result decides whether it is called again.
     func stopAdvertising()
     func startBrowsing()
-    /// Stop looking for rooms while keeping any open connection. Called once a round has started,
-    /// so a phone in a round is not still multicasting for `_cravage._tcp`.
+    /// Stop looking for rooms while keeping any open connection. Not called while experiment
+    /// 2026-10-13 keeps every phone looking until Leave (see `RoundCoordinator.leave`).
     func stopBrowsing()
     /// Joiner: open the single connection to a room's host.
     func connect(to roomID: String)
