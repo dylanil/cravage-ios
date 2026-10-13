@@ -38,19 +38,14 @@ enum TransportEvent: Sendable {
 @MainActor
 protocol RoundTransport: AnyObject {
     var onEvent: ((TransportEvent) -> Void)? { get set }
+    /// Host: register the room and take connections. Decision 2026-10-13: the registration then
+    /// stays until `stopAll` (see `RoundCoordinator.leave`); nothing removes it on its own.
     func startHosting(label: String, size: Int, hostNickname: String)
-    /// Host: remove the room's registration while keeping the listener and every open connection.
-    /// Since 2026-10-13 the room stays registered until Leave (see `RoundCoordinator.leave`), and
-    /// this is called only when a finished round goes to the background.
-    func stopAdvertising()
     /// Host: keep the registration, the listener and every open connection, but say the room takes
     /// nobody new, without its name or the host's, so nearby phones leave it off their lists.
     func closeListing()
+    /// Look for rooms until `stopAll`, which since 2026-10-13 is the only thing that ends it.
     func startBrowsing()
-    /// Stop looking for rooms while keeping any open connection. Since 2026-10-13 every joiner
-    /// keeps looking until Leave, and this is called only when a finished round goes to the
-    /// background.
-    func stopBrowsing()
     /// Joiner: open the single connection to a room's host.
     func connect(to roomID: String)
     func send(_ data: Data, to peer: PeerID)
@@ -63,6 +58,16 @@ protocol RoundTransport: AnyObject {
     /// included. `stopAll` starts a new log; the old one keeps its links, so the diagnostics report
     /// can hold it past Leave and read it after what Leave queued has been sent.
     var linkLog: LinkLog { get }
+    /// Host: how often the system reported the room's registration added or removed since the
+    /// last `startHosting` or `stopAll`.
+    var registrationCounts: RegistrationCounts { get }
+}
+
+/// Counts only. A removal before Leave is what decision 2026-10-13 is meant to avoid, so the
+/// diagnostics report carries these for a device run to check.
+struct RegistrationCounts: Equatable, Sendable {
+    var added = 0
+    var removed = 0
 }
 
 /// The connections of one room, read when the report is made rather than when the room was left:

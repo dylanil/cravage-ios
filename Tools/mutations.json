@@ -516,7 +516,7 @@
       "suite": "app",
       "file": "Cravage/Round/RoundCoordinator.swift",
       "find": "        revision += 1\n        scheduleTick()",
-      "replace": "        revision += 1\n        if engine.phase != .idle, engine.phase != .lobby { transport.stopAdvertising() }\n        scheduleTick()"
+      "replace": "        revision += 1\n        if engine.role == .host, engine.phase != .idle, engine.phase != .lobby { transport.stopAll() }\n        scheduleTick()"
     },
     {
       "name": "a room that takes nobody new closes its listing",
@@ -543,15 +543,64 @@
       "name": "a closed room is left off the nearby list",
       "suite": "app",
       "file": "Cravage/Transport/NetworkTransport.swift",
-      "find": "        guard txt[\"closed\"] == nil,\n              let label",
+      "find": "        guard txt.getEntry(for: \"closed\") == nil,\n              let label",
       "replace": "        guard let label"
+    },
+    {
+      "name": "a closed key without a value still closes the room",
+      "suite": "app",
+      "file": "Cravage/Transport/NetworkTransport.swift",
+      "find": "txt.getEntry(for: \"closed\") == nil",
+      "replace": "txt[\"closed\"] == nil"
+    },
+    {
+      "name": "closing the listing keeps the registration",
+      "suite": "app",
+      "file": "Cravage/Transport/NetworkTransport.swift",
+      "find": "        listener?.service = Self.closedService",
+      "replace": "        listener?.service = nil"
+    },
+    {
+      "name": "closing the listing keeps the registered name",
+      "suite": "app",
+      "file": "Cravage/Transport/NetworkTransport.swift",
+      "find": "NWListener.Service(name: nil, type: serviceType, txtRecord: closedListing)",
+      "replace": "NWListener.Service(name: \"Cravage\", type: serviceType, txtRecord: closedListing)"
+    },
+    {
+      "name": "a registration removal is counted",
+      "suite": "app",
+      "file": "Cravage/Transport/NetworkTransport.swift",
+      "find": "        case .remove: removed += 1",
+      "replace": "        case .remove: break"
+    },
+    {
+      "name": "the last round keeps the registration counts",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "            registration: engine.role == .host ? transport.registrationCounts : nil)",
+      "replace": "            registration: nil)"
+    },
+    {
+      "name": "only the host's report counts registrations",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "registration: engine.role == .host ? transport.registrationCounts : nil",
+      "replace": "registration: transport.registrationCounts"
+    },
+    {
+      "name": "the report shows the room's registrations",
+      "suite": "app",
+      "file": "Cravage/Diagnostics.swift",
+      "find": "        if let registration = last.registration {\n            lines.append(\"registration: added \\(registration.added), removed \\(registration.removed)\")\n        }\n",
+      "replace": ""
     },
     {
       "name": "joiners keep looking for rooms through the round",
       "suite": "app",
       "file": "Cravage/Round/RoundCoordinator.swift",
       "find": "        revision += 1\n        scheduleTick()",
-      "replace": "        revision += 1\n        if engine.phase != .idle, engine.phase != .lobby { transport.stopBrowsing() }\n        scheduleTick()"
+      "replace": "        revision += 1\n        if engine.role == .joiner, engine.phase != .idle, engine.phase != .lobby { transport.stopAll() }\n        scheduleTick()"
     },
     {
       "name": "Leave ends discovery in a started round",
@@ -589,25 +638,18 @@
       "replace": ""
     },
     {
-      "name": "a finished round leaves the nearby list when the phone locks",
+      "name": "a locked phone keeps a finished room set up",
       "suite": "app",
       "file": "Cravage/Round/RoundCoordinator.swift",
-      "find": "                transport.stopAdvertising()\n                transport.stopBrowsing()",
-      "replace": "                transport.stopBrowsing()"
-    },
-    {
-      "name": "a locked phone with a finished round stops looking for rooms",
-      "suite": "app",
-      "file": "Cravage/Round/RoundCoordinator.swift",
-      "find": "                transport.stopAdvertising()\n                transport.stopBrowsing()",
-      "replace": "                transport.stopAdvertising()"
+      "find": "            return\n        }\n        leave()\n        wasInterrupted = true",
+      "replace": "            if engine.role != nil { transport.stopAll() }\n            return\n        }\n        leave()\n        wasInterrupted = true"
     },
     {
       "name": "the Join screen keeps looking for rooms in the background",
       "suite": "app",
       "file": "Cravage/Round/RoundCoordinator.swift",
-      "find": "            if engine.role != nil {\n                transport.stopAdvertising()",
-      "replace": "            if true {\n                transport.stopAdvertising()"
+      "find": "            return\n        }\n        leave()\n        wasInterrupted = true",
+      "replace": "            if engine.role == nil { transport.stopAll() }\n            return\n        }\n        leave()\n        wasInterrupted = true"
     },
     {
       "name": "a connection after the roster locks is refused",

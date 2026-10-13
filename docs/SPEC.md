@@ -51,11 +51,14 @@ in PLAN.md's "Decisions (settled, do not reopen without sign-off)" section.
   record with `{v, closed}`, which names neither the room nor the host, and phones leave a room
   whose record has `closed` off their lists; a build from before the key does too, for want of a
   label. Restarts keep it closed. That replacing the record leaves the registration and an open
-  connection alone was seen on the Mac (loopback); over peer-to-peer Wi-Fi it awaits a device run.
-  A connection to a started round is still refused, so a phone that saw the room before it closed
-  and taps it is turned away. A phone that goes to the background with its round finished removes
-  the registration and stops browsing; a listener that fails after the lock no longer ends the
-  round, because nobody new is needed by then.
+  connection alone, and keeps a name the system changed for a clash, was seen on the Mac
+  (loopback); over peer-to-peer Wi-Fi it awaits a device run, and the host's diagnostics report
+  counts the registrations added and removed up to Leave. A connection to a started round is
+  still refused, so a phone that saw the room before it closed and taps it is turned away; one
+  that connects while a restart gathers is still sent the room label in `welcome`. A phone that
+  goes to the background with its round finished keeps the registration and keeps browsing, so a
+  restart after it comes back runs like any other round. A listener that fails after the lock no
+  longer ends the round, because nobody new is needed by then.
 - **Decision (was open as PLAN.md R8, now closed): signatures-only, no link-layer TLS.** In a star
   topology, hop-level TLS (joiner<->host, separately host<->joiner) cannot give end-to-end
   confidentiality — the host must decrypt to forward regardless — so it can only ever protect

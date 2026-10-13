@@ -77,7 +77,9 @@ than discovered. The in-app Limitations screen carries the same list in shorter 
   showing a lone real participant what looks like a normal room. The confirmation screen shows how
   many other phones are expected; count that many real phones in the room yourself before
   confirming - the app cannot do this check for you.
-- **Room label and nicknames are visible to nearby phones** while a room is taking people.
+- **Room label and nicknames are visible to nearby phones** while a room is taking people, and for
+  a moment after. A phone that connects while a restart is gathering people is still sent the
+  room label, though it can't be let in.
 - **A phone that taps a room just as its round starts is turned away with a message not written
   for this case**: usually "Lost the connection to the host" and that the round has stopped,
   though the round goes on without it. A started round leaves nearby phones' lists within about a

@@ -294,6 +294,37 @@ final class NetworkTransportTests: XCTestCase {
         var namedButClosed = open
         namedButClosed["closed"] = "1"
         XCTAssertNil(NetworkTransport.advert(id: "room", txt: namedButClosed), "a closed room was put on the nearby list")
+        // Review of 999e7b5: a key with no value is still the key.
+        var closedWithoutValue = open
+        XCTAssertTrue(closedWithoutValue.setEntry(.none, for: "closed"))
+        XCTAssertNil(NetworkTransport.advert(id: "room", txt: closedWithoutValue), "a closed room was put on the nearby list")
+    }
+
+    /// Review of 999e7b5: closing the listing sets the listener's service again, with the closed
+    /// record and no name of its own, which keeps the name already registered. It never removes
+    /// the service, which is what ended peer-to-peer links. The listener here is real; nothing
+    /// waits for the network.
+    func testClosingTheListingKeepsTheRegistrationAndReplacesTheRecord() {
+        let transport = NetworkTransport()
+        transport.startHosting(label: "Test room", size: 3, hostNickname: "Test")
+        XCTAssertNotNil(transport.listener, "no listener to close the listing of")
+        transport.closeListing()
+        let service = transport.listener?.service
+        XCTAssertNotNil(service, "closing the listing removed the registration")
+        XCTAssertNil(service?.name, "closing the listing asked for a name other than the registered one")
+        XCTAssertEqual(service?.type, "_cravage._tcp")
+        XCTAssertEqual(service?.txtRecordObject?.dictionary, NetworkTransport.closedListing.dictionary)
+        transport.stopAll()
+    }
+
+    /// The diagnostics report's registration counts: each add and each removal the system reports.
+    func testEveryRegistrationChangeIsCounted() {
+        var counts = RegistrationCounts()
+        let endpoint = NWEndpoint.hostPort(host: "192.0.2.1", port: 1)
+        counts.record(.add(endpoint))
+        counts.record(.remove(endpoint))
+        counts.record(.add(endpoint))
+        XCTAssertEqual(counts, RegistrationCounts(added: 2, removed: 1))
     }
 
     /// Review of 3e916ff: a link that has left the transport's table still reads until its close

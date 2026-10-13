@@ -62,6 +62,7 @@ final class FakeStar {
         /// Like the real transport's: a new log at every start and stop. The host's one entry reads
         /// the frames sent so far whenever the report is made.
         var linkLog = LinkLog()
+        var registrationCounts = RegistrationCounts()
         init(index: Int) { self.index = index }
         func startHosting(label: String, size: Int, hostNickname: String) {
             hosting = (label, size)
@@ -70,13 +71,11 @@ final class FakeStar {
             linkLog = LinkLog()
             linkLog.add { [weak self] in LinkReport(toHost: false, framesSent: self?.sentCount ?? 0) }
         }
-        func stopAdvertising() { advertising = false }
         func closeListing() { listingClosed = true }
         func startBrowsing() {
             browsing = true
             if let advert = star?.advert { onEvent?(.roomsChanged([advert])) }
         }
-        func stopBrowsing() { browsing = false }
         func connect(to roomID: String) {
             connectionAttempts += 1
             star?.connect(joiner: index)
@@ -411,8 +410,8 @@ final class CoordinatorTests: XCTestCase {
         XCTAssertTrue(star.transports[0].advertising)
     }
 
-    /// Non-goal pin: a phone that connects to a started round, from a listing it saw before the
-    /// round started, is turned away, and the round goes on with the people it locked with.
+    /// Non-goal pin: a phone that connects to a started round, as one could from a listing seen
+    /// before the round started, is turned away, and the round goes on with the people it locked with.
     func testALatecomerIsTurnedAwayAndTheRoundIsUnchanged() async {
         let star = FakeStar(phones: 4, entitlement: FakeEntitlement(unlocked: false))
         let host = star.coordinators[0]
@@ -732,10 +731,11 @@ final class CoordinatorTests: XCTestCase {
         XCTAssertEqual(host.lastRound?.listenerFailure, .unavailable)
     }
 
-    /// Review of a5279bc: a finished round keeps its result when the phone locks, and since
-    /// 2026-10-13 it would also have stayed registered until Leave. Going to the background removes
-    /// the registration and stops the search for rooms.
-    func testBackgroundTakesAFinishedRoundOffTheNearbyList() async {
+    /// Decision 2026-10-13, review of 999e7b5: a finished round keeps its result when the phone
+    /// locks, and its room stays registered and its joiners keep looking until Leave. A restart
+    /// after the phones come back then runs like any other round, rather than without discovery,
+    /// which is how rounds stalled over peer-to-peer Wi-Fi.
+    func testBackgroundKeepsAFinishedRoomSetUpSoARestartRunsLikeAnyOther() async {
         let star = await startedThreePhoneRound(joinersBrowse: true)
         for phone in star.coordinators { phone.confirmRoomCode(generation: phone.engine.generation) }
         star.flush()
@@ -744,14 +744,25 @@ final class CoordinatorTests: XCTestCase {
         }
         star.flush()
         XCTAssertEqual(star.coordinators[0].engine.phase, .complete(.agreed))
-        XCTAssertTrue(star.transports[0].advertising)
-        XCTAssertTrue(star.transports[1].browsing)
 
         for phone in star.coordinators { phone.appEnteredBackground() }
         XCTAssertEqual(star.coordinators[0].engine.phase, .complete(.agreed), "the finished result was not kept")
-        XCTAssertFalse(star.transports[0].advertising, "a finished round stayed listed on a locked phone")
-        XCTAssertFalse(star.transports[1].browsing, "a locked phone kept looking for rooms")
-        XCTAssertFalse(star.transports[2].browsing, "a locked phone kept looking for rooms")
+        XCTAssertTrue(star.transports[0].advertising, "a locked phone removed its finished room's registration")
+        XCTAssertTrue(star.transports[1].browsing, "a locked phone stopped looking for rooms")
+        XCTAssertTrue(star.transports[2].browsing, "a locked phone stopped looking for rooms")
+
+        let host = star.coordinators[0]
+        let generation = host.engine.generation
+        host.restart(generation: generation)
+        star.flush()
+        for joiner in star.coordinators[1...2] {
+            joiner.acceptRestart(generation: joiner.engine.generation)
+        }
+        star.flush()
+        XCTAssertGreaterThan(host.engine.generation, generation, "the round was never restarted")
+        XCTAssertEqual(host.engine.phase, .confirming, "the restarted round did not lock")
+        XCTAssertTrue(star.transports[0].advertising, "the restarted round runs without its registration")
+        XCTAssertTrue(star.transports[1].browsing, "the restarted round runs without looking for rooms")
     }
 
     /// Non-goal pin: the Join screen's search for rooms carries on across a trip to the background.

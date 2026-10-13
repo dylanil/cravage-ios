@@ -122,6 +122,21 @@ final class DiagnosticsTests: XCTestCase {
         XCTAssertFalse(joiner.contains("listener failed"), joiner)
     }
 
+    /// Review of 999e7b5: the host's report counts the room's registrations up to leaving, so a
+    /// device run can see whether one was removed during the round. A joiner has none to count.
+    func testTheLastRoundCountsTheRoomsRegistrations() async {
+        let star = await roundInProgress()
+        star.transports[0].registrationCounts = RegistrationCounts(added: 1, removed: 2)
+        for phone in star.coordinators[0...1] { phone.leave() }
+        let host = Diagnostics.report(for: star.coordinators[0], appVersion: "0.1", build: "1",
+                                      systemVersion: "26.6", model: "iPhone17,1")
+        let joiner = Diagnostics.report(for: star.coordinators[1], appVersion: "0.1", build: "1",
+                                        systemVersion: "26.6", model: "iPhone17,1")
+        XCTAssertTrue(host.components(separatedBy: "last round:").last?.contains("registration: added 1, removed 2") == true,
+                      host)
+        XCTAssertFalse(joiner.contains("registration:"), joiner)
+    }
+
     /// Review of e833da5: a figure typed while the room code is still being confirmed is only held;
     /// the share leaves when every phone has confirmed. A round stuck there sent nothing, and the
     /// report must not say it did.

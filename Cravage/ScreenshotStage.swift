@@ -126,12 +126,11 @@ private final class Star {
         let index: Int
         let sendFailures = 0
         let linkLog = LinkLog()
+        let registrationCounts = RegistrationCounts()
         init(index: Int) { self.index = index }
         func startHosting(label: String, size: Int, hostNickname: String) {}
-        func stopAdvertising() {}
         func closeListing() {}
         func startBrowsing() {}
-        func stopBrowsing() {}
         func connect(to roomID: String) { star?.connect(joiner: index) }
         func send(_ data: Data, to peer: PeerID) { star?.enqueue(from: index, to: peer, data) }
         func disconnect(_ peer: PeerID) { preconditionFailure("staged scenes never disconnect a phone") }

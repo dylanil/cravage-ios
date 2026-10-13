@@ -166,13 +166,10 @@ final class RoundCoordinator {
         // Invalidate even idle-screen work queued before it could enter createRoom.
         actionEpoch += 1
         guard isCreatingRoom || !engine.phase.isTerminalOrIdle || engine.restartOffer != nil else {
-            // A finished round keeps its result for sharing, but a phone in a pocket has no reason
-            // to keep the room registered or look for rooms, which it otherwise does until Leave.
-            // The Join screen's own search (no role yet) is left alone.
-            if engine.role != nil {
-                transport.stopAdvertising()
-                transport.stopBrowsing()
-            }
+            // A finished round keeps its result for sharing. Its room stays registered and its
+            // joiners keep looking until Leave, so a restart once the phone is unlocked runs like
+            // any other round (decision 2026-10-13); the closed listing names nothing meanwhile.
+            // The Join screen's own search carries on too.
             return
         }
         leave()
@@ -196,7 +193,8 @@ final class RoundCoordinator {
             secondsSinceRosterLocked: rosterLockedMs.map { Self.seconds(from: $0, to: now) },
             secondsToOwnShare: rosterLockedMs.flatMap { locked in ownShareMs.map { Self.seconds(from: locked, to: $0) } },
             links: transport.linkLog,
-            listenerFailure: listenerFailure)
+            listenerFailure: listenerFailure,
+            registration: engine.role == .host ? transport.registrationCounts : nil)
         rosterLockedMs = nil
         ownShareMs = nil
         listenerFailure = nil
@@ -346,6 +344,8 @@ struct LastRound {
     var links: LinkLog
     /// Host: the listener failed after the round no longer needed it, so the round went on.
     var listenerFailure: TransportProblem?
+    /// Host: the room's registrations up to leaving, so before the one Leave removes.
+    var registration: RegistrationCounts?
 }
 
 private extension Event {

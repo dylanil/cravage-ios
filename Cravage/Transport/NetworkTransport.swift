@@ -22,7 +22,7 @@ private let drainMs: UInt64 = 1_500
 final class NetworkTransport: RoundTransport {
     var onEvent: ((TransportEvent) -> Void)?
 
-    private var listener: NetworkListener<TCP>?
+    private(set) var listener: NetworkListener<TCP>?
     private var listenerTask: Task<Void, Never>?
     private var browserTask: Task<Void, Never>?
     /// Bumped by every start and stop, so work from an earlier start can recognise itself as stale.
@@ -34,6 +34,7 @@ final class NetworkTransport: RoundTransport {
     private(set) var sendFailures = 0
     /// Every link opened since the last start or stop, in order, ended ones included.
     private(set) var linkLog = LinkLog()
+    private(set) var registrationCounts = RegistrationCounts()
     private let origin = ContinuousClock.now
 
     /// One open connection: its receive loop, its outbox, and whoever waits for it to close.
@@ -154,6 +155,12 @@ final class NetworkTransport: RoundTransport {
                 self.onEvent?(.hostingFailed(problem))
             }
         }
+        listener.onServiceRegistrationUpdate { [weak self] _, change in
+            Task { @MainActor in
+                guard let self, self.startToken == token else { return }
+                self.registrationCounts.record(change)
+            }
+        }
         listenerTask = Task { [weak self] in
             do {
                 try await listener.run { connection in
@@ -166,22 +173,21 @@ final class NetworkTransport: RoundTransport {
         }
     }
 
-    /// Removes the Bonjour registration. listener.h, nw_listener_set_advertise_descriptor, says only
-    /// "NULL to prevent or remove registration of a service"; `NetworkListener.service` has no doc
-    /// comment. That the listener and its accepted connections carry on is an inference, not
-    /// documented: the device walk must run a round to its result and a restart on peer-to-peer
-    /// Wi-Fi alone before this is trusted (review 2026-09-24).
-    func stopAdvertising() {
-        listener?.service = nil
+    /// The documentation of `.bonjour(name:type:domain:txtRecord:)`: "Later, a text record can be
+    /// advertised by setting `service` on `NetworkListener` with a TXT record"; NWListener.service
+    /// and listener.h say a service set again may "update the TXT record". None of them says the
+    /// registration survives it, that a nil name keeps the name registered (renamed or not), how
+    /// soon browsers see it, or anything of open connections or peer-to-peer Wi-Fi. Loopback probes
+    /// on the Mac (2026-10-13) saw no removal of the registration, an instance renamed for a clash
+    /// keep its new name, an open connection carry on, and a running browser deliver the new
+    /// record within a second, sometimes after a delivery with an empty one, which the list treats
+    /// as no room. The device run is for peer-to-peer Wi-Fi; its report counts registrations.
+    func closeListing() {
+        listener?.service = Self.closedService
     }
 
-    /// listener.h, nw_listener_set_advertise_descriptor: "Setting the advertise descriptor more than
-    /// once may be used to update the TXT record." `NetworkListener.service` has no doc comment, so
-    /// that it does the same is inferred. A probe on the Mac (2026-10-13) saw the record change with
-    /// no removal of the registration, a running browser deliver the new record within a second,
-    /// and an open connection carry on; that this holds over peer-to-peer Wi-Fi is for the device run.
-    func closeListing() {
-        listener?.service = NWListener.Service(name: nil, type: serviceType, txtRecord: Self.closedListing)
+    static var closedService: NWListener.Service {
+        NWListener.Service(name: nil, type: serviceType, txtRecord: closedListing)
     }
 
     /// What a room taking people lists: its name and size, the host's name and the version.
@@ -248,13 +254,6 @@ final class NetworkTransport: RoundTransport {
         }
     }
 
-    /// Ends discovery only. The endpoints already found are kept, so a connection opened from the
-    /// list still has the endpoint it was made from, and `stopAll` remains the full teardown.
-    func stopBrowsing() {
-        browserTask?.cancel()
-        browserTask = nil
-    }
-
     private func roomsFound(_ found: [Bonjour.Endpoint]) {
         endpoints = Dictionary(found.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         onEvent?(.roomsChanged(found.compactMap { Self.advert(id: $0.id, txt: $0.txtRecord) }))
@@ -262,7 +261,7 @@ final class NetworkTransport: RoundTransport {
 
     /// A room for the nearby list, or nil for a closed or malformed listing.
     static func advert(id: String, txt: NWTXTRecord) -> RoomAdvert? {
-        guard txt["closed"] == nil,
+        guard txt.getEntry(for: "closed") == nil,
               let label = txt["label"], RoomText.isValidLabel(label),
               let host = txt["host"], RoomText.isValidNickname(host),
               let size = txt["size"].flatMap(Int.init), (Roster.minimumSize...Roster.maximumSize).contains(size),
@@ -424,6 +423,7 @@ final class NetworkTransport: RoundTransport {
         let closing = Array(links.values)
         links = [:]
         linkLog = LinkLog()
+        registrationCounts = RegistrationCounts()
         endpoints = [:]
         for link in closing {
             link.ended(.leftRoom)
@@ -447,5 +447,15 @@ final class NetworkTransport: RoundTransport {
             return .localNetworkDenied
         }
         return .unavailable
+    }
+}
+
+extension RegistrationCounts {
+    mutating func record(_ change: NetworkListener<TCP>.ServiceRegistrationChange) {
+        switch change {
+        case .add: added += 1
+        case .remove: removed += 1
+        @unknown default: break
+        }
     }
 }

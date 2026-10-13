@@ -64,6 +64,9 @@ enum Diagnostics {
         if let problem = last.listenerFailure {
             lines.append("listener failed: \(name(problem))")
         }
+        if let registration = last.registration {
+            lines.append("registration: added \(registration.added), removed \(registration.removed)")
+        }
         if let rejection = last.lastRefusedMessage {
             lines.append("last refused message: \(name(rejection))")
         }
