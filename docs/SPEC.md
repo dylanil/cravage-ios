@@ -62,7 +62,8 @@ in PLAN.md's "Decisions (settled, do not reopen without sign-off)" section.
   is registered as "Cravage" and four characters drawn afresh for each room. Given no name, the
   system registered it under the phone's own name, which any Bonjour browser on the network can
   read; a device run saw it. The closed record is set with that same name: on the Mac, a nil name
-  after a made-up one removed the registration and added it again under the Mac's own name.
+  after a made-up one removed the registration and added it again under the Mac's own name. On
+  the same run the record led to a host name iOS made up, not the phone's name.
 - **Decision (was open as PLAN.md R8, now closed): signatures-only, no link-layer TLS.** In a star
   topology, hop-level TLS (joiner<->host, separately host<->joiner) cannot give end-to-end
   confidentiality — the host must decrypt to forward regardless — so it can only ever protect

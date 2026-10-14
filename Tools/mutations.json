@@ -589,6 +589,13 @@
       "replace": "characters[0]"
     },
     {
+      "name": "a room never reuses the last room's name",
+      "suite": "app",
+      "file": "Cravage/Transport/NetworkTransport.swift",
+      "find": "        let name = Self.newServiceName()",
+      "replace": "        let name = serviceName ?? Self.newServiceName()"
+    },
+    {
       "name": "a registration removal is counted",
       "suite": "app",
       "file": "Cravage/Transport/NetworkTransport.swift",

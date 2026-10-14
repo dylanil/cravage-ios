@@ -35,8 +35,9 @@ final class NetworkTransport: RoundTransport {
     /// Every link opened since the last start or stop, in order, ended ones included.
     private(set) var linkLog = LinkLog()
     private(set) var registrationCounts = RegistrationCounts()
-    /// The made-up name the room is registered under; the closed listing is set with it again.
-    private var serviceName = ""
+    /// The made-up name the room asked to be registered under; the closed listing is set with it
+    /// again. Never empty: an empty name, like nil, registers under the device's name.
+    private var serviceName: String?
     private let origin = ContinuousClock.now
 
     /// One open connection: its receive loop, its outbox, and whoever waits for it to close.
@@ -177,18 +178,25 @@ final class NetworkTransport: RoundTransport {
         }
     }
 
-    /// The documentation of `.bonjour(name:type:domain:txtRecord:)`: "Later, a text record can be
-    /// advertised by setting `service` on `NetworkListener` with a TXT record"; NWListener.service
-    /// and listener.h say a service set again may "update the TXT record". None of them says the
-    /// registration survives it, which name it keeps, how soon browsers see it, or anything of open
-    /// connections or peer-to-peer Wi-Fi. Loopback probes on the Mac (2026-10-13, 2026-10-14) saw
-    /// the service set again with the name it started with update the record in place, with no
-    /// removal of the registration, an instance renamed for a clash keep its new name, an open
-    /// connection carry on, and a running browser deliver the new record within a second, sometimes
-    /// after a delivery with an empty one, which the list treats as no room. A nil name after a
-    /// made-up one removed the registration and added it again under the Mac's own name. The
-    /// device run is for peer-to-peer Wi-Fi; its report counts registrations.
+    /// The documentation: NWListener.Service's TXT record, "Update the txtRecord by setting the
+    /// service on the listener with the same name/type/domain and a new TXT record object";
+    /// NetworkListener.service, "May be modified after the listener becomes ready to update the TXT
+    /// record or change the advertised service"; `.bonjour(name:type:domain:txtRecord:)`, "Later, a
+    /// text record can be advertised by setting `service` on `NetworkListener`". None of them says
+    /// whether "the same name" is the one asked for or one the system changed for a clash, what
+    /// setting it before the listener is ready does (the unit test does that; the app closes the
+    /// listing at the lock or the end of the lobby), that the registration survives, how soon
+    /// browsers see it, or anything of open connections or peer-to-peer Wi-Fi. Loopback probes on
+    /// the Mac (2026-10-13, 2026-10-14) saw the service set again with the name asked for update the
+    /// record in place, with no removal of the registration, an instance renamed for a clash keep
+    /// its new name, an open connection carry on, and a running browser deliver the new record
+    /// within a second, sometimes after a delivery with an empty one, which the list treats as no
+    /// room. A nil or empty name after a made-up one removed the registration and added it again
+    /// under the Mac's own name. A device run (asking for no name then) kept the registration
+    /// through the round on a home network; peer-to-peer Wi-Fi is still to see, and the report
+    /// counts registrations.
     func closeListing() {
+        guard let serviceName else { return }
         listener?.service = Self.closedService(name: serviceName)
     }
 
@@ -198,9 +206,11 @@ final class NetworkTransport: RoundTransport {
 
     /// Decision 2026-10-14: given no name, the system registers the room under the phone's own name
     /// (Settings, General, About), which any Bonjour browser on the network can read, though the
-    /// app never shows it. A device run saw it. The room is registered instead as "Cravage" and four
-    /// characters drawn afresh for each room, so the name says nothing about the phone and does not
-    /// follow it from room to room.
+    /// app never shows it. NWListener.Service.name: "if nil the system name will be used";
+    /// advertise_descriptor.h: "If the name is unspecified, the default name for the device will be
+    /// used". A device run saw it. The room asks instead for "Cravage" and four characters drawn
+    /// afresh for each room, so the name says nothing about the phone and does not follow it from
+    /// room to room. On that run the record led to a host name iOS made up, not the phone's name.
     static func newServiceName() -> String {
         let characters = Array("ABCDEFGHJKLMNPQRSTUVWXYZ23456789")
         return "Cravage " + String((0..<4).map { _ in characters[Int.random(in: 0..<characters.count)] })

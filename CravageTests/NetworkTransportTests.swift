@@ -301,7 +301,7 @@ final class NetworkTransportTests: XCTestCase {
     }
 
     /// Review of 999e7b5: closing the listing sets the listener's service again, with the closed
-    /// record and no name of its own, which keeps the name already registered. It never removes
+    /// record and the name the room started with, which keeps the registration. It never removes
     /// the service, which is what ended peer-to-peer links. The listener here is real; nothing
     /// waits for the network.
     func testClosingTheListingKeepsTheRegistrationAndReplacesTheRecord() {
@@ -319,21 +319,32 @@ final class NetworkTransportTests: XCTestCase {
         transport.stopAll()
     }
 
-    /// Decision 2026-10-14: the room is registered under a made-up name, never the phone's own.
-    func testTheRoomIsRegisteredUnderAMadeUpNameNotThePhones() {
+    /// Decision 2026-10-14: the room asks to be registered under a made-up name, never the phone's
+    /// own. This reads back the name asked for; a clash can make the system add " (2)" to it.
+    func testTheRoomAsksForAMadeUpNameNotThePhones() {
         let transport = NetworkTransport()
         transport.startHosting(label: "Test room", size: 3, hostNickname: "Test")
         let name = transport.listener?.service?.name ?? ""
-        XCTAssertNotNil(name.wholeMatch(of: /Cravage [A-Z2-9]{4}/), "registered as \(name)")
+        XCTAssertNotNil(name.wholeMatch(of: Self.madeUpName), "asked for \(name)")
         transport.stopAll()
     }
 
-    /// A name drawn afresh for each room does not follow the phone from room to room.
+    /// Review of 1e0351e: each room the phone hosts draws its own name, so the name does not
+    /// follow the phone from room to room. Three rooms all drawing one name by chance: about 1e-12.
     func testEachRoomDrawsANewName() {
-        let names = Set((0..<20).map { _ in NetworkTransport.newServiceName() })
-        XCTAssertGreaterThan(names.count, 1)
-        XCTAssertTrue(names.allSatisfy { $0.wholeMatch(of: /Cravage [A-Z2-9]{4}/) != nil }, "\(names)")
+        let transport = NetworkTransport()
+        var names: [String] = []
+        for _ in 0..<3 {
+            transport.startHosting(label: "Test room", size: 3, hostNickname: "Test")
+            names.append(transport.listener?.service?.name ?? "")
+        }
+        transport.stopAll()
+        XCTAssertGreaterThan(Set(names).count, 1, "\(names)")
+        XCTAssertTrue(names.allSatisfy { $0.wholeMatch(of: Self.madeUpName) != nil }, "\(names)")
     }
+
+    /// "Cravage" and four characters, none of them 0, 1, I or O.
+    static let madeUpName = /Cravage [A-HJ-NP-Z2-9]{4}/
 
     /// The diagnostics report's registration counts: each add and each removal the system reports.
     func testEveryRegistrationChangeIsCounted() {
