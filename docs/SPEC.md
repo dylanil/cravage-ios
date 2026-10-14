@@ -58,7 +58,11 @@ in PLAN.md's "Decisions (settled, do not reopen without sign-off)" section.
   that connects while a restart gathers is still sent the room label in `welcome`. A phone that
   goes to the background with its round finished keeps the registration and keeps browsing, so a
   restart after it comes back runs like any other round. A listener that fails after the lock no
-  longer ends the round, because nobody new is needed by then.
+  longer ends the round, because nobody new is needed by then. **Decision 2026-10-14**: the room
+  is registered as "Cravage" and four characters drawn afresh for each room. Given no name, the
+  system registered it under the phone's own name, which any Bonjour browser on the network can
+  read; a device run saw it. The closed record is set with that same name: on the Mac, a nil name
+  after a made-up one removed the registration and added it again under the Mac's own name.
 - **Decision (was open as PLAN.md R8, now closed): signatures-only, no link-layer TLS.** In a star
   topology, hop-level TLS (joiner<->host, separately host<->joiner) cannot give end-to-end
   confidentiality — the host must decrypt to forward regardless — so it can only ever protect

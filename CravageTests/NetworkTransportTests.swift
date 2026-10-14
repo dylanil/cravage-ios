@@ -308,13 +308,31 @@ final class NetworkTransportTests: XCTestCase {
         let transport = NetworkTransport()
         transport.startHosting(label: "Test room", size: 3, hostNickname: "Test")
         XCTAssertNotNil(transport.listener, "no listener to close the listing of")
+        let registered = transport.listener?.service?.name
         transport.closeListing()
         let service = transport.listener?.service
         XCTAssertNotNil(service, "closing the listing removed the registration")
-        XCTAssertNil(service?.name, "closing the listing asked for a name other than the registered one")
+        XCTAssertNotNil(registered)
+        XCTAssertEqual(service?.name, registered, "closing the listing asked for a name other than the registered one")
         XCTAssertEqual(service?.type, "_cravage._tcp")
         XCTAssertEqual(service?.txtRecordObject?.dictionary, NetworkTransport.closedListing.dictionary)
         transport.stopAll()
+    }
+
+    /// Decision 2026-10-14: the room is registered under a made-up name, never the phone's own.
+    func testTheRoomIsRegisteredUnderAMadeUpNameNotThePhones() {
+        let transport = NetworkTransport()
+        transport.startHosting(label: "Test room", size: 3, hostNickname: "Test")
+        let name = transport.listener?.service?.name ?? ""
+        XCTAssertNotNil(name.wholeMatch(of: /Cravage [A-Z2-9]{4}/), "registered as \(name)")
+        transport.stopAll()
+    }
+
+    /// A name drawn afresh for each room does not follow the phone from room to room.
+    func testEachRoomDrawsANewName() {
+        let names = Set((0..<20).map { _ in NetworkTransport.newServiceName() })
+        XCTAssertGreaterThan(names.count, 1)
+        XCTAssertTrue(names.allSatisfy { $0.wholeMatch(of: /Cravage [A-Z2-9]{4}/) != nil }, "\(names)")
     }
 
     /// The diagnostics report's registration counts: each add and each removal the system reports.

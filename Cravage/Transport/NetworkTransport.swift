@@ -35,6 +35,8 @@ final class NetworkTransport: RoundTransport {
     /// Every link opened since the last start or stop, in order, ended ones included.
     private(set) var linkLog = LinkLog()
     private(set) var registrationCounts = RegistrationCounts()
+    /// The made-up name the room is registered under; the closed listing is set with it again.
+    private var serviceName = ""
     private let origin = ContinuousClock.now
 
     /// One open connection: its receive loop, its outbox, and whoever waits for it to close.
@@ -138,15 +140,17 @@ final class NetworkTransport: RoundTransport {
         stopAll()
         let token = startToken
         let txt = Self.openListing(label: label, size: size, hostNickname: hostNickname)
+        let name = Self.newServiceName()
         let listener: NetworkListener<TCP>
         do {
-            listener = try NetworkListener(for: .bonjour(name: nil, type: serviceType, txtRecord: txt),
+            listener = try NetworkListener(for: .bonjour(name: name, type: serviceType, txtRecord: txt),
                                            using: .parameters { TCP() }.peerToPeerIncluded(true))
         } catch {
             onEvent?(.hostingFailed(Self.problem(from: error)))
             return
         }
         self.listener = listener
+        serviceName = name
         limiter = AcceptLimiter()
         refreshConnectionBudget()
         listener.onStateUpdate { [weak self] _, state in
@@ -176,18 +180,30 @@ final class NetworkTransport: RoundTransport {
     /// The documentation of `.bonjour(name:type:domain:txtRecord:)`: "Later, a text record can be
     /// advertised by setting `service` on `NetworkListener` with a TXT record"; NWListener.service
     /// and listener.h say a service set again may "update the TXT record". None of them says the
-    /// registration survives it, that a nil name keeps the name registered (renamed or not), how
-    /// soon browsers see it, or anything of open connections or peer-to-peer Wi-Fi. Loopback probes
-    /// on the Mac (2026-10-13) saw no removal of the registration, an instance renamed for a clash
-    /// keep its new name, an open connection carry on, and a running browser deliver the new
-    /// record within a second, sometimes after a delivery with an empty one, which the list treats
-    /// as no room. The device run is for peer-to-peer Wi-Fi; its report counts registrations.
+    /// registration survives it, which name it keeps, how soon browsers see it, or anything of open
+    /// connections or peer-to-peer Wi-Fi. Loopback probes on the Mac (2026-10-13, 2026-10-14) saw
+    /// the service set again with the name it started with update the record in place, with no
+    /// removal of the registration, an instance renamed for a clash keep its new name, an open
+    /// connection carry on, and a running browser deliver the new record within a second, sometimes
+    /// after a delivery with an empty one, which the list treats as no room. A nil name after a
+    /// made-up one removed the registration and added it again under the Mac's own name. The
+    /// device run is for peer-to-peer Wi-Fi; its report counts registrations.
     func closeListing() {
-        listener?.service = Self.closedService
+        listener?.service = Self.closedService(name: serviceName)
     }
 
-    static var closedService: NWListener.Service {
-        NWListener.Service(name: nil, type: serviceType, txtRecord: closedListing)
+    static func closedService(name: String) -> NWListener.Service {
+        NWListener.Service(name: name, type: serviceType, txtRecord: closedListing)
+    }
+
+    /// Decision 2026-10-14: given no name, the system registers the room under the phone's own name
+    /// (Settings, General, About), which any Bonjour browser on the network can read, though the
+    /// app never shows it. A device run saw it. The room is registered instead as "Cravage" and four
+    /// characters drawn afresh for each room, so the name says nothing about the phone and does not
+    /// follow it from room to room.
+    static func newServiceName() -> String {
+        let characters = Array("ABCDEFGHJKLMNPQRSTUVWXYZ23456789")
+        return "Cravage " + String((0..<4).map { _ in characters[Int.random(in: 0..<characters.count)] })
     }
 
     /// What a room taking people lists: its name and size, the host's name and the version.

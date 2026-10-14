@@ -79,7 +79,8 @@ than discovered. The in-app Limitations screen carries the same list in shorter 
   confirming - the app cannot do this check for you.
 - **Room label and nicknames are visible to nearby phones** while a room is taking people, and for
   a moment after. A phone that connects while a restart is gathering people is still sent the
-  room label, though it can't be let in.
+  room label, though it can't be let in. The room's name on the network is "Cravage" and four
+  random characters, never the phone's name.
 - **A phone that taps a room just as its round starts is turned away with a message not written
   for this case**: usually "Lost the connection to the host" and that the round has stopped,
   though the round goes on without it. A started round leaves nearby phones' lists within about a

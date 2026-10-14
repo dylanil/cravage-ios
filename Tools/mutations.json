@@ -557,15 +557,36 @@
       "name": "closing the listing keeps the registration",
       "suite": "app",
       "file": "Cravage/Transport/NetworkTransport.swift",
-      "find": "        listener?.service = Self.closedService",
+      "find": "        listener?.service = Self.closedService(name: serviceName)",
       "replace": "        listener?.service = nil"
     },
     {
       "name": "closing the listing keeps the registered name",
       "suite": "app",
       "file": "Cravage/Transport/NetworkTransport.swift",
-      "find": "NWListener.Service(name: nil, type: serviceType, txtRecord: closedListing)",
-      "replace": "NWListener.Service(name: \"Cravage\", type: serviceType, txtRecord: closedListing)"
+      "find": "NWListener.Service(name: name, type: serviceType, txtRecord: closedListing)",
+      "replace": "NWListener.Service(name: nil, type: serviceType, txtRecord: closedListing)"
+    },
+    {
+      "name": "the closed listing is set with the room's own name",
+      "suite": "app",
+      "file": "Cravage/Transport/NetworkTransport.swift",
+      "find": "        serviceName = name",
+      "replace": "        _ = name"
+    },
+    {
+      "name": "the room is registered under a made-up name",
+      "suite": "app",
+      "file": "Cravage/Transport/NetworkTransport.swift",
+      "find": ".bonjour(name: name, type: serviceType, txtRecord: txt)",
+      "replace": ".bonjour(name: nil, type: serviceType, txtRecord: txt)"
+    },
+    {
+      "name": "each room draws a new name",
+      "suite": "app",
+      "file": "Cravage/Transport/NetworkTransport.swift",
+      "find": "characters[Int.random(in: 0..<characters.count)]",
+      "replace": "characters[0]"
     },
     {
       "name": "a registration removal is counted",
