@@ -1,6 +1,6 @@
 # Cravage privacy policy
 
-*Last updated: 2026-10-11*
+*Last updated: 2026-10-14*
 
 Cravage is designed so that there is very little to collect, and this page says exactly what that
 little is.
@@ -25,9 +25,11 @@ operate a server that receives your round data.
 
 ## What nearby phones can see
 
-While a room is open, phones nearby running Cravage can see the room's label (what is being
-averaged), the host's nickname, and the group size. Once you join, the other participants see your
-nickname.
+While a room is open, nearby phones running Cravage can see the room's label (what is being
+averaged), the host's nickname and the group size, and so can any other nearby device, or any
+device on the same Wi-Fi network, that looks for them. Shortly after the round starts, the room's
+listing drops the label and nickname and shows only a made-up name, until the host leaves. Once you
+join, the other participants see your nickname.
 
 ## What is saved on your phone
 
