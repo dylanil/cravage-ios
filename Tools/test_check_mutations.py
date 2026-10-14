@@ -176,6 +176,38 @@ print("Executed 1 test, with 0 failures (0 unexpected)")
         self.assertIn("caught: example guard", result.stdout)
         self.assertIn("caught: other guard", result.stdout)
 
+    def add_guards(self, *names):
+        path = self.root / "Tools/mutations.json"
+        manifest = json.loads(path.read_text())
+        for name in names:
+            (self.root / f"CravageCore/{name}.swift").write_text(f"{name} intact\n")
+            manifest["mutations"].append({"name": f"{name} guard", "file": f"CravageCore/{name}.swift",
+                                          "find": f"{name} intact", "replace": f"{name} removed"})
+        path.write_text(json.dumps(manifest))
+
+    def caught(self, result):
+        return {line.split(":")[1].strip() for line in result.stdout.splitlines() if line.startswith("caught:")}
+
+    def test_the_shards_together_run_every_guard_exactly_once(self):
+        self.add_guards("Second", "Third", "Fourth", "Fifth")
+        everything = {"example guard", "Second guard", "Third guard", "Fourth guard", "Fifth guard"}
+        seen = []
+        for shard in ("1/3", "2/3", "3/3"):
+            result = self.run_gate("assertion", ("--shard", shard))
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn(f"Shard {shard}:", result.stdout)
+            seen.append(self.caught(result))
+        self.assertEqual(set().union(*seen), everything)
+        self.assertEqual(sum(len(part) for part in seen), len(everything))
+        self.assertTrue(all(seen), seen)
+
+    def test_a_shard_that_could_select_nothing_is_refused(self):
+        for shard in ("0/3", "4/3", "1/0", "2", "a/b", "-1/3"):
+            result = self.run_gate("assertion", ("--shard", shard))
+            self.assertEqual(result.returncode, 2, f"{shard}: {result.stdout}")
+            self.assertIn("--shard", result.stderr)
+            self.assertNotIn("caught:", result.stdout)
+
     def test_app_mutations_build_then_require_a_real_simulator_test_failure(self):
         for directory in ["Cravage", "CravageTests", "Cravage.xcodeproj", "Config"]:
             (self.root / directory).mkdir()

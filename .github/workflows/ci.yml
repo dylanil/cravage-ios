@@ -4,7 +4,8 @@
 #
 # Mutation gates (decision 2026-10-03): a push or pull request runs only the guards whose
 # file it changed (every guard if Tools/mutations.json or the gate changed); the nightly schedule
-# and a manual run check every guard. The app guards were most of a two-hour run.
+# and a manual run check every guard. The app guards run as three parallel parts: in one job the
+# nightly sweep of every app guard ran past the job's five-hour limit.
 name: CI
 
 on:
@@ -99,9 +100,63 @@ jobs:
   app:
     name: iOS app build + tests (simulator)
     runs-on: macos-latest
-    # Every app guard (a scheduled run) takes about 3.3 hours at about 3.4 minutes each; a hung
-    # simulator test still fails the job before GitHub's six-hour limit.
-    timeout-minutes: 300
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select the newest Xcode on the runner
+        run: |
+          XCODE="$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)"
+          sudo xcode-select -s "$XCODE"
+      # StoreKitBackendTests is skipped by name: on the runner the local StoreKit store accepts the
+      # session but never completes a purchase, so the first buy waits forever. It runs from Xcode.
+      - name: Build and test on a simulator
+        run: |
+          if [ ! -d Cravage.xcodeproj ]; then
+            echo "No Xcode project yet - skipping app job"
+            exit 0
+          fi
+          SIM="$(xcrun simctl list devices available | grep -m1 -o 'iPhone [0-9A-Za-z ]*' | sed 's/ *$//')"
+          echo "Simulator: $SIM"
+          xcodebuild test \
+            -project Cravage.xcodeproj \
+            -scheme Cravage \
+            -destination "platform=iOS Simulator,name=$SIM" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            -derivedDataPath "$RUNNER_TEMP/debug" \
+            -resultBundlePath "$RUNNER_TEMP/result.xcresult" \
+            -skip-testing:CravageTests/StoreKitBackendTests
+      - name: Build the Release configuration (no test hooks, no signing)
+        run: |
+          if [ ! -d Cravage.xcodeproj ]; then exit 0; fi
+          xcodebuild build \
+            -project Cravage.xcodeproj \
+            -scheme Cravage \
+            -configuration Release \
+            -destination "generic/platform=iOS Simulator" \
+            -derivedDataPath "$RUNNER_TEMP/release" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+          Tools/check_stage_compiled_out.sh \
+            "$RUNNER_TEMP/release/Build/Products/Release-iphonesimulator/Cravage.app" \
+            "$RUNNER_TEMP/debug/Build/Products/Debug-iphonesimulator/Cravage.app"
+          Tools/check_privacy_manifest.sh "$RUNNER_TEMP/release/Build/Products/Release-iphonesimulator/Cravage.app"
+      - name: Upload the test result bundle on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcresult
+          path: ${{ runner.temp }}/result.xcresult
+
+  app-mutations:
+    name: App mutation gate, part ${{ matrix.part }} of ${{ strategy.job-total }}
+    runs-on: macos-latest
+    # Each part takes an equal share of the app guards (Tools/check_mutations.py --shard); the part
+    # count comes from this list, so adding a part cannot leave guards unrun. A slow runner took
+    # about 3 minutes per guard, and a hung simulator test still fails the part well before the limit.
+    timeout-minutes: 240
+    strategy:
+      fail-fast: false
+      matrix:
+        part: [1, 2, 3]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -127,49 +182,22 @@ jobs:
         run: |
           XCODE="$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)"
           sudo xcode-select -s "$XCODE"
-      # StoreKitBackendTests is skipped by name: on the runner the local StoreKit store accepts the
-      # session but never completes a purchase, so the first buy waits forever. It runs from Xcode.
-      - name: Build and test on a simulator
+      - name: Break each app guard in this part and require a failing test
+        env:
+          PART: ${{ matrix.part }}
+          PARTS: ${{ strategy.job-total }}
         run: |
           if [ ! -d Cravage.xcodeproj ]; then
-            echo "No Xcode project yet - skipping app job"
+            echo "No Xcode project yet - skipping app guards"
             exit 0
           fi
           SIM="$(xcrun simctl list devices available | grep -m1 -o 'iPhone [0-9A-Za-z ]*' | sed 's/ *$//')"
           echo "Simulator: $SIM"
-          xcodebuild test \
-            -project Cravage.xcodeproj \
-            -scheme Cravage \
-            -destination "platform=iOS Simulator,name=$SIM" \
-            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
-            -derivedDataPath "$RUNNER_TEMP/debug" \
-            -resultBundlePath "$RUNNER_TEMP/result.xcresult" \
-            -skip-testing:CravageTests/StoreKitBackendTests
-          python3 Tools/check_mutations.py --suite app ${{ steps.scope.outputs.args }} \
+          python3 Tools/check_mutations.py --suite app --shard "$PART/$PARTS" ${{ steps.scope.outputs.args }} \
             --destination "platform=iOS Simulator,name=$SIM"
-      - name: Build the Release configuration (no test hooks, no signing)
-        run: |
-          if [ ! -d Cravage.xcodeproj ]; then exit 0; fi
-          xcodebuild build \
-            -project Cravage.xcodeproj \
-            -scheme Cravage \
-            -configuration Release \
-            -destination "generic/platform=iOS Simulator" \
-            -derivedDataPath "$RUNNER_TEMP/release" \
-            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
-          Tools/check_stage_compiled_out.sh \
-            "$RUNNER_TEMP/release/Build/Products/Release-iphonesimulator/Cravage.app" \
-            "$RUNNER_TEMP/debug/Build/Products/Debug-iphonesimulator/Cravage.app"
-          Tools/check_privacy_manifest.sh "$RUNNER_TEMP/release/Build/Products/Release-iphonesimulator/Cravage.app"
-      - name: Upload the test result bundle on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: xcresult
-          path: ${{ runner.temp }}/result.xcresult
       - name: Upload app mutation evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: app-mutation-evidence
+          name: app-mutation-evidence-${{ matrix.part }}
           path: .build/mutations/

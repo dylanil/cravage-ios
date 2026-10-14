@@ -7,6 +7,7 @@ Build/test logs are retained under .build/mutations/. An error is never a caught
     python3 Tools/check_mutations.py
     python3 Tools/check_mutations.py --suite app --destination 'platform=iOS Simulator,name=iPhone 17 Pro'
     python3 Tools/check_mutations.py --changed-files changed.txt
+    python3 Tools/check_mutations.py --suite app --shard 2/3 --destination ...
 
 With --changed-files (one repository path per line), only guards whose file is listed run (every
 guard, when the guard list or this gate itself is listed): CI does
@@ -15,6 +16,10 @@ caught within a day rather than on the push itself (decision 2026-10-03).
 
 A runner that hangs after reporting its results (xcodebuild does this) is judged on the results it
 already printed, not on the hang: a named failing test still counts as caught.
+
+With --shard K/N, only every Nth guard of the suite, starting at the Kth, runs; the N shards
+together run each guard once. CI runs the app guards as parallel shards: in one job the daily sweep
+ran past the job's time limit.
 """
 import argparse
 import json
@@ -27,6 +32,7 @@ import tempfile
 import time
 
 ROOT = Path(__file__).resolve().parent.parent
+SHARD = re.compile(r"^([0-9]+)/([0-9]+)$")
 FAILED_CASE = re.compile(r"^Test Case '(.+)' failed \(", re.MULTILINE)
 PASSED_CASE = re.compile(r"^Test Case '.+' passed \(", re.MULTILINE)
 
@@ -85,14 +91,22 @@ def main():
     parser.add_argument("--timeout", type=float, help="seconds per build and per test run (default: 600 core, 1800 app)")
     parser.add_argument("--changed-files", type=Path,
                         help="file listing changed paths; run only the guards whose file is listed")
+    parser.add_argument("--shard", help="K/N: run only the Kth of N equal parts of the suite's guards")
     args = parser.parse_args()
     if args.suite == "app" and not args.destination:
         parser.error("--suite app requires --destination")
+    shard = SHARD.match(args.shard) if args.shard is not None else None
+    if args.shard is not None and not (shard and 1 <= int(shard[1]) <= int(shard[2])):
+        parser.error("--shard must be K/N with 1 <= K <= N")
     timeout = args.timeout if args.timeout else (1800 if args.suite == "app" else 600)
     mutations = json.loads((ROOT / "Tools/mutations.json").read_text())["mutations"]
     if any(m.get("suite", "core") not in ("core", "app") for m in mutations):
         parser.error("unknown mutation suite; expected core or app")
     mutations = [m for m in mutations if m.get("suite", "core") == args.suite]
+    if shard:
+        part, parts = int(shard[1]), int(shard[2])
+        mutations = mutations[part - 1::parts]
+        print(f"Shard {args.shard}: {len(mutations)} {args.suite} mutations", flush=True)
     if args.changed_files is not None:
         changed = {line.strip() for line in args.changed_files.read_text().splitlines() if line.strip()}
         listed = len(mutations)
