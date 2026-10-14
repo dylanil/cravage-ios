@@ -313,7 +313,8 @@ drawn from.
 **Addition, approved 2026-09-24.** The in-app list carries one item beyond the 2026-09-13
 text, so the screen and README agree after the lifecycle decision of 2026-09-22: "Locking this
 phone or moving Cravage to the background leaves an unfinished round. It does not resume; create
-or join a new room."
+or join a new room." **Changed, approved 2026-10-14**, after a host locked between rounds lost
+its connections (section 2): "Locking this phone or moving Cravage to the background, even between rounds, can cut it off from the room: an unfinished round ends, and Run again may find nobody. Neither resumes; create or join a new room. While you're in a room, the screen stays on so it won't lock by itself."
 
 **Second addition, approved 2026-09-24**, for the invisible-character rule on names and room
 labels (docs/WIRE.md): "Names and room labels can't contain invisible characters, except the joining marks some languages need. Some emoji, such as the red heart, are refused as a result."
