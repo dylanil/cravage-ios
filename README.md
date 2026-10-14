@@ -54,7 +54,9 @@ than discovered. The in-app Limitations screen carries the same list in shorter 
 - **Keep Cravage open and the phones unlocked while in a room, between rounds too.** While
   something more can happen in the room (a lobby, a round, or a result the host could run again),
   the app keeps the screen from going to sleep on its own, so it should not lock by itself; the
-  side button still locks it. That this stops Auto-Lock is still to be checked on phones.
+  side button still locks it. On test phones with a 30-second Auto-Lock, screens in a lobby
+  stayed on past it and locked as usual after Leave; the result screen and the side button were
+  not checked with this build.
   Locking a phone or moving the app to the background leaves its unfinished round and clears its
   local round data. It does not resume on return; create or join a new room. Locking the host
   after a round, even for about 10 seconds, cut its connections on test phones, with Wi-Fi on and
