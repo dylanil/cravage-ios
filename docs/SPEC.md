@@ -58,12 +58,17 @@ in PLAN.md's "Decisions (settled, do not reopen without sign-off)" section.
   that connects while a restart gathers is still sent the room label in `welcome`. A phone that
   goes to the background with its round finished keeps the registration and keeps browsing, so a
   restart after it comes back runs like any other round, if its connections are still open. A
-  device run (2026-10-14) locked the host on its result for about 10 seconds, with Wi-Fi on and
-  off, and each time the restart found nobody; with Wi-Fi off the host's report shows both
-  peer-to-peer links and the listener ended. **Decision
-  2026-10-14**: while a phone is in a room, from the lobby until Leave, its screen does not dim and
-  lock on its own (`isIdleTimerDisabled`); the side button still locks it. A listener that fails
-  after the lock no longer ends the round, because nobody new is needed by then. **Decision 2026-10-14**: the room
+  listener that fails after the lock no longer ends the round, because nobody new is needed by
+  then. A device run (2026-10-14) locked the host on its result for about 10 seconds, with Wi-Fi
+  on and off, and each time the restart found nobody. The host's reports show its listener
+  failed both times; with Wi-Fi off both peer-to-peer links ended, and with Wi-Fi on one link over
+  the Wi-Fi network was lost and the other ended on the host while the joiner's end stayed open
+  until it left. **Decision 2026-10-14**: while something more can happen in the room
+  (`RoundEngine.roomCanGoOn`: a lobby or a round; a finished or failed round the host could
+  restart with enough phones still connected, or that a joiner was in while its host is still
+  connected), the app keeps the screen from going to sleep on its own (`isIdleTimerDisabled`).
+  Once nothing can, it may sleep again. That this stops Auto-Lock and that the side button still
+  locks the phone is to be seen on a device. **Decision 2026-10-14**: the room
   is registered as "Cravage" and four characters drawn afresh for each room. Given no name, the
   system registered it under the phone's own name, which any Bonjour browser on the network can
   read; a device run saw it. The closed record is set with that same name: on the Mac, a nil name

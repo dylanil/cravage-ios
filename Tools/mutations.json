@@ -673,24 +673,31 @@
       "replace": "            if engine.role != nil { transport.stopAll() }\n            return\n        }\n        leave()\n        wasInterrupted = true"
     },
     {
-      "name": "a phone in a room keeps its screen awake",
+      "name": "a room that can go on keeps the screen awake",
       "suite": "app",
       "file": "Cravage/Round/RoundCoordinator.swift",
-      "find": "        let inARoom = engine.phase != .idle",
-      "replace": "        let inARoom = false"
+      "find": "        keepScreenAwake(engine.roomCanGoOn)",
+      "replace": "        keepScreenAwake(false)"
     },
     {
-      "name": "leaving a room lets the screen lock again",
+      "name": "leaving a room lets the screen sleep again",
       "suite": "app",
       "file": "Cravage/Round/RoundCoordinator.swift",
-      "find": "        guard inARoom != screenKeptAwake else { return }",
-      "replace": "        guard inARoom, inARoom != screenKeptAwake else { return }"
+      "find": "        keepScreenAwake(engine.roomCanGoOn)",
+      "replace": "        keepScreenAwake(true)"
+    },
+    {
+      "name": "a room where nothing more can happen lets the screen sleep",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "        keepScreenAwake(engine.roomCanGoOn)",
+      "replace": "        keepScreenAwake(engine.role != nil)"
     },
     {
       "name": "every step of a round updates the screen setting",
       "suite": "app",
       "file": "Cravage/Round/RoundCoordinator.swift",
-      "find": "        keepTheScreenAwakeWhileInARoom()\n",
+      "find": "        keepTheScreenAwakeWhileTheRoomCanGoOn()\n",
       "replace": ""
     },
     {
@@ -1045,6 +1052,42 @@
       "file": "CravageCore/Sources/CravageCore/Framing.swift",
       "find": "        guard body.count == length else { throw EndOfStream() }\n",
       "replace": ""
+    },
+    {
+      "name": "a finished room's host counts the phones a restart would reach",
+      "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
+      "find": "        case .host: return rosterPeers.values.filter { connected.contains($0) }.count + 1 >= Roster.minimumSize",
+      "replace": "        case .host: return true"
+    },
+    {
+      "name": "a joiner whose host has gone cannot go on",
+      "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
+      "find": "        case .joiner: return !hostLost",
+      "replace": "        case .joiner: return true"
+    },
+    {
+      "name": "a joiner remembers losing its host",
+      "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
+      "find": "            hostLost = true\n",
+      "replace": ""
+    },
+    {
+      "name": "a lost host is forgotten on Leave",
+      "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
+      "find": "        hostLost = false\n",
+      "replace": ""
+    },
+    {
+      "name": "a room with no roster cannot be restarted",
+      "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
+      "find": "        guard roster != nil else { return false }\n",
+      "replace": ""
+    },
+    {
+      "name": "a lobby or a round can go on",
+      "file": "CravageCore/Sources/CravageCore/RoundEngine.swift",
+      "find": "        guard phase.isTerminal else { return true }",
+      "replace": "        guard phase.isTerminal else { return false }"
     },
     {
       "name": "a link the other phone closed says so",

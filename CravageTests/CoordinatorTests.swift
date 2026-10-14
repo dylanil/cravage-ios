@@ -782,38 +782,63 @@ final class CoordinatorTests: XCTestCase {
         XCTAssertTrue(star.transports[1].browsing)
     }
 
-    /// Decision 2026-10-14: a locked phone loses its connections, so while a phone is in a room,
-    /// from the lobby until Leave, it keeps its screen from locking on its own, and only then.
-    func testTheScreenStaysAwakeOnlyWhileThePhoneIsInARoom() async {
+    /// Decision 2026-10-14: a locked phone loses its connections, so the screen is kept awake while
+    /// something more can happen in the room, through lobby, round, result and Run again, and
+    /// allowed to sleep once nothing can: a host left with too few phones to restart, a joiner whose
+    /// host has gone, a phone that left.
+    func testTheScreenStaysAwakeOnlyWhileSomethingCanStillHappenInTheRoom() async {
         let star = FakeStar(phones: 3, entitlement: FakeEntitlement(unlocked: false))
-        XCTAssertEqual(star.screenAwake, [false, false, false])
         let host = star.coordinators[0]
         await host.createRoom(label: "Annual bonus", size: 3, nickname: "Sam")
-        XCTAssertEqual(star.screenAwake, [true, false, false], "the host's lobby lets the screen lock")
+        XCTAssertEqual(star.screenAwake, [true, false, false], "the host's lobby lets the screen sleep")
         for (index, name) in [(1, "Alex"), (2, "Dee")] {
             star.coordinators[index].join(roomID: "room", nickname: name)
             star.flush()
         }
-        XCTAssertEqual(star.screenAwake, [true, true, true], "a joiner's lobby lets the screen lock")
+        XCTAssertEqual(star.screenAwake, [true, true, true], "a joiner's lobby lets the screen sleep")
         for pending in host.engine.pendingJoiners {
             host.admit(pending.verifyingKey, generation: host.engine.generation)
         }
         host.start(generation: host.engine.generation)
         star.flush()
+        playToTheResult(star)
+        XCTAssertEqual(host.engine.phase, .complete(.agreed))
+        XCTAssertEqual(star.screenAwake, [true, true, true], "the result screen lets the screen sleep before Run again")
+
+        host.restart(generation: host.engine.generation)
+        star.flush()
+        for joiner in star.coordinators[1...2] { joiner.acceptRestart(generation: joiner.engine.generation) }
+        star.flush()
+        playToTheResult(star)
+        XCTAssertEqual(host.engine.generation, 2)
+        XCTAssertEqual(star.screenAwake, [true, true, true], "Run again lets the screen sleep")
+
+        star.coordinators[1].leave()
+        star.flush()
+        XCTAssertEqual(star.screenAwake, [false, false, true],
+                       "a phone that left, or a host with too few phones to restart, keeps its screen awake")
+        host.leave()
+        star.flush()
+        XCTAssertEqual(star.screenAwake, [false, false, false], "a joiner whose host left keeps its screen awake")
+    }
+
+    /// A lobby that timed out cannot be restarted, so its screen may sleep before anyone taps Leave.
+    func testALobbyThatTimedOutLetsTheScreenSleep() async {
+        let star = FakeStar(phones: 1, entitlement: FakeEntitlement(unlocked: false))
+        await star.coordinators[0].createRoom(label: "Team", size: 3, nickname: "Sam")
+        XCTAssertEqual(star.screenAwake, [true])
+        await star.clock.advance(ms: 600_000)
+        XCTAssertEqual(star.coordinators[0].engine.phase, .failed(.timeout(.lobby)))
+        XCTAssertEqual(star.screenAwake, [false])
+    }
+
+    private func playToTheResult(_ star: FakeStar) {
         for phone in star.coordinators { phone.confirmRoomCode(generation: phone.engine.generation) }
         star.flush()
         for (phone, figure) in zip(star.coordinators, ["10", "20", "30"]) {
             XCTAssertNil(phone.submitFigure(figure, generation: phone.engine.generation))
         }
         star.flush()
-        XCTAssertEqual(host.engine.phase, .complete(.agreed))
-        XCTAssertEqual(star.screenAwake, [true, true, true], "the result screen lets the screen lock before Run again")
-        star.coordinators[1].leave()
-        star.flush()
-        XCTAssertEqual(star.screenAwake[1], false, "a phone that left still keeps its screen awake")
-        host.leave()
-        star.flush()
-        XCTAssertEqual(star.screenAwake[0], false, "a host that left still keeps its screen awake")
     }
 
     /// A phone that leaves an unfinished round in the background lets its screen lock again.

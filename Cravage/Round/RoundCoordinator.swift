@@ -42,7 +42,6 @@ final class RoundCoordinator {
     @ObservationIgnored private let clock: RoundClock
     @ObservationIgnored private let entitlement: EntitlementProvider
     @ObservationIgnored private let keepScreenAwake: @MainActor (Bool) -> Void
-    @ObservationIgnored private var screenKeptAwake = false
     @ObservationIgnored private var tickTask: Task<Void, Never>?
     @ObservationIgnored private var listingOpen = false
     // For `lastRound`: the since-launch failure count when the room was entered, when the roster
@@ -297,7 +296,7 @@ final class RoundCoordinator {
         revision += 1
         scheduleTick()
         closeTheListingOnceTheRoomTakesNobodyNew()
-        keepTheScreenAwakeWhileInARoom()
+        keepTheScreenAwakeWhileTheRoomCanGoOn()
         // The advert claimed this version, but the host speaks another: every message would be
         // refused, so the lobby could only time out. Leave now and say why.
         if hostOnAnotherVersion {
@@ -306,21 +305,20 @@ final class RoundCoordinator {
         }
     }
 
+    /// Decision 2026-10-14: a host locked for about 10 seconds lost its connections on a device run,
+    /// with Wi-Fi on and off, and Auto-Lock locks a phone left alone. That ends an unfinished round
+    /// and leaves Run again with nobody connected. So while something more can happen in the room
+    /// (`RoundEngine.roomCanGoOn`), the screen is kept from going to sleep on its own; once nothing
+    /// can, it may sleep again, as Apple asks of the setting. Set after every step rather than only
+    /// on a change, so a reset by anything else is undone at the next one.
+    private func keepTheScreenAwakeWhileTheRoomCanGoOn() {
+        keepScreenAwake(engine.roomCanGoOn)
+    }
+
     /// Decision 2026-10-13: a room that takes nobody new, started or not, stays registered (see
     /// `leave`) but closes its listing, so nearby phones leave it off their lists and it no longer
     /// names the room or the host. Restarts keep it closed: they take back only phones already
     /// connected.
-    /// Decision 2026-10-14: a host locked for about 10 seconds lost its connections on a device run,
-    /// with Wi-Fi on and off, and Auto-Lock locks a phone left alone. That ends an unfinished round
-    /// and leaves Run again with nobody connected. So while the phone is in a room, from the lobby
-    /// until Leave, its screen does not dim and lock on its own; the side button still locks it.
-    private func keepTheScreenAwakeWhileInARoom() {
-        let inARoom = engine.phase != .idle
-        guard inARoom != screenKeptAwake else { return }
-        screenKeptAwake = inARoom
-        keepScreenAwake(inARoom)
-    }
-
     private func closeTheListingOnceTheRoomTakesNobodyNew() {
         guard listingOpen, engine.phase != .idle, engine.phase != .lobby else { return }
         listingOpen = false

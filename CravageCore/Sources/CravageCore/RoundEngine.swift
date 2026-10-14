@@ -225,6 +225,19 @@ public final class RoundEngine {
     /// A first round starts only at the size the host chose; a restart can start with whoever
     /// came back, as long as there are at least `Roster.minimumSize`.
     public var startNeedsFullRoom: Bool { !restartPending }
+    /// Decision 2026-10-14: whether anything more can happen in this room. In a lobby or a round,
+    /// yes. In a finished or failed round, for the host while a restart would find enough phones
+    /// still connected, and for a joiner that was in the round while its host is still connected
+    /// to offer one. The app keeps the screen awake only while this holds.
+    public var roomCanGoOn: Bool {
+        guard let role, phase != .idle else { return false }
+        guard phase.isTerminal else { return true }
+        guard roster != nil else { return false }
+        switch role {
+        case .host: return rosterPeers.values.filter { connected.contains($0) }.count + 1 >= Roster.minimumSize
+        case .joiner: return !hostLost
+        }
+    }
     public private(set) var localConfirmed = false
     public private(set) var lastIncompatibleVersion: Int?
 
@@ -286,6 +299,9 @@ public final class RoundEngine {
         let signature: Signature
     }
     private var connected: Set<PeerID> = []
+    /// Joiner: the connection to the host has ended. Kept until Leave, since a finished round
+    /// ignores the disconnect otherwise.
+    private var hostLost = false
     private var pending: [Joiner] = []
     private var admitted: [Joiner] = []
     private var declinedPeers: Set<PeerID> = []
@@ -1047,6 +1063,7 @@ public final class RoundEngine {
         guard let role else { return }
         if role == .joiner {
             guard peer == .host else { return }
+            hostLost = true
             fail(.connectionLost, now: now, into: &effects)
             return
         }
@@ -1142,6 +1159,7 @@ public final class RoundEngine {
         restartOffer = nil
         localConfirmed = false
         connected = []
+        hostLost = false
         pending = []
         admitted = []
         declinedPeers = []

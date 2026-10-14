@@ -57,9 +57,10 @@ struct CravageApp: App {
 }
 
 /// The phone's own screen setting, for `RoundCoordinator`. UIApplication.h documents only that
-/// `idleTimerDisabled` is "default is NO"; that true stops the screen dimming and locking on its
-/// own is Apple's web documentation for the property, which also asks apps to set it back to false
-/// once it is not needed. A device run is to show it.
+/// `idleTimerDisabled` is "default is NO". Apple's web documentation: true disables "the idle
+/// timer" to "avert system sleep", in which "the screen dims", and apps should "reset it to false
+/// when the need no longer exists". That this idle timer is what Auto-Lock times, and that the side
+/// button still locks the phone, is inference for a device run to show.
 enum ScreenAwake {
     @MainActor static func keep(_ awake: Bool) {
         UIApplication.shared.isIdleTimerDisabled = awake

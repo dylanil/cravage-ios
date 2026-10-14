@@ -893,6 +893,60 @@ final class RestartConsentTests: XCTestCase {
         XCTAssertEqual(bus.phases(), Array(repeating: .confirming, count: 3))
     }
 
+    /// Decision 2026-10-14: the app keeps the screen awake only while something more can happen in
+    /// the room. A finished round can go on while the host could restart it and, for a joiner,
+    /// while its host is still there to offer that.
+    func testAFinishedRoomCanGoOnOnlyWhileARestartCouldStillReachIt() {
+        let bus = StarBus.completed(figures: [1, 2, 3, 4])
+        XCTAssertEqual(bus.host.phase, .complete(.agreed))
+        XCTAssertTrue(bus.engines.allSatisfy(\.roomCanGoOn))
+        bus.drop(3)
+        XCTAssertFalse(bus.engines[3].roomCanGoOn, "a joiner whose host has gone")
+        XCTAssertTrue(bus.host.roomCanGoOn, "a host with three phones left can restart")
+        bus.drop(2)
+        XCTAssertFalse(bus.host.roomCanGoOn, "a host with too few phones left to restart")
+        XCTAssertTrue(bus.engines[1].roomCanGoOn, "a joiner still connected to its host")
+    }
+
+    func testALobbyOrARoundCanGoOnAndAPhoneOutOfItCannot() {
+        XCTAssertFalse(RoundEngine(deadlines: .forTests).roomCanGoOn)
+        let bus = StarBus.lobby(nodes: 3)
+        XCTAssertTrue(bus.engines.allSatisfy(\.roomCanGoOn), "a lobby")
+        bus.admitAll()
+        bus.start()
+        XCTAssertTrue(bus.engines.allSatisfy(\.roomCanGoOn), "a round under way")
+        bus.drop(2)
+        XCTAssertFalse(bus.engines[2].roomCanGoOn, "a joiner whose host went mid-round")
+        bus.deliver(1, .leave)
+        XCTAssertFalse(bus.engines[1].roomCanGoOn, "a phone that left")
+    }
+
+    /// A lobby that timed out has no roster, so nobody can restart it.
+    func testALobbyThatTimedOutCannotGoOn() {
+        let bus = StarBus.lobby(nodes: 3)
+        bus.advance(ms: Deadlines.forTests.lobbyMs)
+        XCTAssertEqual(bus.host.phase, .failed(.timeout(.lobby)))
+        XCTAssertFalse(bus.host.roomCanGoOn)
+        XCTAssertFalse(bus.engines[1].roomCanGoOn)
+    }
+
+    /// A host lost in one room does not count against the next.
+    func testAJoinerThatLostItsHostCanGoOnInItsNextRoom() {
+        let bus = StarBus.completed(figures: [1, 2, 3])
+        bus.drop(2)
+        XCTAssertFalse(bus.engines[2].roomCanGoOn)
+        for node in [1, 2, 0] { bus.deliver(node, .leave) }
+        bus.run()
+        bus.deliver(0, .createRoom(label: "Average salary", maxSize: 3, nickname: "Host", entitled: false))
+        for k in [1, 2] { bus.join(k) }
+        bus.admitAll()
+        bus.start()
+        bus.confirm()
+        bus.submit([0: 1, 1: 2, 2: 3])
+        XCTAssertEqual(bus.engines[2].phase, .complete(.agreed))
+        XCTAssertTrue(bus.engines[2].roomCanGoOn, "the last room's lost host still counts")
+    }
+
     func testDecliningARestartLeavesAndTheRestContinueIfEnoughRemain() {
         let bus = StarBus.locked(nodes: 4)
         bus.advance(ms: Deadlines.forTests.confirmingMs)

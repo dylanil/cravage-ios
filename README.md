@@ -51,8 +51,10 @@ than discovered. The in-app Limitations screen carries the same list in shorter 
   result, such as the red heart. A nickname saved before this rule is asked for again.
 - **Decimal input is explicit.** Positive and negative figures are supported. Use a full stop for
   the decimal point; commas and grouping separators are refused, never guessed or converted.
-- **Keep Cravage open and the phones unlocked while in a room, between rounds too.** While a phone
-  is in a room its screen stays on, so it does not lock by itself; the side button still locks it.
+- **Keep Cravage open and the phones unlocked while in a room, between rounds too.** While
+  something more can happen in the room (a lobby, a round, or a result the host could run again),
+  the app keeps the screen from going to sleep on its own, so it should not lock by itself; the
+  side button still locks it. That this stops Auto-Lock is still to be checked on phones.
   Locking a phone or moving the app to the background leaves its unfinished round and clears its
   local round data. It does not resume on return; create or join a new room. Locking the host
   after a round, even for about 10 seconds, cut its connections on test phones, with Wi-Fi on and

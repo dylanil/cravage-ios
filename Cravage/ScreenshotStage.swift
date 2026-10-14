@@ -146,7 +146,9 @@ private final class Star {
         let clock = FrozenClock()
         for transport in transports {
             transport.star = self
-            coordinators.append(RoundCoordinator(transport: transport, clock: clock, entitlement: Unentitled()))
+            // Staged phones leave the phone's own screen setting alone.
+            coordinators.append(RoundCoordinator(transport: transport, clock: clock, entitlement: Unentitled(),
+                                                 keepScreenAwake: { _ in }))
         }
     }
 
