@@ -41,6 +41,8 @@ final class RoundCoordinator {
     @ObservationIgnored private let transport: RoundTransport
     @ObservationIgnored private let clock: RoundClock
     @ObservationIgnored private let entitlement: EntitlementProvider
+    @ObservationIgnored private let keepScreenAwake: @MainActor (Bool) -> Void
+    @ObservationIgnored private var screenKeptAwake = false
     @ObservationIgnored private var tickTask: Task<Void, Never>?
     @ObservationIgnored private var listingOpen = false
     // For `lastRound`: the since-launch failure count when the room was entered, when the roster
@@ -50,11 +52,13 @@ final class RoundCoordinator {
     @ObservationIgnored private var ownShareMs: UInt64?
     @ObservationIgnored private var listenerFailure: TransportProblem?
 
-    init(transport: RoundTransport, clock: RoundClock, entitlement: EntitlementProvider, deadlines: Deadlines = Deadlines()) {
+    init(transport: RoundTransport, clock: RoundClock, entitlement: EntitlementProvider, deadlines: Deadlines = Deadlines(),
+         keepScreenAwake: @escaping @MainActor (Bool) -> Void = ScreenAwake.keep) {
         self.engine = RoundEngine(deadlines: deadlines)
         self.transport = transport
         self.clock = clock
         self.entitlement = entitlement
+        self.keepScreenAwake = keepScreenAwake
         transport.onEvent = { [weak self] event in self?.transportEvent(event) }
     }
 
@@ -293,6 +297,7 @@ final class RoundCoordinator {
         revision += 1
         scheduleTick()
         closeTheListingOnceTheRoomTakesNobodyNew()
+        keepTheScreenAwakeWhileInARoom()
         // The advert claimed this version, but the host speaks another: every message would be
         // refused, so the lobby could only time out. Leave now and say why.
         if hostOnAnotherVersion {
@@ -305,6 +310,17 @@ final class RoundCoordinator {
     /// `leave`) but closes its listing, so nearby phones leave it off their lists and it no longer
     /// names the room or the host. Restarts keep it closed: they take back only phones already
     /// connected.
+    /// Decision 2026-10-14: a host locked for about 10 seconds lost its connections on a device run,
+    /// with Wi-Fi on and off, and Auto-Lock locks a phone left alone. That ends an unfinished round
+    /// and leaves Run again with nobody connected. So while the phone is in a room, from the lobby
+    /// until Leave, its screen does not dim and lock on its own; the side button still locks it.
+    private func keepTheScreenAwakeWhileInARoom() {
+        let inARoom = engine.phase != .idle
+        guard inARoom != screenKeptAwake else { return }
+        screenKeptAwake = inARoom
+        keepScreenAwake(inARoom)
+    }
+
     private func closeTheListingOnceTheRoomTakesNobodyNew() {
         guard listingOpen, engine.phase != .idle, engine.phase != .lobby else { return }
         listingOpen = false

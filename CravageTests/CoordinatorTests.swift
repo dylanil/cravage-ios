@@ -1,3 +1,4 @@
+import UIKit
 import XCTest
 @testable import CravageCore
 @testable import Cravage
@@ -88,6 +89,8 @@ final class FakeStar {
     let transports: [Transport]
     let clock = FakeClock()
     var coordinators: [RoundCoordinator] = []
+    /// Whether each phone has asked for its screen to stay awake.
+    var screenAwake: [Bool] = []
     var connected: Set<Int> = []
     private var queue: [(to: Int, event: TransportEvent)] = []
 
@@ -97,13 +100,19 @@ final class FakeStar {
         return RoomAdvert(id: "room", label: hosting.label, size: hosting.size, hostNickname: "Host", protocolVersion: CravageCore.protocolVersion)
     }
 
-    init(phones: Int, entitlement: FakeEntitlement) {
+    /// With `realScreenForHost`, the host sets the phone's own screen setting, as the app does.
+    init(phones: Int, entitlement: FakeEntitlement, realScreenForHost: Bool = false) {
         transports = (0..<phones).map { Transport(index: $0) }
+        screenAwake = Array(repeating: false, count: phones)
         for transport in transports {
             transport.star = self
-            coordinators.append(RoundCoordinator(transport: transport, clock: clock, entitlement: entitlement,
-                                                 deadlines: Deadlines(lobbyMs: 600_000, confirmingMs: 60_000, figureMs: 90_000,
-                                                                      confirmationsMs: 10_000, helloMs: 5_000)))
+            let deadlines = Deadlines(lobbyMs: 600_000, confirmingMs: 60_000, figureMs: 90_000,
+                                      confirmationsMs: 10_000, helloMs: 5_000)
+            let index = transport.index
+            coordinators.append(realScreenForHost && index == 0
+                ? RoundCoordinator(transport: transport, clock: clock, entitlement: entitlement, deadlines: deadlines)
+                : RoundCoordinator(transport: transport, clock: clock, entitlement: entitlement, deadlines: deadlines,
+                                   keepScreenAwake: { [weak self] in self?.screenAwake[index] = $0 }))
         }
     }
 
@@ -771,6 +780,61 @@ final class CoordinatorTests: XCTestCase {
         star.coordinators[1].browse()
         star.coordinators[1].appEnteredBackground()
         XCTAssertTrue(star.transports[1].browsing)
+    }
+
+    /// Decision 2026-10-14: a locked phone loses its connections, so while a phone is in a room,
+    /// from the lobby until Leave, it keeps its screen from locking on its own, and only then.
+    func testTheScreenStaysAwakeOnlyWhileThePhoneIsInARoom() async {
+        let star = FakeStar(phones: 3, entitlement: FakeEntitlement(unlocked: false))
+        XCTAssertEqual(star.screenAwake, [false, false, false])
+        let host = star.coordinators[0]
+        await host.createRoom(label: "Annual bonus", size: 3, nickname: "Sam")
+        XCTAssertEqual(star.screenAwake, [true, false, false], "the host's lobby lets the screen lock")
+        for (index, name) in [(1, "Alex"), (2, "Dee")] {
+            star.coordinators[index].join(roomID: "room", nickname: name)
+            star.flush()
+        }
+        XCTAssertEqual(star.screenAwake, [true, true, true], "a joiner's lobby lets the screen lock")
+        for pending in host.engine.pendingJoiners {
+            host.admit(pending.verifyingKey, generation: host.engine.generation)
+        }
+        host.start(generation: host.engine.generation)
+        star.flush()
+        for phone in star.coordinators { phone.confirmRoomCode(generation: phone.engine.generation) }
+        star.flush()
+        for (phone, figure) in zip(star.coordinators, ["10", "20", "30"]) {
+            XCTAssertNil(phone.submitFigure(figure, generation: phone.engine.generation))
+        }
+        star.flush()
+        XCTAssertEqual(host.engine.phase, .complete(.agreed))
+        XCTAssertEqual(star.screenAwake, [true, true, true], "the result screen lets the screen lock before Run again")
+        star.coordinators[1].leave()
+        star.flush()
+        XCTAssertEqual(star.screenAwake[1], false, "a phone that left still keeps its screen awake")
+        host.leave()
+        star.flush()
+        XCTAssertEqual(star.screenAwake[0], false, "a host that left still keeps its screen awake")
+    }
+
+    /// A phone that leaves an unfinished round in the background lets its screen lock again.
+    func testLeavingARoundInTheBackgroundLetsTheScreenLockAgain() async {
+        let star = await startedThreePhoneRound(joinersBrowse: false)
+        XCTAssertEqual(star.screenAwake, [true, true, true])
+        star.coordinators[2].appEnteredBackground()
+        XCTAssertEqual(star.coordinators[2].engine.phase, .idle)
+        XCTAssertEqual(star.screenAwake[2], false)
+    }
+
+    /// The app's own coordinator sets the phone's screen setting, and sets it back on Leave.
+    func testTheAppSetsThePhonesScreenSettingWhileInARoom() async {
+        let before = UIApplication.shared.isIdleTimerDisabled
+        defer { UIApplication.shared.isIdleTimerDisabled = before }
+        UIApplication.shared.isIdleTimerDisabled = false
+        let star = FakeStar(phones: 1, entitlement: FakeEntitlement(unlocked: false), realScreenForHost: true)
+        await star.coordinators[0].createRoom(label: "Team", size: 3, nickname: "Sam")
+        XCTAssertTrue(UIApplication.shared.isIdleTimerDisabled, "the host's lobby lets the phone lock")
+        star.coordinators[0].leave()
+        XCTAssertFalse(UIApplication.shared.isIdleTimerDisabled, "Leave left the phone unable to lock")
     }
 
     private func startedThreePhoneRound(joinersBrowse: Bool) async -> FakeStar {

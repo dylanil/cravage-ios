@@ -51,11 +51,15 @@ than discovered. The in-app Limitations screen carries the same list in shorter 
   result, such as the red heart. A nickname saved before this rule is asked for again.
 - **Decimal input is explicit.** Positive and negative figures are supported. Use a full stop for
   the decimal point; commas and grouping separators are refused, never guessed or converted.
-- **Keep Cravage open and the phones unlocked during a round.** Locking a phone or moving the app
-  to the background leaves its unfinished round and clears its local round data. It does not
-  resume on return; create or join a new room. Temporary inactivity (such as Control Center or a
-  permission prompt) covers the screen but does not itself end the round. Finished results remain
-  available for sharing. The app-switcher cover still needs a physical-device acceptance check.
+- **Keep Cravage open and the phones unlocked while in a room, between rounds too.** While a phone
+  is in a room its screen stays on, so it does not lock by itself; the side button still locks it.
+  Locking a phone or moving the app to the background leaves its unfinished round and clears its
+  local round data. It does not resume on return; create or join a new room. Locking the host
+  after a round, even for about 10 seconds, cut its connections on test phones, with Wi-Fi on and
+  off, so Run again found nobody: leave and create a new room. Temporary inactivity
+  (such as Control Center or a permission prompt) covers the screen but does not itself end the
+  round. Finished results remain available for sharing. The app-switcher cover still needs a
+  physical-device acceptance check.
 - **A first round runs at the size the host chose.** A room for 6 starts only when all 6 are in;
   if someone isn't coming, close the room and create a new one for the people who are there.
 - **If someone drops out mid-round, the round fails.** A host can restart with the same room and

@@ -57,8 +57,13 @@ in PLAN.md's "Decisions (settled, do not reopen without sign-off)" section.
   still refused, so a phone that saw the room before it closed and taps it is turned away; one
   that connects while a restart gathers is still sent the room label in `welcome`. A phone that
   goes to the background with its round finished keeps the registration and keeps browsing, so a
-  restart after it comes back runs like any other round. A listener that fails after the lock no
-  longer ends the round, because nobody new is needed by then. **Decision 2026-10-14**: the room
+  restart after it comes back runs like any other round, if its connections are still open. A
+  device run (2026-10-14) locked the host on its result for about 10 seconds, with Wi-Fi on and
+  off, and each time the restart found nobody; with Wi-Fi off the host's report shows both
+  peer-to-peer links and the listener ended. **Decision
+  2026-10-14**: while a phone is in a room, from the lobby until Leave, its screen does not dim and
+  lock on its own (`isIdleTimerDisabled`); the side button still locks it. A listener that fails
+  after the lock no longer ends the round, because nobody new is needed by then. **Decision 2026-10-14**: the room
   is registered as "Cravage" and four characters drawn afresh for each room. Given no name, the
   system registered it under the phone's own name, which any Bonjour browser on the network can
   read; a device run saw it. The closed record is set with that same name: on the Mac, a nil name

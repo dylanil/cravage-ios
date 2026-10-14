@@ -673,6 +673,41 @@
       "replace": "            if engine.role != nil { transport.stopAll() }\n            return\n        }\n        leave()\n        wasInterrupted = true"
     },
     {
+      "name": "a phone in a room keeps its screen awake",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "        let inARoom = engine.phase != .idle",
+      "replace": "        let inARoom = false"
+    },
+    {
+      "name": "leaving a room lets the screen lock again",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "        guard inARoom != screenKeptAwake else { return }",
+      "replace": "        guard inARoom, inARoom != screenKeptAwake else { return }"
+    },
+    {
+      "name": "every step of a round updates the screen setting",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "        keepTheScreenAwakeWhileInARoom()\n",
+      "replace": ""
+    },
+    {
+      "name": "the app's coordinator sets the phone's own screen",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "keepScreenAwake: @escaping @MainActor (Bool) -> Void = ScreenAwake.keep",
+      "replace": "keepScreenAwake: @escaping @MainActor (Bool) -> Void = { _ in }"
+    },
+    {
+      "name": "the screen setting reaches the phone",
+      "suite": "app",
+      "file": "Cravage/CravageApp.swift",
+      "find": "        UIApplication.shared.isIdleTimerDisabled = awake",
+      "replace": "        _ = awake"
+    },
+    {
       "name": "the Join screen keeps looking for rooms in the background",
       "suite": "app",
       "file": "Cravage/Round/RoundCoordinator.swift",
