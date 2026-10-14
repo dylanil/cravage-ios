@@ -52,8 +52,10 @@ in PLAN.md's "Decisions (settled, do not reopen without sign-off)" section.
   whose record has `closed` off their lists; a build from before the key does too, for want of a
   label. Restarts keep it closed. That replacing the record leaves the registration and an open
   connection alone, and keeps a name the system changed for a clash, was seen on the Mac
-  (loopback); over peer-to-peer Wi-Fi it awaits a device run, and the host's diagnostics report
-  counts the registrations added and removed up to Leave. A connection to a started round is
+  (loopback). On a device run (2026-10-14, 48f4dd5) a Mac watching the home network saw the record
+  replaced at Start and the registration removed only at Leave, and with Wi-Fi off, every link
+  over peer-to-peer Wi-Fi, the host's report counted one registration added and none removed up
+  to Leave; no round in that run stalled. A connection to a started round is
   still refused, so a phone that saw the room before it closed and taps it is turned away; one
   that connects while a restart gathers is still sent the room label in `welcome`. A phone that
   goes to the background with its round finished keeps the registration and keeps browsing, so a

@@ -91,9 +91,10 @@ than discovered. The in-app Limitations screen carries the same list in shorter 
   random characters, never the phone's name.
 - **A phone that taps a room just as its round starts is turned away with a message not written
   for this case**: usually "Lost the connection to the host" and that the round has stopped,
-  though the round goes on without it. A started round leaves nearby phones' lists within about a
-  second. That this holds over peer-to-peer Wi-Fi, and that rounds there no longer stall, is still
-  being checked on phones (test build).
+  though the round goes on without it. A started round left nearby lists within about a second in
+  tests on a Mac. On three test phones, at least 30 rounds ran without a stall across two test
+  builds, at least 20 of them with Wi-Fi off so every link went over peer-to-peer Wi-Fi, and the
+  host's room stayed registered until Leave.
 - **Every phone needs the same version of Cravage.** A room from a phone on another version shows
   in the list but can't be joined; update the app on both phones.
 - **Not sold in the EU** in this version, because EU rules would require publishing a postal

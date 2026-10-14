@@ -192,9 +192,9 @@ final class NetworkTransport: RoundTransport {
     /// its new name, an open connection carry on, and a running browser deliver the new record
     /// within a second, sometimes after a delivery with an empty one, which the list treats as no
     /// room. A nil or empty name after a made-up one removed the registration and added it again
-    /// under the Mac's own name. A device run (asking for no name then) kept the registration
-    /// through the round on a home network; peer-to-peer Wi-Fi is still to see, and the report
-    /// counts registrations.
+    /// under the Mac's own name. Device runs (2026-10-14) kept the registration through the round,
+    /// asking for no name, on a home network and with every link over peer-to-peer Wi-Fi (the
+    /// report counting one added and none removed), and with the made-up name on a home network.
     func closeListing() {
         guard let serviceName else { return }
         listener?.service = Self.closedService(name: serviceName)
