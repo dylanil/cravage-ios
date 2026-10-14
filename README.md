@@ -54,13 +54,14 @@ than discovered. The in-app Limitations screen carries the same list in shorter 
 - **Keep Cravage open and the phones unlocked while in a room, between rounds too.** While
   something more can happen in the room (a lobby, a round, or a result the host could run again),
   the app keeps the screen from going to sleep on its own, so it should not lock by itself; the
-  side button still locks it. On test phones with a 30-second Auto-Lock, screens in a lobby
-  stayed on past it and locked as usual after Leave; the result screen and the side button were
-  not checked with this build.
+  side button still locks it. On test phones with a 30-second Auto-Lock, screens in a lobby and
+  on the result stayed on past it, and locked as usual after Leave or once nothing more could
+  happen (a joiner whose host had closed the room, or that had been cut off by a lock).
   Locking a phone or moving the app to the background leaves its unfinished round and clears its
   local round data. It does not resume on return; create or join a new room. Locking the host
   after a round, even for about 10 seconds, cut its connections on test phones, with Wi-Fi on and
-  off, so Run again found nobody: leave and create a new room. Temporary inactivity
+  off, so Run again found nobody: leave and create a new room. A joiner locked after a round was
+  cut off too, and could not take part when the host ran the round again. Temporary inactivity
   (such as Control Center or a permission prompt) covers the screen but does not itself end the
   round. Finished results remain available for sharing. The app-switcher cover still needs a
   physical-device acceptance check.

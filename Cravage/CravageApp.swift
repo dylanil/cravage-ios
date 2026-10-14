@@ -60,8 +60,8 @@ struct CravageApp: App {
 /// `idleTimerDisabled` is "default is NO". Apple's web documentation: true disables "the idle
 /// timer" to "avert system sleep", in which "the screen dims", and apps should "reset it to false
 /// when the need no longer exists". A device run (2026-10-14) saw it keep three phones in a lobby
-/// on past a 30-second Auto-Lock, and setting it back let them lock. That the side button still
-/// locks the phone is inference; that run did not try it.
+/// and on the result on past a 30-second Auto-Lock, setting it back let them lock, and the side
+/// button still locked a phone at once.
 enum ScreenAwake {
     @MainActor static func keep(_ awake: Bool) {
         UIApplication.shared.isIdleTimerDisabled = awake

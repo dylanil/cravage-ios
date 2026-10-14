@@ -70,8 +70,10 @@ in PLAN.md's "Decisions (settled, do not reopen without sign-off)" section.
   restart with enough phones still connected, or that a joiner was in while its host is still
   connected), the app keeps the screen from going to sleep on its own (`isIdleTimerDisabled`).
   Once nothing can, it may sleep again. A device run (2026-10-14, 44a3c81, 30-second Auto-Lock)
-  saw three phones in a lobby stay on past it and lock as usual after Leave; the result screen,
-  the dead ends and the side button were not checked on it. **Decision 2026-10-14**: the room
+  saw three phones in a lobby and on the result stay on past it, and lock as usual after Leave and
+  once nothing more could happen: joiners whose host closed the room, and a joiner cut off by a
+  lock between rounds, which could not take part in the host's restart. The side button still
+  locked a phone at once. **Decision 2026-10-14**: the room
   is registered as "Cravage" and four characters drawn afresh for each room. Given no name, the
   system registered it under the phone's own name, which any Bonjour browser on the network can
   read; a device run saw it. The closed record is set with that same name: on the Mac, a nil name
