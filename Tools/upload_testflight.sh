@@ -51,6 +51,12 @@ APP="$WORK/Cravage.xcarchive/Products/Applications/Cravage.app"
 VERSION="$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$APP/Info.plist")"
 BUILD="$(/usr/libexec/PlistBuddy -c 'Print CFBundleVersion' "$APP/Info.plist")"
 echo "Archived Cravage $VERSION ($BUILD)"
+# The export compliance answer (docs/APP_STORE.md) travels in the build, so App Store Connect does
+# not ask for it; an archive without it would wait in App Store Connect for the questionnaire.
+if [ "$(/usr/libexec/PlistBuddy -c 'Print ITSAppUsesNonExemptEncryption' "$APP/Info.plist" 2>/dev/null)" != "false" ]; then
+  echo "The archive does not declare ITSAppUsesNonExemptEncryption = NO (see docs/APP_STORE.md)" >&2
+  exit 1
+fi
 "$HERE/check_privacy_manifest.sh" "$APP"
 # The stage check needs a Debug build of the same commit to show its search can fire; build one
 # rather than skip the check or compare against whatever older build is lying around.

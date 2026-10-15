@@ -158,8 +158,11 @@ encryption built into Apple's operating system), so exempt with no documentation
   documentation. A US annual self-classification report may still apply to exempt encryption; the
   a decision is needed on whether to file one. This is not legal advice.
 
-If preferred, the same answers go in Info.plist as `ITSAppUsesNonExemptEncryption = NO` so
-App Store Connect stops asking at each upload.
+Since build 1.0 (2) the same answer is in Info.plist as `ITSAppUsesNonExemptEncryption = NO`
+(set in `project.yml`), so App Store Connect no longer asks at each upload. Apple's web
+documentation for the key: NO means the app "either uses no encryption, or only uses encryption
+that's exempt from export compliance requirements". If the app ever adds encryption of its own,
+or transport encryption beyond the operating system's, this answer and the key are revisited.
 
 ## Territories and trader status
 

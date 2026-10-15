@@ -31,6 +31,9 @@ targets:
         CFBundleDisplayName: Cravage
         CFBundleShortVersionString: "1.0"
         CFBundleVersion: "1"
+        # Only the operating system's encryption, which needs no export documentation
+        # (docs/APP_STORE.md, "Export compliance"); App Store Connect then stops asking per upload.
+        ITSAppUsesNonExemptEncryption: false
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
