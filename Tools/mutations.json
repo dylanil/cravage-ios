@@ -1022,8 +1022,8 @@
       "name": "VoiceOver hears the room's question on the figure field",
       "suite": "app",
       "file": "Cravage/UI/FigureCopy.swift",
-      "find": "        question.map { \"Your figure for \\($0)\" } ?? \"Your figure\"",
-      "replace": "        \"Your figure\""
+      "find": "        question.map { \"Your private figure for \\($0)\" } ?? \"Your private figure\"",
+      "replace": "        \"Your private figure\""
     },
     {
       "name": "leaving forgets a discovery error",

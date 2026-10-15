@@ -65,7 +65,7 @@ same Wi-Fi network and try again.
 The host taps Restart. The room and its label are kept; everyone re-enters their figure.
 
 **Is my figure really private?**
-Your figure is processed on your phone; the app sends a masked share to the other participants.
+Your private figure is processed on your phone; the app sends a masked share to the other participants.
 See the [privacy policy](privacy-policy.md) and the Limitations screen in the app for exactly what
 is and is not protected.
 

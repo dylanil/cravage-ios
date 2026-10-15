@@ -1,11 +1,11 @@
 # Cravage privacy policy
 
-*Last updated: 2026-10-14*
+*Last updated: 2026-10-15*
 
 Cravage is designed so that there is very little to collect, and this page says exactly what that
 little is.
 
-## Your figure
+## Your private figure
 
 The figure you type is processed on your phone. What the app sends to the other participants is a
 masked version of it: your figure plus random amounts that cancel out when everyone's masked

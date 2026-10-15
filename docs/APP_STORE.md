@@ -42,7 +42,7 @@ is sent. Then each person types their figure, and the average appears on every p
 WHAT MAKES IT PRIVATE
 Cravage uses secure aggregation, so nobody has to be trusted with the figures: not a colleague, not
 a survey company, not a server holding a decryption key.
-Your figure is processed on your phone; the app sends a masked share to the other participants.
+Your private figure is processed on your phone; the app sends a masked share to the other participants.
 Every pair of phones agrees a secret random
 number, and each person sends only their figure plus those secrets. When all the masked numbers are
 added together, the secrets cancel out and only the true total remains. Every phone does that

@@ -27,7 +27,7 @@ struct HomeView: View {
         Step(id: 2, title: "Match the code",
              detail: "Each screen shows the same room code. Check it together."),
         Step(id: 3, title: "Only the average appears",
-             detail: "Each phone sends a masked share, not your figure."),
+             detail: "Each phone sends a masked share, not your private figure."),
     ]
 
     var body: some View {

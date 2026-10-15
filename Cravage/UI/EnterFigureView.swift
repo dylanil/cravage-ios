@@ -31,7 +31,7 @@ struct EnterFigureView: View {
             PaperNavBar(title: "Leave", action: onLeave)
             ScrollingBody {
                 VStack(alignment: .leading, spacing: 0) {
-                    PaperHeader(eyebrow: engine.roster?.label ?? "Round", title: "Your figure",
+                    PaperHeader(eyebrow: engine.roster?.label ?? "Round", title: "Your private figure",
                                 speaksEyebrow: engine.roster != nil)
                         .padding(.top, 6)
                     figureField

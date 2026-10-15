@@ -18,18 +18,18 @@ final class FigureCopyTests: XCTestCase {
     /// The room's question sits in the eyebrow, which VoiceOver skips on other screens. On the
     /// figure and result screens it is the only place the question appears, so it is spoken there.
     func testVoiceOverHearsTheQuestionOnTheFigureAndResultScreens() {
-        XCTAssertEqual(PaperHeader.spokenLabel(eyebrow: "Weekly screen time", title: "Your figure", speaksEyebrow: true),
-                       "Weekly screen time. Your figure")
+        XCTAssertEqual(PaperHeader.spokenLabel(eyebrow: "Weekly screen time", title: "Your private figure", speaksEyebrow: true),
+                       "Weekly screen time. Your private figure")
         XCTAssertEqual(PaperHeader.spokenLabel(eyebrow: "Check the code", title: "Is this on every phone?", speaksEyebrow: false),
                        "Is this on every phone?", "a decorative eyebrow stays silent")
-        XCTAssertEqual(FigureCopy.fieldLabel(question: "Weekly screen time"), "Your figure for Weekly screen time")
-        XCTAssertEqual(FigureCopy.fieldLabel(question: nil), "Your figure")
+        XCTAssertEqual(FigureCopy.fieldLabel(question: "Weekly screen time"), "Your private figure for Weekly screen time")
+        XCTAssertEqual(FigureCopy.fieldLabel(question: nil), "Your private figure")
     }
 
     /// CONTRIBUTING.md's allowed honesty copy, word for word.
     func testTheOnThisPhoneLineIsTheApprovedWording() {
         XCTAssertEqual(FigureCopy.onThisPhone,
-                       "Your figure is processed on your phone; the app sends a masked share to the other participants.")
+                       "Your private figure is processed on your phone; the app sends a masked share to the other participants.")
     }
 
     /// The screen must not invite a decimal mark the parser rejects, and must say why, because a

@@ -22,9 +22,9 @@ enum FigureCopy {
     /// What VoiceOver calls the figure field: the question with it, since the field is often
     /// reached without passing the heading.
     static func fieldLabel(question: String?) -> String {
-        question.map { "Your figure for \($0)" } ?? "Your figure"
+        question.map { "Your private figure for \($0)" } ?? "Your private figure"
     }
 
     /// Allowed honesty copy, unchanged from CONTRIBUTING.md.
-    static let onThisPhone = "Your figure is processed on your phone; the app sends a masked share to the other participants."
+    static let onThisPhone = "Your private figure is processed on your phone; the app sends a masked share to the other participants."
 }

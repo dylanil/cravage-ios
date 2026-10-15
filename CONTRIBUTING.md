@@ -58,7 +58,7 @@ https://github.com/dylanil/SMPC and shares the crypto with this app.
 
 ## Honesty copy
 
-Allowed: "Your figure is processed on your phone; the app sends a masked share to the other
+Allowed: "Your private figure is processed on your phone; the app sends a masked share to the other
 participants." "Cravage does not operate a server that receives your round data." "Round history is
 not saved; your nickname is saved on this phone; exported transcripts can be kept by whoever
 receives them." Forbidden: "no data leaves the room", "nothing stored or sent", any claim against
