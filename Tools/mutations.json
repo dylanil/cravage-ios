@@ -1205,8 +1205,8 @@
       "name": "a problem report is addressed to the support address",
       "suite": "app",
       "file": "Cravage/UI/ProblemReport.swift",
-      "find": "        return URL(string: \"mailto:\\(Self.address)?subject=\\(subject)&body=\\(body)\")",
-      "replace": "        return URL(string: \"mailto:?subject=\\(subject)&body=\\(body)\")"
+      "find": "    static let address = \"cravage.support@gmail.com\"",
+      "replace": "    static let address = \"support@example.com\""
     },
     {
       "name": "a problem report carries the diagnostics",
@@ -1216,32 +1216,25 @@
       "replace": "            + \"You can delete anything before you send.\\n\\n\"\n"
     },
     {
-      "name": "a problem report's mail link escapes every character a mail app could misread",
-      "suite": "app",
-      "file": "Cravage/UI/ProblemReport.swift",
-      "find": "        func escaped(_ text: String) -> String? { text.addingPercentEncoding(withAllowedCharacters: unreserved) }",
-      "replace": "        func escaped(_ text: String) -> String? { text.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) }"
-    },
-    {
       "name": "with Mail set up, a problem report opens the Mail screen",
       "suite": "app",
       "file": "Cravage/UI/ProblemReport.swift",
-      "find": "        if canSendMail { return .compose }\n",
-      "replace": ""
+      "find": "        canSendMail ? .mailScreen : .copyAndEmail",
+      "replace": "        .copyAndEmail"
     },
     {
-      "name": "without Mail, a problem report opens a mail link",
+      "name": "without Mail, a problem report offers to copy the diagnostics instead",
       "suite": "app",
       "file": "Cravage/UI/ProblemReport.swift",
-      "find": "        if let link = mailLink, await open(link) { return .openedMailLink }\n",
-      "replace": ""
+      "find": "        canSendMail ? .mailScreen : .copyAndEmail",
+      "replace": "        .mailScreen"
     },
     {
-      "name": "when nothing opens the mail link, the diagnostics are copied",
+      "name": "the no-Mail message gives the support address",
       "suite": "app",
       "file": "Cravage/UI/ProblemReport.swift",
-      "find": "        copy(diagnostics)\n",
-      "replace": ""
+      "find": "email them to \\(address) from any email app.\"",
+      "replace": "email them to support from any email app.\""
     }
   ]
 }

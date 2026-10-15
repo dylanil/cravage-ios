@@ -58,7 +58,8 @@ phones nearby running Cravage.
 
 Cravage has no analytics, advertising or crash-reporting service. If you ask for help, you can copy
 a short diagnostic summary from Settings, or tap Report a problem, which opens an email to the
-address below with the summary filled in. The summary contains the app and iOS versions, the phone
+address below with the summary filled in (if the iPhone's Mail app isn't set up, it offers to copy
+the summary instead). The summary contains the app and iOS versions, the phone
 model, the protocol stage, counts (such as how many phones confirmed the room code or how many sends
 failed), timings in seconds (such as how long a connection had been quiet), the kind of
 connection each link used (such as peer-to-peer Wi-Fi or a Wi-Fi network, never a network's name)

@@ -4,16 +4,19 @@ import Foundation
 ///
 /// Nothing reaches support until the person sends the email (a draft they save can still sync to
 /// their own mail provider), so the report holds only what Copy diagnostics would copy, plus a
-/// line asking what happened. Apple's
-/// header for `MFMailComposeViewController.canSendMail` names the two options when Mail cannot
-/// send: tell the person, or open a "mailto" link. The link comes first, since it opens whichever
-/// email app the phone uses; if nothing opens it, the diagnostics are copied and the screen says
-/// where to send them.
+/// line asking what happened. Apple's header for `MFMailComposeViewController.canSendMail` names
+/// two options when Mail cannot send: tell the person, or open a "mailto" link. Cravage tells the
+/// person: a mailto link can land in a Mail app with no account and lose the report without a word
+/// (review of 6f7f6c1), so the message gives the address and copies the diagnostics only when the
+/// person asks (owner decision 2026-10-15).
 struct ProblemReport: Equatable, Identifiable {
     /// The address docs/support.md and the privacy policy publish (Tools/check_store_paperwork.sh).
     static let address = "cravage.support@gmail.com"
 
-    enum Outcome: Equatable { case compose, openedMailLink, copied }
+    static let noMailTitle = "Mail isn't set up on this iPhone"
+    static let noMailMessage = "Copy the diagnostics, then email them to \(address) from any email app."
+
+    enum Way: Equatable { case mailScreen, copyAndEmail }
 
     let diagnostics: String
     let subject: String
@@ -29,22 +32,8 @@ struct ProblemReport: Equatable, Identifiable {
             + diagnostics
     }
 
-    /// Every character outside the unreserved set is escaped: some mail apps read a bare "+" as a
-    /// space, and a bare "&" would start another field.
-    var mailLink: URL? {
-        let unreserved = CharacterSet(charactersIn:
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~")
-        func escaped(_ text: String) -> String? { text.addingPercentEncoding(withAllowedCharacters: unreserved) }
-        guard let subject = escaped(subject), let body = escaped(body) else { return nil }
-        return URL(string: "mailto:\(Self.address)?subject=\(subject)&body=\(body)")
-    }
-
-    /// Picks the way out. `.compose` asks the caller to show Apple's Mail screen with this report.
-    @MainActor
-    func send(canSendMail: Bool, open: (URL) async -> Bool, copy: (String) -> Void) async -> Outcome {
-        if canSendMail { return .compose }
-        if let link = mailLink, await open(link) { return .openedMailLink }
-        copy(diagnostics)
-        return .copied
+    /// Apple's email screen when Mail can send; otherwise the message with the address.
+    static func way(canSendMail: Bool) -> Way {
+        canSendMail ? .mailScreen : .copyAndEmail
     }
 }

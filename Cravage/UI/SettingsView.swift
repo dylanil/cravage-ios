@@ -15,9 +15,7 @@ struct SettingsView: View {
     @State private var editingName = false
     @State private var copied = false
     @State private var mailReport: ProblemReport?
-    @State private var noEmailApp = false
-    /// A second tap while the first report is still choosing its way out does nothing.
-    @State private var reporting = false
+    @State private var mailNotSetUp = false
     @AppStorage(Appearance.key) private var appearance: Appearance = .system
 
     private static let privacyPolicy = URL(string: "https://dylanil.github.io/cravage-ios/privacy-policy")!
@@ -96,10 +94,11 @@ struct SettingsView: View {
                 MailComposer(report: report) { mailReport = nil }
                     .ignoresSafeArea()
             }
-            .alert("No email app is set up", isPresented: $noEmailApp) {
-                Button("OK", role: .cancel) {}
+            .alert(ProblemReport.noMailTitle, isPresented: $mailNotSetUp) {
+                Button("Copy diagnostics") { UIPasteboard.general.string = diagnostics() }
+                Button("Cancel", role: .cancel) {}
             } message: {
-                Text("The diagnostics are copied. Paste them into an email to \(ProblemReport.address).")
+                Text(ProblemReport.noMailMessage)
             }
         }
     }
@@ -140,19 +139,14 @@ struct SettingsView: View {
         copied = true
     }
 
+    /// A tap while the email screen or the message is already up does nothing.
     private func reportProblem() {
-        guard !reporting else { return }
-        reporting = true
-        let report = ProblemReport(diagnostics: diagnostics(), appVersion: Self.appVersion, build: Self.build)
-        Task {
-            defer { reporting = false }
-            switch await report.send(canSendMail: MFMailComposeViewController.canSendMail(),
-                                     open: { await UIApplication.shared.open($0) },
-                                     copy: { UIPasteboard.general.string = $0 }) {
-            case .compose: mailReport = report
-            case .openedMailLink: break
-            case .copied: noEmailApp = true
-            }
+        guard mailReport == nil, !mailNotSetUp else { return }
+        switch ProblemReport.way(canSendMail: MFMailComposeViewController.canSendMail()) {
+        case .mailScreen:
+            mailReport = ProblemReport(diagnostics: diagnostics(), appVersion: Self.appVersion, build: Self.build)
+        case .copyAndEmail:
+            mailNotSetUp = true
         }
     }
 
