@@ -285,8 +285,9 @@ final class NetworkTransport: RoundTransport {
         onEvent?(Self.roomList(found.map { (id: $0.id, txt: $0.txtRecord) }))
     }
 
-    /// Every listing counts as found, a closed or malformed one included; only open rooms go on
-    /// the list.
+    /// Every endpoint the search returned counts, a closed or malformed listing included; only
+    /// open, well-formed rooms go on the list. `roomsFound` passes the browser's whole answer here
+    /// in one line, which no test runs: `Bonjour.Endpoint` has no public initialiser.
     static func roomList(_ listings: [(id: String, txt: NWTXTRecord)]) -> TransportEvent {
         let rooms = listings.compactMap { advert(id: $0.id, txt: $0.txt) }
         return .roomsChanged(rooms, listings: listings.count)

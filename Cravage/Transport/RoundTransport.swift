@@ -23,8 +23,9 @@ enum TransportProblem: Equatable, Sendable {
 }
 
 enum TransportEvent: Sendable {
-    /// The open rooms a search found, and how many listings it found in all: a started room's
-    /// closed listing is left off the list but shows the search can see other phones.
+    /// The open rooms a search found, and how many endpoints it returned in all (an id can
+    /// repeat). A started room's closed listing is left off the list but still counts: it shows
+    /// the search is getting answers.
     case roomsChanged([RoomAdvert], listings: Int)
     case discoveryFailed(TransportProblem)
     case hostingFailed(TransportProblem)

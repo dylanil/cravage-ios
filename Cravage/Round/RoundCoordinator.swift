@@ -227,11 +227,14 @@ final class RoundCoordinator {
         switch event {
         case let .roomsChanged(adverts, listings):
             rooms = adverts
-            // A waiting browser delivers results once it moves to ready (Network.framework
-            // browser.h); the transport reports a policy-denied wait as a discovery error. That
-            // the wait comes from an unanswered Local Network prompt is inferred, not documented.
-            // Any listing found since, a started room's closed one included, shows the search
-            // works; an empty answer shows nothing.
+            // The SDK documents that a waiting browser delivers no results until it moves to ready
+            // (NetworkBrowser.State.waiting); the transport reports a policy-denied wait as a
+            // discovery error. That the wait comes from an unanswered Local Network prompt, and that
+            // a delivery after it means access is now allowed, are inferred, not documented. Any
+            // listing delivered since, a started room's closed one included, shows the search is
+            // getting answers; an empty answer shows nothing. Updates are documented to come when
+            // the set of endpoints changes, so a browser back at ready with the same set may send
+            // nothing and the error stays until the set changes.
             if problemIsDiscovery, listings > 0 {
                 problem = nil
                 problemIsDiscovery = false
