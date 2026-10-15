@@ -172,8 +172,8 @@ encryption built into Apple's operating system), so exempt with no documentation
   signatures and for deriving one-time masking values; connections between phones are plain TCP
   with no transport encryption of the app's own or the OS's (checked 2026-10-06); it
   implements no proprietary encryption and the source is public. Under this answer Apple requires no
-  documentation. A US annual self-classification report may still apply to exempt encryption; the
-  a decision is needed on whether to file one. This is not legal advice.
+  documentation. A US annual self-classification report may still apply to exempt encryption; a
+  decision is needed on whether to file one. This is not legal advice.
 
 Since build 1.0 (2) the same answer is in Info.plist as `ITSAppUsesNonExemptEncryption = NO`
 (set in `project.yml`), so App Store Connect no longer asks at each upload. Apple's web
