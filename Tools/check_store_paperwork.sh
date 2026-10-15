@@ -30,7 +30,7 @@ if not paper_version or paper_version.group(1) != code_version:
 # Report a problem writes to the support address the published pages give, or mail goes nowhere.
 code_address = re.search(r'static let address = "([^"]+)"', (root / "Cravage/UI/ProblemReport.swift").read_text()).group(1)
 for page in ("docs/support.md", "docs/privacy-policy.md"):
-    published = set(re.findall(r"[\w.+-]+@[\w-]+\.[\w.]+", (root / page).read_text()))
+    published = set(re.findall(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+", (root / page).read_text()))
     if published != {code_address}:
         failures.append(f"{page} gives {sorted(published)}; Report a problem writes to {code_address}")
 

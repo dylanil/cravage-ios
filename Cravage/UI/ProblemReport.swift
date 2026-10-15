@@ -2,8 +2,9 @@ import Foundation
 
 /// Report a problem (Settings): an email to support with the diagnostics filled in.
 ///
-/// Nothing leaves the phone until the person sends the email from their own email app, so the
-/// report holds only what Copy diagnostics would copy, plus a line asking what happened. Apple's
+/// Nothing reaches support until the person sends the email (a draft they save can still sync to
+/// their own mail provider), so the report holds only what Copy diagnostics would copy, plus a
+/// line asking what happened. Apple's
 /// header for `MFMailComposeViewController.canSendMail` names the two options when Mail cannot
 /// send: tell the person, or open a "mailto" link. The link comes first, since it opens whichever
 /// email app the phone uses; if nothing opens it, the diagnostics are copied and the screen says

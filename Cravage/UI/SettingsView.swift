@@ -16,6 +16,8 @@ struct SettingsView: View {
     @State private var copied = false
     @State private var mailReport: ProblemReport?
     @State private var noEmailApp = false
+    /// A second tap while the first report is still choosing its way out does nothing.
+    @State private var reporting = false
     @AppStorage(Appearance.key) private var appearance: Appearance = .system
 
     private static let privacyPolicy = URL(string: "https://dylanil.github.io/cravage-ios/privacy-policy")!
@@ -139,8 +141,11 @@ struct SettingsView: View {
     }
 
     private func reportProblem() {
+        guard !reporting else { return }
+        reporting = true
         let report = ProblemReport(diagnostics: diagnostics(), appVersion: Self.appVersion, build: Self.build)
         Task {
+            defer { reporting = false }
             switch await report.send(canSendMail: MFMailComposeViewController.canSendMail(),
                                      open: { await UIApplication.shared.open($0) },
                                      copy: { UIPasteboard.general.string = $0 }) {

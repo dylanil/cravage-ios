@@ -21,7 +21,11 @@ struct MailComposer: UIViewControllerRepresentable {
 
     func makeCoordinator() -> Coordinator { Coordinator(finished: finished) }
 
-    final class Coordinator: NSObject, MFMailComposeViewControllerDelegate {
+    /// MessageUI's header does not say which thread calls the delegate. The conformance is
+    /// main-actor isolated, so Swift checks at run time that the call arrives on the main actor
+    /// rather than assuming it before `finished` changes the screen's state.
+    @MainActor
+    final class Coordinator: NSObject, @preconcurrency MFMailComposeViewControllerDelegate {
         let finished: () -> Void
 
         init(finished: @escaping () -> Void) {
