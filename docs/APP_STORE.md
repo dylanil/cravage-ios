@@ -104,7 +104,8 @@ three-phone round. With a single device you can exercise everything up to the po
 participants would join: creating a room, the group-size picker and its one-off unlock (groups of
 exactly three are free; four to eight require the purchase, which only the room's host makes),
 Settings, Restore Purchases, the privacy policy and limitations screens, and the Join screen's
-"looking for rooms" state. The app has no server, no account and collects no data. Local Network
+"looking for rooms" state. The app has no server and no account, and collects no data apart from
+an optional support email the person chooses to send (Settings, Report a problem). Local Network
 permission is requested only to find other phones running Cravage.
 
 **Attachment (*later*):** 30 to 60 second screen recording of three phones completing a round,
@@ -113,7 +114,7 @@ including the room-code confirmation and the result appearing on all three.
 ## App Privacy (nutrition label)
 
 Answer **"Data Not Collected"** for every category. Rationale, in Apple's terms: nothing is sent to
-the developer or any third party. The nickname stays on the device. Masked shares travel only to
+the developer or any third party, apart from a support email the person chooses to send (below). The nickname stays on the device. Masked shares travel only to
 other phones in the room. Purchases are processed by Apple under Apple's own label. There are no
 third-party SDKs. Tracking: No.
 
@@ -123,10 +124,14 @@ Report a problem (Settings) opens an email to the support address with the diagn
 the person sends it, or not, from their own email app. Apple's web documentation (App Privacy
 Details, "Optional disclosure") lets a data type go undisclosed when all four of its criteria hold,
 and gives as an example "data collected in optional feedback forms or customer service requests
-that are unrelated to the primary purpose of the app and meet the other criteria above". Here: no
-tracking or advertising use; infrequent, outside the app's purpose and optional; and the person
-sees what is sent and their own address in the email screen and chooses to send each time. On that
-reading the label stays "Data Not Collected" (decided 2026-10-15). Were it ever declared instead,
+that are unrelated to the primary purpose of the app and meet the other criteria above". The first
+three criteria hold: no tracking or advertising use; infrequent, outside the app's purpose and
+optional. The fourth is a judgment, not a certainty: it asks that "the data is provided by the user
+in your app's interface" and that "the user's name or account name is prominently displayed in the
+submission form". The diagnostics are filled in by the app, though the person sees them and can
+delete them before sending; Apple's email screen shows their own address; and the person chooses to
+send each time. Reading that as meeting the criterion is inference. On that reading the label stays
+"Data Not Collected" (owner's decision, 2026-10-15, made knowing it is a judgment). Were it ever declared instead,
 the types would be Contact Info: Email Address and Diagnostics: Other Diagnostic Data, for App
 Functionality, not used for tracking.
 

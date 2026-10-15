@@ -67,7 +67,8 @@ room name, a key or the room code. It is only sent if you send it.
 
 ## Children
 
-Cravage does not knowingly collect any information from anyone, including children.
+Cravage does not knowingly collect any information from children. Apart from an email you choose to
+send to support, it collects no information from anyone.
 
 ## Changes
 
