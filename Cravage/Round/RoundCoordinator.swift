@@ -225,13 +225,14 @@ final class RoundCoordinator {
 
     private func transportEvent(_ event: TransportEvent) {
         switch event {
-        case let .roomsChanged(adverts):
+        case let .roomsChanged(adverts, listings):
             rooms = adverts
             // A waiting browser delivers results once it moves to ready (Network.framework
             // browser.h); the transport reports a policy-denied wait as a discovery error. That
             // the wait comes from an unanswered Local Network prompt is inferred, not documented.
-            // A room found since shows the search works; an empty list shows nothing.
-            if problemIsDiscovery, !adverts.isEmpty {
+            // Any listing found since, a started room's closed one included, shows the search
+            // works; an empty answer shows nothing.
+            if problemIsDiscovery, listings > 0 {
                 problem = nil
                 problemIsDiscovery = false
             }

@@ -75,7 +75,7 @@ final class FakeStar {
         func closeListing() { listingClosed = true }
         func startBrowsing() {
             browsing = true
-            if let advert = star?.advert { onEvent?(.roomsChanged([advert])) }
+            if let advert = star?.advert { onEvent?(.roomsChanged([advert], listings: 1)) }
         }
         func connect(to roomID: String) {
             connectionAttempts += 1
@@ -179,7 +179,7 @@ final class CoordinatorTests: XCTestCase {
         await star.coordinators[0].createRoom(label: "Team", size: 3, nickname: "Sam")
         let joiner = star.coordinators[1]
         star.transports[1].onEvent?(.roomsChanged([RoomAdvert(id: "room", label: "Team", size: 3, hostNickname: "Sam",
-                                                               protocolVersion: CravageCore.protocolVersion + 1)]))
+                                                               protocolVersion: CravageCore.protocolVersion + 1)], listings: 1))
         joiner.join(roomID: "room", nickname: "Alex")
         star.flush()
         XCTAssertEqual(star.transports[1].connectionAttempts, 0)
@@ -888,11 +888,23 @@ final class CoordinatorTests: XCTestCase {
         joiner.browse()
         star.transports[1].onEvent?(.discoveryFailed(.localNetworkDenied))
         XCTAssertEqual(joiner.problem, .localNetworkDenied)
-        star.transports[1].onEvent?(.roomsChanged([]))
+        star.transports[1].onEvent?(.roomsChanged([], listings: 0))
         XCTAssertEqual(joiner.problem, .localNetworkDenied, "an empty list does not show the search works")
         star.transports[1].onEvent?(.roomsChanged([RoomAdvert(id: "room", label: "Team", size: 3, hostNickname: "Sam",
-                                                               protocolVersion: CravageCore.protocolVersion)]))
+                                                               protocolVersion: CravageCore.protocolVersion)], listings: 1))
         XCTAssertNil(joiner.problem)
+    }
+
+    /// Review of 999e7b5: a search that finds only rooms that have started shows the search works,
+    /// though none of them can be joined, so an earlier discovery error goes.
+    func testFindingOnlyStartedRoomsClearsAnEarlierDiscoveryError() async {
+        let star = FakeStar(phones: 2, entitlement: FakeEntitlement(unlocked: false))
+        let joiner = star.coordinators[1]
+        joiner.browse()
+        star.transports[1].onEvent?(.discoveryFailed(.localNetworkDenied))
+        star.transports[1].onEvent?(.roomsChanged([], listings: 1))
+        XCTAssertNil(joiner.problem)
+        XCTAssertEqual(joiner.rooms, [])
     }
 
     /// Non-goal pin: a failed listener's error is not cleared by rooms someone else is advertising.
@@ -902,7 +914,7 @@ final class CoordinatorTests: XCTestCase {
         await host.createRoom(label: "L", size: 3, nickname: "Sam")
         star.transports[0].onEvent?(.hostingFailed(.unavailable))
         star.transports[0].onEvent?(.roomsChanged([RoomAdvert(id: "other", label: "Team", size: 3, hostNickname: "Kim",
-                                                               protocolVersion: CravageCore.protocolVersion)]))
+                                                               protocolVersion: CravageCore.protocolVersion)], listings: 1))
         XCTAssertEqual(host.problem, .unavailable)
     }
 
@@ -916,7 +928,7 @@ final class CoordinatorTests: XCTestCase {
         star.transports[0].onEvent?(.discoveryFailed(.localNetworkDenied))
         star.transports[0].onEvent?(.hostingFailed(.unavailable))
         star.transports[0].onEvent?(.roomsChanged([RoomAdvert(id: "other", label: "Team", size: 3, hostNickname: "Kim",
-                                                               protocolVersion: CravageCore.protocolVersion)]))
+                                                               protocolVersion: CravageCore.protocolVersion)], listings: 1))
         XCTAssertEqual(phone.problem, .unavailable)
     }
 

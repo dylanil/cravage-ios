@@ -1001,14 +1001,14 @@
       "name": "a room found after a discovery error clears the error",
       "suite": "app",
       "file": "Cravage/Round/RoundCoordinator.swift",
-      "find": "            if problemIsDiscovery, !adverts.isEmpty {\n                problem = nil",
-      "replace": "            if problemIsDiscovery, !adverts.isEmpty {\n                _ = problem"
+      "find": "            if problemIsDiscovery, listings > 0 {\n                problem = nil",
+      "replace": "            if problemIsDiscovery, listings > 0 {\n                _ = problem"
     },
     {
       "name": "an empty room list does not clear a discovery error",
       "suite": "app",
       "file": "Cravage/Round/RoundCoordinator.swift",
-      "find": "            if problemIsDiscovery, !adverts.isEmpty {",
+      "find": "            if problemIsDiscovery, listings > 0 {",
       "replace": "            if problemIsDiscovery {"
     },
     {
@@ -1186,6 +1186,20 @@
       "file": "Cravage/Transport/NetworkTransport.swift",
       "find": "            currentRoute = nil\n",
       "replace": ""
+    },
+    {
+      "name": "a search that finds only started rooms clears a discovery error",
+      "suite": "app",
+      "file": "Cravage/Round/RoundCoordinator.swift",
+      "find": "            if problemIsDiscovery, listings > 0 {",
+      "replace": "            if problemIsDiscovery, !adverts.isEmpty {"
+    },
+    {
+      "name": "the room list counts a closed listing as found",
+      "suite": "app",
+      "file": "Cravage/Transport/NetworkTransport.swift",
+      "find": "        return .roomsChanged(rooms, listings: listings.count)",
+      "replace": "        return .roomsChanged(rooms, listings: rooms.count)"
     }
   ]
 }

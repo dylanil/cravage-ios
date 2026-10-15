@@ -300,6 +300,18 @@ final class NetworkTransportTests: XCTestCase {
         XCTAssertNil(NetworkTransport.advert(id: "room", txt: closedWithoutValue), "a closed room was put on the nearby list")
     }
 
+    /// Review of 999e7b5: a search that finds only rooms that have started has still found phones,
+    /// so the room list says how many listings the search saw as well as which rooms are open.
+    func testTheRoomListCountsClosedListingsAsFound() {
+        let open = NetworkTransport.openListing(label: "Annual bonus", size: 3, hostNickname: "Sam")
+        guard case let .roomsChanged(rooms, listings) =
+                NetworkTransport.roomList([("a", open), ("b", NetworkTransport.closedListing)]) else {
+            return XCTFail("not a room list")
+        }
+        XCTAssertEqual(rooms.map(\.id), ["a"])
+        XCTAssertEqual(listings, 2, "a closed listing was not counted as found")
+    }
+
     /// Review of 999e7b5: closing the listing sets the listener's service again, with the closed
     /// record and the name the room started with, which keeps the registration. It never removes
     /// the service, which is what ended peer-to-peer links. The listener here is real; nothing
