@@ -19,7 +19,8 @@ https://github.com/dylanil/SMPC and shares the crypto with this app.
   Network or StoreKit.** `swift test --package-path CravageCore` runs on the Mac and CI without a
   simulator.
 - `Cravage/` - the app target (iOS 26+, iPhone, portrait): SwiftUI views, `NetworkTransport` (the
-  only file that imports Network), StoreKit 2, settings, transcript export, diagnostics.
+  only file that imports Network), StoreKit 2, settings, transcript export, diagnostics and the
+  Report a problem email.
   `Cravage.xcodeproj` is generated from `project.yml`: edit the yml and run `xcodegen generate`,
   never edit the project in Xcode's settings panes. Signing reads the git-ignored
   `Config/Local.xcconfig` (team ID); see `Config/Local.xcconfig.example`.

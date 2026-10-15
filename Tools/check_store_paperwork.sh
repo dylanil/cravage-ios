@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # CI: docs/APP_STORE.md, the paperwork typed into App Store Connect, agrees with the code on the
-# values Apple makes permanent or matches exactly: the unlock's product ID and the version.
+# values Apple makes permanent or matches exactly: the unlock's product ID and the version. The
+# support pages give the address Report a problem writes to.
 # A product ID cannot be changed once created, so a mismatch has to be caught before then.
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -26,8 +27,15 @@ paper_version = re.search(r"^\| Version \| ([^ |]+)", paperwork, re.M)
 if not paper_version or paper_version.group(1) != code_version:
     failures.append(f"APP_STORE.md's Version is {paper_version.group(1) if paper_version else 'missing'}; project.yml has {code_version}")
 
+# Report a problem writes to the support address the published pages give, or mail goes nowhere.
+code_address = re.search(r'static let address = "([^"]+)"', (root / "Cravage/UI/ProblemReport.swift").read_text()).group(1)
+for page in ("docs/support.md", "docs/privacy-policy.md"):
+    published = set(re.findall(r"[\w.+-]+@[\w-]+\.[\w.]+", (root / page).read_text()))
+    if published != {code_address}:
+        failures.append(f"{page} gives {sorted(published)}; Report a problem writes to {code_address}")
+
 if failures:
     print("Store paperwork disagrees with the code:", *failures, sep="\n  ", file=sys.stderr)
     sys.exit(1)
-print(f"Store paperwork matches the code: product {code_id}, version {code_version}")
+print(f"Store paperwork matches the code: product {code_id}, version {code_version}, support {code_address}")
 EOF

@@ -119,6 +119,17 @@ third-party SDKs. Tracking: No.
 
 The privacy policy page says the same in plain words, and the label and the policy must agree.
 
+Report a problem (Settings) opens an email to the support address with the diagnostics filled in;
+the person sends it, or not, from their own email app. Apple's web documentation (App Privacy
+Details, "Optional disclosure") lets a data type go undisclosed when all four of its criteria hold,
+and gives as an example "data collected in optional feedback forms or customer service requests
+that are unrelated to the primary purpose of the app and meet the other criteria above". Here: no
+tracking or advertising use; infrequent, outside the app's purpose and optional; and the person
+sees what is sent and their own address in the email screen and chooses to send each time. On that
+reading the label stays "Data Not Collected" (decided 2026-10-15). Were it ever declared instead,
+the types would be Contact Info: Email Address and Diagnostics: Other Diagnostic Data, for App
+Functionality, not used for tracking.
+
 ## Age rating questionnaire
 
 Every question answered **None / No**: no violence, no sexual content or nudity, no profanity or

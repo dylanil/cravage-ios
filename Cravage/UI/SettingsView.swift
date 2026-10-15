@@ -1,10 +1,12 @@
+import MessageUI
 import SwiftUI
 import UIKit
 
 /// Settings.
 ///
 /// Restore purchase asks the App Store for the Apple ID's earlier unlock. It can show an App Store
-/// sign-in prompt, so it runs only when tapped.
+/// sign-in prompt, so it runs only when tapped. Report a problem opens an email the person sends
+/// themselves (ProblemReport).
 struct SettingsView: View {
     let coordinator: RoundCoordinator
     let nicknames: NicknameStore
@@ -12,6 +14,8 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var editingName = false
     @State private var copied = false
+    @State private var mailReport: ProblemReport?
+    @State private var noEmailApp = false
     @AppStorage(Appearance.key) private var appearance: Appearance = .system
 
     private static let privacyPolicy = URL(string: "https://dylanil.github.io/cravage-ios/privacy-policy")!
@@ -60,6 +64,11 @@ struct SettingsView: View {
 
                     SectionHeading(text: "Support")
                         .padding(.top, 24)
+                    Button(action: reportProblem) {
+                        row(title: "Report a problem", note: "Opens an email to support with the diagnostics filled in",
+                            chevron: true)
+                    }
+                    .buttonStyle(.plain)
                     Button(action: copyDiagnostics) {
                         row(title: copied ? "Copied" : "Copy diagnostics",
                             note: "No figures, names or room names", chevron: false)
@@ -81,6 +90,15 @@ struct SettingsView: View {
                 ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } }
             }
             .sheet(isPresented: $editingName) { NicknameSheet(nicknames: nicknames) }
+            .sheet(item: $mailReport) { report in
+                MailComposer(report: report) { mailReport = nil }
+                    .ignoresSafeArea()
+            }
+            .alert("No email app is set up", isPresented: $noEmailApp) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("The diagnostics are copied. Paste them into an email to \(ProblemReport.address).")
+            }
         }
     }
 
@@ -116,13 +134,30 @@ struct SettingsView: View {
     }
 
     private func copyDiagnostics() {
-        UIPasteboard.general.string = Diagnostics.report(
+        UIPasteboard.general.string = diagnostics()
+        copied = true
+    }
+
+    private func reportProblem() {
+        let report = ProblemReport(diagnostics: diagnostics(), appVersion: Self.appVersion, build: Self.build)
+        Task {
+            switch await report.send(canSendMail: MFMailComposeViewController.canSendMail(),
+                                     open: { await UIApplication.shared.open($0) },
+                                     copy: { UIPasteboard.general.string = $0 }) {
+            case .compose: mailReport = report
+            case .openedMailLink: break
+            case .copied: noEmailApp = true
+            }
+        }
+    }
+
+    private func diagnostics() -> String {
+        Diagnostics.report(
             for: coordinator,
             appVersion: Self.appVersion,
             build: Self.build,
             systemVersion: UIDevice.current.systemVersion,
             model: Self.model)
-        copied = true
     }
 
     private static var appVersion: String {

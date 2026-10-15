@@ -1,0 +1,36 @@
+import MessageUI
+import SwiftUI
+
+/// Apple's Mail screen with a problem report filled in. Shown only when
+/// `MFMailComposeViewController.canSendMail()` says Mail is set up; the person sends, edits or
+/// cancels it there.
+struct MailComposer: UIViewControllerRepresentable {
+    let report: ProblemReport
+    let finished: () -> Void
+
+    func makeUIViewController(context: Context) -> MFMailComposeViewController {
+        let mail = MFMailComposeViewController()
+        mail.mailComposeDelegate = context.coordinator
+        mail.setToRecipients([ProblemReport.address])
+        mail.setSubject(report.subject)
+        mail.setMessageBody(report.body, isHTML: false)
+        return mail
+    }
+
+    func updateUIViewController(_ controller: MFMailComposeViewController, context: Context) {}
+
+    func makeCoordinator() -> Coordinator { Coordinator(finished: finished) }
+
+    final class Coordinator: NSObject, MFMailComposeViewControllerDelegate {
+        let finished: () -> Void
+
+        init(finished: @escaping () -> Void) {
+            self.finished = finished
+        }
+
+        func mailComposeController(_ controller: MFMailComposeViewController,
+                                   didFinishWith result: MFMailComposeResult, error: Error?) {
+            finished()
+        }
+    }
+}

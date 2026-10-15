@@ -1200,6 +1200,48 @@
       "file": "Cravage/Transport/NetworkTransport.swift",
       "find": "        return .roomsChanged(rooms, listings: listings.count)",
       "replace": "        return .roomsChanged(rooms, listings: rooms.count)"
+    },
+    {
+      "name": "a problem report is addressed to the support address",
+      "suite": "app",
+      "file": "Cravage/UI/ProblemReport.swift",
+      "find": "        return URL(string: \"mailto:\\(Self.address)?subject=\\(subject)&body=\\(body)\")",
+      "replace": "        return URL(string: \"mailto:?subject=\\(subject)&body=\\(body)\")"
+    },
+    {
+      "name": "a problem report carries the diagnostics",
+      "suite": "app",
+      "file": "Cravage/UI/ProblemReport.swift",
+      "find": "            + \"You can delete anything before you send.\\n\\n\"\n            + diagnostics\n",
+      "replace": "            + \"You can delete anything before you send.\\n\\n\"\n"
+    },
+    {
+      "name": "a problem report's mail link escapes every character a mail app could misread",
+      "suite": "app",
+      "file": "Cravage/UI/ProblemReport.swift",
+      "find": "        func escaped(_ text: String) -> String? { text.addingPercentEncoding(withAllowedCharacters: unreserved) }",
+      "replace": "        func escaped(_ text: String) -> String? { text.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) }"
+    },
+    {
+      "name": "with Mail set up, a problem report opens the Mail screen",
+      "suite": "app",
+      "file": "Cravage/UI/ProblemReport.swift",
+      "find": "        if canSendMail { return .compose }\n",
+      "replace": ""
+    },
+    {
+      "name": "without Mail, a problem report opens a mail link",
+      "suite": "app",
+      "file": "Cravage/UI/ProblemReport.swift",
+      "find": "        if let link = mailLink, await open(link) { return .openedMailLink }\n",
+      "replace": ""
+    },
+    {
+      "name": "when nothing opens the mail link, the diagnostics are copied",
+      "suite": "app",
+      "file": "Cravage/UI/ProblemReport.swift",
+      "find": "        copy(diagnostics)\n",
+      "replace": ""
     }
   ]
 }
