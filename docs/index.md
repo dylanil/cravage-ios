@@ -1,6 +1,6 @@
 # Cravage
 
-**Get the average, not the secrets.**
+**It's YOUR data. Aggregate it without exposing it. No middleman.**
 
 Cravage lets a group of people in the same room find their average - daily steps, hours of doomscrolling,
 what something is worth, anything - without anyone revealing their own figure. It uses secure

@@ -8,7 +8,7 @@ and the acceptance discipline changed.
 
 ## Context
 
-Cravage ("Get the average, not the secrets") is today a browser demo plus a Python relay at
+Cravage ("It's YOUR data. Aggregate it without exposing it. No middleman.") is today a browser demo plus a Python relay at
 fl-wg-smpc.fly.dev (repo github.com/dylanil/SMPC, public, MIT). A group computes its average without
 anyone revealing their figure: pairwise ECDH+HKDF masks that cancel in the sum, ECDSA-signed shares,
 exact fixed-point arithmetic, and a downloadable transcript anyone can verify offline.
@@ -431,9 +431,9 @@ out of release). Built 2026-10-05; room codes come from fresh keys, so they diff
   pinned; CI runs it against the Swift-produced transcript.
 - R8 Link security choice: resolved 2026-09-13, signatures-only, no link-layer TLS (docs/SPEC.md
   §2 has the reasoning).
-- R9 Tagline: open since 2026-10-13. "Get the group average without exposing the secrets." is on
-  trial in the launch video as a replacement for "Get the average, not the secrets.", with
-  "Private group averages. No middleman." as a closing line. If adopted, change README.md,
-  docs/index.md, docs/_config.yml, this plan's Context line, the App Store listing copy
-  (docs/APP_STORE.md) and the GitHub repository description together, and run
-  Tools/check_honesty_copy.sh.
+- R9 Tagline: decided 2026-10-16, "It's YOUR data. Aggregate it without exposing it. No middleman."
+  replaces "Get the average, not the secrets." in README.md, docs/index.md, docs/_config.yml, this
+  plan's Context line, the GitHub repository description and the launch video's opening card (the
+  store listing carries no tagline). "Safely" and "securely" were left out: the honesty rules
+  forbid claiming the average is safe, and a group of three can still work out one figure by
+  collusion. A future change moves all of these together and runs Tools/check_honesty_copy.sh.
