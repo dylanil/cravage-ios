@@ -41,7 +41,10 @@ struct CravageApp: App {
                 .task {
                     store.start()
                     #if DEBUG
-                    await stage?.run(hostNickname: NicknameStore().nickname)
+                    if let stage {
+                        await stage.run(hostNickname: NicknameStore().nickname)
+                        coordinator = stage.coordinator
+                    }
                     #endif
                 }
         }

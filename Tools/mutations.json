@@ -1263,6 +1263,13 @@
       "file": "Cravage/UI/ProblemReport.swift",
       "find": "        case .failed: .mailFailed",
       "replace": "        case .failed: nil"
+    },
+    {
+      "name": "staged scenes from Check the code on show Alice, Bob and Carol in letter order",
+      "suite": "app",
+      "file": "Cravage/ScreenshotStage.swift",
+      "find": "        while coordinator.engine.roster?.parties.map(\\.nickname) != [hostNickname] + Self.others,",
+      "replace": "        while false,"
     }
   ]
 }

@@ -33,6 +33,20 @@ final class ScreenshotStageTests: XCTestCase {
         XCTAssertEqual(result.coordinator.engine.average, "8.83")
     }
 
+    /// The listing shows Alice, Bob and Carol in that order (decision 2026-10-05), but letters follow
+    /// each round's fresh keys, so one try in six has them in name order. Twenty runs of a stage that
+    /// did not replay would all pass about once in 3.6 x 10^15.
+    func testFromCheckTheCodeOnTheLettersFollowTheNames() async {
+        for scene in [ScreenshotStage.Scene.confirmCode, .enterFigure, .waiting, .result] {
+            for _ in 0..<5 {
+                let stage = ScreenshotStage(scene: scene)
+                await stage.run(hostNickname: "Alice")
+                XCTAssertEqual(stage.coordinator.engine.roster?.parties.map(\.nickname),
+                               ["Alice", "Bob", "Carol"], "\(scene)")
+            }
+        }
+    }
+
     func testRunningASceneAgainLeavesTheRoomAsItWas() async {
         let stage = ScreenshotStage(scene: .lobby)
         await stage.run(hostNickname: "Alice")

@@ -8,7 +8,9 @@ import CravageCore
 /// only: the Release build step in CI checks that the argument name is absent from the binary.
 ///
 /// The clock is frozen, so countdowns read their full deadline and nothing expires mid-capture.
-/// Room codes come from fresh random keys and differ between runs; everything else is fixed.
+/// Room codes come from fresh random keys and differ between runs. Letters follow the keys too, so
+/// from Check the code on the stage replays the room until they follow the names; everything else
+/// is fixed.
 @MainActor
 final class ScreenshotStage {
     enum Scene: String, CaseIterable {
@@ -20,10 +22,14 @@ final class ScreenshotStage {
     static let others = ["Bob", "Carol"]
     static let figures = ["12", "6", "8.5"]
 
+    /// Tries at the room before the last one stands; each has a one-in-six chance of name order.
+    static let replays = 100
+
     let scene: Scene
-    let coordinator: RoundCoordinator
+    /// The visible phone. `run` may swap in a fresh room's host; the app shows the one it ends with.
+    private(set) var coordinator: RoundCoordinator
     let store: StoreManager
-    private let star: Star
+    private var star: Star
     private var played = false
 
     /// The figure the Enter figure screen starts with: the host's, typed in but not sent.
@@ -57,21 +63,20 @@ final class ScreenshotStage {
         guard !played else { return }
         played = true
         guard ![.home, .newRoom].contains(scene) else { return }
-        let host = coordinator
-        await host.createRoom(label: Self.label, size: 1 + Self.others.count, nickname: hostNickname)
-        for (offset, name) in Self.others.enumerated() {
-            star.coordinators[offset + 1].join(roomID: "room", nickname: name)
-            star.flush()
-        }
-        // The lobby shows one person admitted and one waiting at the door.
-        let pending = host.engine.pendingJoiners
-        for joiner in scene == .lobby ? Array(pending.prefix(1)) : pending {
-            host.admit(joiner.verifyingKey, generation: host.engine.generation)
-        }
-        star.flush()
+        await openRoom(hostNickname: hostNickname)
         guard scene != .lobby else { return }
-        host.start(generation: host.engine.generation)
-        star.flush()
+        startRound()
+        // The listing shows Alice, Bob and Carol in that order (decision 2026-10-05).
+        var tries = 1
+        while coordinator.engine.roster?.parties.map(\.nickname) != [hostNickname] + Self.others,
+              tries < Self.replays {
+            star = Star(phones: 1 + Self.others.count)
+            coordinator = star.coordinators[0]
+            await openRoom(hostNickname: hostNickname)
+            startRound()
+            tries += 1
+        }
+        let host = coordinator
         guard scene != .confirmCode else { return }
         for phone in star.coordinators { phone.confirmRoomCode(generation: phone.engine.generation) }
         star.flush()
@@ -82,6 +87,26 @@ final class ScreenshotStage {
         for (phone, figure) in zip(star.coordinators.dropFirst(), Self.figures.dropFirst()) {
             phone.submitFigure(figure, generation: phone.engine.generation)
         }
+        star.flush()
+    }
+
+    /// The hidden phones join; the lobby shows one person admitted and one waiting at the door.
+    private func openRoom(hostNickname: String) async {
+        let host = coordinator
+        await host.createRoom(label: Self.label, size: 1 + Self.others.count, nickname: hostNickname)
+        for (offset, name) in Self.others.enumerated() {
+            star.coordinators[offset + 1].join(roomID: "room", nickname: name)
+            star.flush()
+        }
+        let pending = host.engine.pendingJoiners
+        for joiner in scene == .lobby ? Array(pending.prefix(1)) : pending {
+            host.admit(joiner.verifyingKey, generation: host.engine.generation)
+        }
+        star.flush()
+    }
+
+    private func startRound() {
+        coordinator.start(generation: coordinator.engine.generation)
         star.flush()
     }
 }
