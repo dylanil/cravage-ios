@@ -3,8 +3,15 @@
 # Connect for TestFlight. Written after the first upload (2026-10-06), done by hand.
 #
 # Before running: raise CFBundleVersion in project.yml (App Store Connect refuses a build number it
-# has seen), run xcodegen, commit and push. Xcode must be signed in to an Apple Account with App
-# Store Connect access (Xcode > Settings > Accounts); "Failed to Use Accounts" means sign in again.
+# has seen), run xcodegen, commit and push.
+#
+# Sign-in: an App Store Connect API key, when Tools/app_store_key.sh (a local helper outside this
+# repository) has one in the Mac keychain, since a key does not expire until revoked; otherwise the
+# Apple Account in Xcode > Settings > Accounts, whose sign-in does expire ("Failed to Use
+# Accounts"). xcodebuild's -help text says the key serves -allowProvisioningUpdates; Apple's WWDC21
+# session "Distribute apps in Xcode with cloud signing" passes it to -exportArchive and says
+# xcodebuild needs credentials "to successfully cloud sign and upload". Apple names no minimum role
+# for the key; Admin is the role forum reports agree on.
 #
 # Usage: Tools/upload_testflight.sh [--check-only]
 #   --check-only builds and checks the archive without uploading.
@@ -13,9 +20,13 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(dirname "$HERE")"
 WORK="$ROOT/build/testflight"
 CLEAN=""
+KEYDIR=""
 cleanup() {
   if [ -n "$CLEAN" ]; then
     git -C "$ROOT" worktree remove --force "$CLEAN" || echo "Could not remove the clean copy at $CLEAN" >&2
+  fi
+  if [ -n "$KEYDIR" ]; then
+    rm -rf "$KEYDIR"
   fi
 }
 trap cleanup EXIT
@@ -33,6 +44,21 @@ if [ -z "$TEAM" ]; then
   exit 1
 fi
 
+# The key is written for this run only, readable by this account only, and removed on exit.
+AUTH=()
+KEY_ID=""
+if [ -x "$HERE/app_store_key.sh" ]; then
+  KEYDIR="$(mktemp -d)"
+  read -r KEY_ID ISSUER < <("$HERE/app_store_key.sh" write "$KEYDIR") || true
+fi
+if [ -n "$KEY_ID" ]; then
+  AUTH=(-authenticationKeyPath "$KEYDIR/AuthKey_$KEY_ID.p8" -authenticationKeyID "$KEY_ID"
+        -authenticationKeyIssuerID "$ISSUER")
+  echo "Signing in with App Store Connect key $KEY_ID"
+else
+  echo "Signing in with the Apple Account in Xcode (no App Store Connect key stored)"
+fi
+
 rm -rf "$WORK"
 mkdir -p "$WORK"
 CLEAN="$(cd "$(mktemp -d)" && pwd -P)/cravage"
@@ -41,7 +67,7 @@ cp "$ROOT/Config/Local.xcconfig" "$CLEAN/Config/"
 echo "Archiving commit $(git -C "$ROOT" rev-parse --short HEAD)..."
 xcodebuild archive -project "$CLEAN/Cravage.xcodeproj" -scheme Cravage -configuration Release \
   -destination 'generic/platform=iOS' -archivePath "$WORK/Cravage.xcarchive" \
-  -allowProvisioningUpdates > "$WORK/archive.log" 2>&1 || {
+  -allowProvisioningUpdates ${AUTH[@]+"${AUTH[@]}"} > "$WORK/archive.log" 2>&1 || {
     echo "Archive failed; see $WORK/archive.log" >&2
     tail -20 "$WORK/archive.log" >&2
     exit 1
@@ -92,10 +118,14 @@ EOF
 echo "Uploading $VERSION ($BUILD) to App Store Connect..."
 if xcodebuild -exportArchive -archivePath "$WORK/Cravage.xcarchive" \
      -exportOptionsPlist "$WORK/ExportOptions.plist" -exportPath "$WORK/export" \
-     -allowProvisioningUpdates > "$WORK/upload.log" 2>&1; then
+     -allowProvisioningUpdates ${AUTH[@]+"${AUTH[@]}"} > "$WORK/upload.log" 2>&1; then
   echo "Uploaded $VERSION ($BUILD). Apple emails when processing finishes (usually 5 to 30 minutes)."
 else
   echo "Upload failed; see $WORK/upload.log" >&2
   grep -E "error|App Store Connect access" "$WORK/upload.log" >&2 || tail -10 "$WORK/upload.log" >&2
+  if grep -q "Failed to Use Accounts" "$WORK/upload.log"; then
+    echo "Xcode's sign-in has expired: sign in again in Xcode > Settings > Accounts, or store an" >&2
+    echo "App Store Connect key so uploads stop depending on it." >&2
+  fi
   exit 1
 fi
