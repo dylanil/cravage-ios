@@ -30,7 +30,7 @@ targets:
       properties:
         CFBundleDisplayName: Cravage
         CFBundleShortVersionString: "1.0"
-        CFBundleVersion: "2"
+        CFBundleVersion: "3"
         # Only the operating system's encryption, which needs no export documentation
         # (docs/APP_STORE.md, "Export compliance"); App Store Connect then stops asking per upload.
         ITSAppUsesNonExemptEncryption: false
