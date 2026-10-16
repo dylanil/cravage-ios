@@ -8,7 +8,8 @@
 #   Defaults: "iPhone 17 Pro Max" (the 6.9-inch size, 1320x2868) and build/screenshots.
 # Captures every scene in light and dark into <output>/<appearance>/<NN>-<scene>.png, then copies
 # the listing set (five screens, light) to <output>/listing/<N>-<scene>.png.
-# Room codes come from fresh keys, so they differ between runs; the rest is fixed.
+# Keys are fresh on every run, so the room code and the roster's letters (A, B, C follow the keys,
+# so Alice is not always first on Check the code) differ between runs; the rest is fixed.
 # Each capture is kept once two frames in a row are identical; a screen that never settles is
 # reported and the script exits non-zero.
 set -euo pipefail
