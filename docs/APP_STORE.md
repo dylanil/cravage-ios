@@ -25,8 +25,8 @@ limits are Apple's. Items marked *decision* need confirmation before entry; item
 
 **Promotional text (170):**
 
-Find your group's average without anyone saying their number. Phones in the same room, no server,
-no account, no round history saved.
+Find your group's average without anyone revealing their sensitive figure. Phones in the same room,
+no server, no account, no round history saved.
 
 **Description (4000):**
 
@@ -69,8 +69,8 @@ GOOD TO KNOW
 Everyone needs an iPhone with Cravage installed, within Wi-Fi range of each other. The maths hides
 figures up to a trillion in any unit. If everyone else in a group conspires, they can work out the
 remaining person's figure; that is inherent to the technique, and the app says so where you enter
-your number. Three is the minimum, and the smallest group where no one else can work out your figure
-alone; in a group of three, the other two together can.
+your sensitive figure. Three is the minimum, and the smallest group where no one else can work out
+your figure alone; in a group of three, the other two together can.
 
 Cravage is open source. The code, the plan and independent AI reviews of its design are published
 at github.com/dylanil/cravage-ios.
