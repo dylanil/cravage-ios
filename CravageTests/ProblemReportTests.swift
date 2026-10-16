@@ -1,3 +1,4 @@
+import MessageUI
 import XCTest
 @testable import Cravage
 
@@ -38,5 +39,40 @@ final class ProblemReportTests: XCTestCase {
     /// The message is the only place the person learns where to send what they copy.
     func testTheNoMailMessageGivesTheSupportAddress() {
         XCTAssertTrue(ProblemReport.noMailMessage.contains(ProblemReport.address), ProblemReport.noMailMessage)
+    }
+
+    /// Send means only that Mail queued the email: a phone whose Mail had no working account kept
+    /// it in the Outbox (device walk 2026-10-16), so Cravage says where it is.
+    func testAfterSendCravageSaysTheReportIsInMailsOutbox() {
+        XCTAssertEqual(ProblemReport.afterMail(.sent), .inOutbox)
+    }
+
+    func testTheOutboxNoteNeverSaysTheReportWasSent() {
+        let note = ProblemReport.Notice.inOutbox
+        XCTAssertFalse(note.title.localizedCaseInsensitiveContains("sent"), note.title)
+        XCTAssertFalse(note.message.localizedCaseInsensitiveContains("sent"), note.message)
+    }
+
+    /// A report that stays in the Outbox can still reach support by the copy route.
+    func testTheOutboxNoteGivesTheSupportAddress() {
+        let note = ProblemReport.Notice.inOutbox
+        XCTAssertTrue(note.message.contains(ProblemReport.address), note.message)
+    }
+
+    func testWhenMailFailsCravageOffersToCopyTheDiagnostics() {
+        XCTAssertEqual(ProblemReport.afterMail(.failed), .mailFailed)
+        XCTAssertTrue(ProblemReport.Notice.mailFailed.message.contains(ProblemReport.address))
+    }
+
+    /// The person chose to stop or keep a draft; nothing more is said.
+    func testCancelOrSaveShowsNothing() {
+        XCTAssertNil(ProblemReport.afterMail(.cancelled))
+        XCTAssertNil(ProblemReport.afterMail(.saved))
+    }
+
+    /// The message shown without Mail is unchanged.
+    func testTheNoMailNoticeKeepsItsWording() {
+        XCTAssertEqual(ProblemReport.Notice.noMail.title, "Mail isn't set up on this iPhone")
+        XCTAssertEqual(ProblemReport.Notice.noMail.message, ProblemReport.noMailMessage)
     }
 }

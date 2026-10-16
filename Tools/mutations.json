@@ -1235,6 +1235,34 @@
       "file": "Cravage/UI/ProblemReport.swift",
       "find": "email them to \\(address) from any email app.\"",
       "replace": "email them to support from any email app.\""
+    },
+    {
+      "name": "after Send, Cravage says the report is in Mail's Outbox",
+      "suite": "app",
+      "file": "Cravage/UI/ProblemReport.swift",
+      "find": "        case .sent: .inOutbox",
+      "replace": "        case .sent: nil"
+    },
+    {
+      "name": "the Outbox note never says the report was sent",
+      "suite": "app",
+      "file": "Cravage/UI/ProblemReport.swift",
+      "find": "    static let outboxTitle = \"Your report is in Mail's Outbox\"",
+      "replace": "    static let outboxTitle = \"Your report was sent\""
+    },
+    {
+      "name": "the Outbox note gives the support address",
+      "suite": "app",
+      "file": "Cravage/UI/ProblemReport.swift",
+      "find": "        + \"and email \\(address) from any email app.\"",
+      "replace": "        + \"and email support from any email app.\""
+    },
+    {
+      "name": "when Mail fails, Cravage offers to copy the diagnostics",
+      "suite": "app",
+      "file": "Cravage/UI/ProblemReport.swift",
+      "find": "        case .failed: .mailFailed",
+      "replace": "        case .failed: nil"
     }
   ]
 }

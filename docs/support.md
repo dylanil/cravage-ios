@@ -5,7 +5,9 @@ Cravage is made by Dylan Liew. Questions, bugs and suggestions are welcome.
 - Email: cravage.support@gmail.com
 - In the app: Settings, Report a problem. It opens an email to the same address with the
   diagnostics filled in, and you send it yourself. If the iPhone's Mail app isn't set up, it
-  offers to copy the diagnostics for you to email instead.
+  offers to copy the diagnostics for you to email instead. Mail keeps what you send in its Outbox
+  until it can send it; if your report stays there, copy the diagnostics and email them from any
+  email app.
 - Report a bug or request a feature: [GitHub issues](https://github.com/dylanil/cravage-ios/issues)
 
 ## Why Cravage?

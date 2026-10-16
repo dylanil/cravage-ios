@@ -3,10 +3,10 @@ import SwiftUI
 
 /// Apple's Mail screen with a problem report filled in. Shown only when
 /// `MFMailComposeViewController.canSendMail()` says Mail is set up; the person sends, edits or
-/// cancels it there.
+/// cancels it there, and `finished` gets Apple's result.
 struct MailComposer: UIViewControllerRepresentable {
     let report: ProblemReport
-    let finished: () -> Void
+    let finished: (MFMailComposeResult) -> Void
 
     func makeUIViewController(context: Context) -> MFMailComposeViewController {
         let mail = MFMailComposeViewController()
@@ -26,15 +26,15 @@ struct MailComposer: UIViewControllerRepresentable {
     /// rather than assuming it before `finished` changes the screen's state.
     @MainActor
     final class Coordinator: NSObject, @preconcurrency MFMailComposeViewControllerDelegate {
-        let finished: () -> Void
+        let finished: (MFMailComposeResult) -> Void
 
-        init(finished: @escaping () -> Void) {
+        init(finished: @escaping (MFMailComposeResult) -> Void) {
             self.finished = finished
         }
 
         func mailComposeController(_ controller: MFMailComposeViewController,
                                    didFinishWith result: MFMailComposeResult, error: Error?) {
-            finished()
+            finished(result)
         }
     }
 }

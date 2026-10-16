@@ -122,7 +122,9 @@ The privacy policy page says the same in plain words, and the label and the poli
 
 Report a problem (Settings) opens Apple's email screen inside Cravage, addressed to support with the
 diagnostics filled in; the person sends it, or not. When Mail is not set up, Cravage shows the
-address and a Copy diagnostics button instead and opens no other app. Apple's web documentation (App Privacy
+address and a Copy diagnostics button instead and opens no other app. Apple's Send means only that
+Mail queued the email, so afterwards Cravage says the report is in Mail's Outbox and offers the same
+copy route. Apple's web documentation (App Privacy
 Details, "Optional disclosure") lets a data type go undisclosed when all four of its criteria hold,
 and gives as an example "data collected in optional feedback forms or customer service requests
 that are unrelated to the primary purpose of the app and meet the other criteria above". The first

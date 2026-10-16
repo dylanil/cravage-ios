@@ -15,7 +15,9 @@ struct SettingsView: View {
     @State private var editingName = false
     @State private var copied = false
     @State private var mailReport: ProblemReport?
-    @State private var mailNotSetUp = false
+    @State private var notice: ProblemReport.Notice?
+    /// Held until Apple's email screen has gone, so the message is not presented over it.
+    @State private var noticeAfterMail: ProblemReport.Notice?
     @AppStorage(Appearance.key) private var appearance: Appearance = .system
 
     private static let privacyPolicy = URL(string: "https://dylanil.github.io/cravage-ios/privacy-policy")!
@@ -90,15 +92,18 @@ struct SettingsView: View {
                 ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } }
             }
             .sheet(isPresented: $editingName) { NicknameSheet(nicknames: nicknames) }
-            .sheet(item: $mailReport) { report in
-                MailComposer(report: report) { mailReport = nil }
-                    .ignoresSafeArea()
+            .sheet(item: $mailReport, onDismiss: showNoticeAfterMail) { report in
+                MailComposer(report: report) { result in
+                    noticeAfterMail = ProblemReport.afterMail(result)
+                    mailReport = nil
+                }
+                .ignoresSafeArea()
             }
-            .alert(ProblemReport.noMailTitle, isPresented: $mailNotSetUp) {
+            .alert(notice?.title ?? "", isPresented: noticeShown, presenting: notice) { notice in
                 Button("Copy diagnostics") { UIPasteboard.general.string = diagnostics() }
-                Button("Cancel", role: .cancel) {}
-            } message: {
-                Text(ProblemReport.noMailMessage)
+                Button(notice.closeLabel, role: .cancel) {}
+            } message: { notice in
+                Text(notice.message)
             }
         }
     }
@@ -139,15 +144,24 @@ struct SettingsView: View {
         copied = true
     }
 
-    /// A tap while the email screen or the message is already up does nothing.
+    /// A tap while the email screen or a message is already up does nothing.
     private func reportProblem() {
-        guard mailReport == nil, !mailNotSetUp else { return }
+        guard mailReport == nil, notice == nil else { return }
         switch ProblemReport.way(canSendMail: MFMailComposeViewController.canSendMail()) {
         case .mailScreen:
             mailReport = ProblemReport(diagnostics: diagnostics(), appVersion: Self.appVersion, build: Self.build)
         case .copyAndEmail:
-            mailNotSetUp = true
+            notice = .noMail
         }
+    }
+
+    private func showNoticeAfterMail() {
+        notice = noticeAfterMail
+        noticeAfterMail = nil
+    }
+
+    private var noticeShown: Binding<Bool> {
+        Binding(get: { notice != nil }, set: { if !$0 { notice = nil } })
     }
 
     private func diagnostics() -> String {
