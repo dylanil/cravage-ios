@@ -232,9 +232,12 @@ Commission drops from 30% to 15% from the month after approval.
    Entered 2026-10-17 through the App Store Connect API, word for word from this file and read
    back: everything on this line except the privacy label, plus the categories, content rights,
    copyright, price (free), build 1.0 (3) and the unlock's review note. Apple rated the app 4+.
-   The privacy label, and adding the unlock to version 1.0, are done on the website.
+   The privacy label is done on the website.
 6. Review notes and video attached; contact details entered.
-7. Submit for review. Typical turnaround is one to three days.
+7. Submit for review. Typical turnaround is one to three days. The first non-consumable purchase
+   goes in the same submission as a new app version (Apple's help, "Submit an In-App Purchase"):
+   on the purchase's page, Add for Review, choose iOS and version 1.0, check that both are listed,
+   then Submit for Review.
 8. Once the app is live, open it from the App Store on a UK account, go to New room, pick 4, and
    check the button reads "Unlock for £0.99". TestFlight cannot show this: on iOS 26 it can give
    the app US dollar prices while Apple's payment sheet shows the local price, so a "$0.99" seen in
