@@ -108,8 +108,9 @@ Settings, Restore Purchases, the privacy policy and limitations screens, and the
 an optional support email the person chooses to send (Settings, Report a problem). Local Network
 permission is requested only to find other phones running Cravage.
 
-**Attachment (*later*):** 30 to 60 second screen recording of three phones completing a round,
-including the room-code confirmation and the result appearing on all three.
+**Attachment (attached 2026-10-17):** a 48 second video of one real round of 3: the three phones'
+own screen recordings, side by side and in sync, including the room-code confirmation and the result
+appearing on all three. Waits are sped up 2x or 3x, with a badge on screen saying so.
 
 ## App Privacy (nutrition label)
 
