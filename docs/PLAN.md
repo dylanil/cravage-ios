@@ -401,8 +401,11 @@ out of release). Built 2026-10-05; room codes come from fresh keys, so they diff
    from Lamplight, Night, True black and always-light; the app follows the phone's setting unless
    Settings' Appearance switch picks Light or Dark (2026-10-05). The icon has a light look too, a
    white ground with hollow ink phones; the ink icon is its dark-appearance variant.)
-10. TestFlight (needs a person present): external link, a real 4-plus phone round, an 8-phone round before
-    "up to 8" is advertised; fix findings.
+10. TestFlight (needs a person present): external link, a real 4-plus phone round, a round of 8 before
+    "up to 8" is advertised; fix findings. (Decision 2026-10-17: a round of 8 on the three iPhones
+    plus five simulated iPhones on the Mac meets this, with README saying so; eight separate
+    iPhones are not required. Done 2026-10-17: four rounds of 8, every phone agreeing, after a
+    TestFlight sandbox purchase on the host.)
 11. Store listing and submission (needs a person present): scripted screenshots, metadata, nutrition label,
     export questionnaire, territories, review note and video, submit; respond to review.
 12. Post-launch: App Store link on the SMPC web home page; hand off to the marketing project.
@@ -414,7 +417,7 @@ out of release). Built 2026-10-05; room codes come from fresh keys, so they diff
 - `python3 Tools/verify_round.py --transcript golden.json` (v2) passes in CI; pinned-verifier check
   passes.
 - `xcodebuild test` debug and release; release has no test hooks (asserted).
-- Device: three physical phones from step 2; interruption matrix in step 6; eight phones in step 10;
+- Device: three physical phones from step 2; interruption matrix in step 6; a round of 8 in step 10;
   permission denied path; disputed-result path with a deliberately misbehaving test build.
 - Purchase: sandbox buy, restore on a second device, offline cold start, gate through the
   coordinator.

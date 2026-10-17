@@ -8,9 +8,9 @@ aggregation, peer-to-peer: phones talk directly to each other over Wi-Fi. Cravag
 accounts, and saves no round data.
 
 *Status: the first-round and restart screens are built, and both paths have worked on three
-physical iPhones. Settings and the in-app Limitations screen are built. The purchase unlock is built
-and tested with a simulated store; runs against Xcode's local store and Apple's sandbox are still
-outstanding. Dark mode is built, with a light/dark/same-as-phone switch in Settings and a light
+physical iPhones; rooms of 8 have worked on three iPhones and five simulated ones. Settings and
+the in-app Limitations screen are built. The purchase unlock is built, tested with a simulated
+store and bought once in TestFlight (Apple's sandbox); restoring it is still outstanding. Dark mode is built, with a light/dark/same-as-phone switch in Settings and a light
 and a dark app icon. Release polish is still outstanding. Not yet on the App Store.*
 
 The web demo, which shares the same maths: [dylanil/SMPC](https://github.com/dylanil/SMPC).
@@ -39,9 +39,11 @@ than discovered. The in-app Limitations screen carries the same list in shorter 
 
 - **Same room only.** Phones must be within Wi-Fi range of each other. Remote participants are
   planned for a later version.
-- **Rooms of 4 to 8 need the one-off unlock**, which so far has been tested only with a simulated
-  store, not Xcode's local store, the App Store's sandbox or a real purchase. Eight-phone hardware acceptance
-  is still required before advertising that capacity.
+- **Rooms of 4 to 8 need the one-off unlock.** It has been bought once in a TestFlight build,
+  which uses the App Store's sandbox. Restoring it, Xcode's local store and a real purchase are not
+  yet tested. Rooms of 8 have run four rounds to the end, every phone agreeing on the result, with
+  three iPhones and five simulated iPhones on one Mac. The simulated ones share the Mac's one Wi-Fi
+  connection, so a room of eight separate iPhones has not been tested.
 - **Everyone needs an iPhone running iOS 26 or later with the app.** iPhone 11 and newer. There is
   no Android or web participant in this version.
 - **Figures up to 999,999,999,999.99.** The masking maths hides figures perfectly only within a
