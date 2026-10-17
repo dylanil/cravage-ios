@@ -237,7 +237,8 @@ Commission drops from 30% to 15% from the month after approval.
 7. Submit for review. Typical turnaround is one to three days. The first non-consumable purchase
    goes in the same submission as a new app version (Apple's help, "Submit an In-App Purchase"):
    on the purchase's page, Add for Review, choose iOS and version 1.0, check that both are listed,
-   then Submit for Review.
+   then Submit for Review. Submitted 2026-10-17: version 1.0 (build 3) with the unlock, release set
+   to manual, so an approved version waits to be released by hand.
 8. Once the app is live, open it from the App Store on a UK account, go to New room, pick 4, and
    check the button reads "Unlock for £0.99". TestFlight cannot show this: on iOS 26 it can give
    the app US dollar prices while Apple's payment sheet shows the local price, so a "$0.99" seen in

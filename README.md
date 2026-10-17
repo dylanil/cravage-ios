@@ -12,7 +12,8 @@ physical iPhones; rooms of 8 have worked on three iPhones and five simulated one
 the in-app Limitations screen are built. The purchase unlock is built, tested with a simulated
 store, bought once in TestFlight (Apple's sandbox) and back after deleting and reinstalling the
 app there. Dark mode is built, with a light/dark/same-as-phone switch in Settings and a light
-and a dark app icon. Release polish is still outstanding. Not yet on the App Store.*
+and a dark app icon. Release polish is still outstanding. Version 1.0 (build 3) was submitted to
+App Review on 2026-10-17; not yet on the App Store.*
 
 The web demo, which shares the same maths: [dylanil/SMPC](https://github.com/dylanil/SMPC).
 
