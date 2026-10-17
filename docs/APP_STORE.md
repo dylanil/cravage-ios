@@ -174,8 +174,16 @@ encryption built into Apple's operating system), so exempt with no documentation
   signatures and for deriving one-time masking values; connections between phones are plain TCP
   with no transport encryption of the app's own or the OS's (checked 2026-10-06); it
   implements no proprietary encryption and the source is public. Under this answer Apple requires no
-  documentation. A US annual self-classification report may still apply to exempt encryption; a
-  decision is needed on whether to file one. This is not legal advice.
+  documentation.
+- Is a US annual self-classification report filed? **No** (decided 2026-10-16). Since the rule of
+  2021-03-29 (Federal Register 2021-05481), the report in 15 CFR 740.17(e)(3) "applies to 'mass
+  market' encryption components and 'executable software'" classified under ECCN 5A992.c or
+  5D992.c, and to encryption items that stay in 5A002, 5B002 or 5D002. The same rule defines that
+  software as coming "from an existing hardware component" and says it "does not include complete
+  binary images of the 'software' running on an end item". Cravage is a finished app sold to the
+  public, neither a component nor such software, so on that reading it files nothing. The reading
+  rests on the 2021 rule's text; later changes to 740.17 were not checked. This is not legal
+  advice.
 
 Since build 1.0 (2) the same answer is in Info.plist as `ITSAppUsesNonExemptEncryption = NO`
 (set in `project.yml`), so App Store Connect no longer asks at each upload. Apple's web
