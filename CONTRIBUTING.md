@@ -104,3 +104,5 @@ to share. The Limitations text is council-approved and changes only with the mai
   and launches it on every paired iPhone.
 - TestFlight: raise `CFBundleVersion` in `project.yml`, then `Tools/upload_testflight.sh` archives
   HEAD from a clean copy, checks it and uploads it.
+- After a push, `Tools/wait_ci.sh [commit]` waits for that commit's CI run (not the Pages
+  deployment), prints each job's result and exits 0 only on success.
