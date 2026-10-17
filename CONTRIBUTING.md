@@ -99,7 +99,8 @@ to share. The Limitations text is council-approved and changes only with the mai
   (2026-10-10). CI and the mutation gate skip it by name too, so a green CI run has not exercised
   a real purchase.
 - Device: Network framework cannot run on CI and the simulator ignores local-network privacy; test
-  on three physical phones, eight before advertising eight. `Tools/install_to_phones.sh` builds the
-  last commit and installs and launches it on every paired iPhone.
+  on three physical phones, and a room of 8 (those three plus five simulated phones, decision
+  2026-10-17) before advertising 8. `Tools/install_to_phones.sh` builds the last commit and installs
+  and launches it on every paired iPhone.
 - TestFlight: raise `CFBundleVersion` in `project.yml`, then `Tools/upload_testflight.sh` archives
   HEAD from a clean copy, checks it and uploads it.
