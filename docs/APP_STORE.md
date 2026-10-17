@@ -198,7 +198,8 @@ or transport encryption beyond the operating system's, this answer and the key a
   Croatia, Cyprus, Czechia, Denmark, Estonia, Finland, France, Germany, Greece, Hungary, Ireland,
   Italy, Latvia, Lithuania, Luxembourg, Malta, Netherlands, Poland, Portugal, Romania, Slovakia,
   Slovenia, Spain, Sweden). Reason: the EU Digital Services Act requires a trader to display a postal
-  address and phone number on the product page.
+  address and phone number on the product page. New territories are not added automatically (set
+  2026-10-17), so a country Apple adds later is never offered until someone chooses to.
 - **Trader status declaration:** made 2026-10-06 as "not a trader under the DSA or not
   distributing in the EU", so no contact details are displayed. This binds the availability above:
   the EU countries **must be unticked** when availability is set. Offering the app in the EU later
@@ -228,6 +229,10 @@ Commission drops from 30% to 15% from the month after approval.
 3. In-app purchase created and set to Ready to Submit with its screenshot.
 4. Build uploaded from Xcode; export compliance answered.
 5. Listing copy, keywords, URLs, screenshots, age rating, privacy label, territories entered.
+   Entered 2026-10-17 through the App Store Connect API, word for word from this file and read
+   back: everything on this line except the privacy label, plus the categories, content rights,
+   copyright, price (free), build 1.0 (3) and the unlock's review note. Apple rated the app 4+.
+   The privacy label, and adding the unlock to version 1.0, are done on the website.
 6. Review notes and video attached; contact details entered.
 7. Submit for review. Typical turnaround is one to three days.
 8. Once the app is live, open it from the App Store on a UK account, go to New room, pick 4, and
