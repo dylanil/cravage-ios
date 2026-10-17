@@ -10,7 +10,8 @@ accounts, and saves no round data.
 *Status: the first-round and restart screens are built, and both paths have worked on three
 physical iPhones; rooms of 8 have worked on three iPhones and five simulated ones. Settings and
 the in-app Limitations screen are built. The purchase unlock is built, tested with a simulated
-store and bought once in TestFlight (Apple's sandbox); restoring it is still outstanding. Dark mode is built, with a light/dark/same-as-phone switch in Settings and a light
+store, bought once in TestFlight (Apple's sandbox) and back after deleting and reinstalling the
+app there. Dark mode is built, with a light/dark/same-as-phone switch in Settings and a light
 and a dark app icon. Release polish is still outstanding. Not yet on the App Store.*
 
 The web demo, which shares the same maths: [dylanil/SMPC](https://github.com/dylanil/SMPC).
@@ -40,8 +41,9 @@ than discovered. The in-app Limitations screen carries the same list in shorter 
 - **Same room only.** Phones must be within Wi-Fi range of each other. Remote participants are
   planned for a later version.
 - **Rooms of 4 to 8 need the one-off unlock.** It has been bought once in a TestFlight build,
-  which uses the App Store's sandbox. Restoring it, Xcode's local store and a real purchase are not
-  yet tested. Rooms of 8 have run four rounds to the end, every phone agreeing on the result, with
+  which uses the App Store's sandbox. After the app was deleted and reinstalled on that phone, the
+  unlock showed before Restore purchase was tapped, and was still there after tapping it. Restoring
+  on a second phone, Xcode's local store and a real purchase are not yet tested. Rooms of 8 have run four rounds to the end, every phone agreeing on the result, with
   three iPhones and five simulated iPhones on one Mac. The simulated ones share the Mac's one Wi-Fi
   connection, so a room of eight separate iPhones has not been tested.
 - **Everyone needs an iPhone running iOS 26 or later with the app.** iPhone 11 and newer. There is
